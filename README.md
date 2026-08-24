@@ -1,0 +1,129 @@
+# Gym Progress PWA
+
+A local-first Progressive Web App port of the Gym Progress Android project, designed to run on iPhone/iPad from Safari and install to the Home Screen.
+
+## What is included
+
+- Workout-day rotation with manual override
+- Programme editor with ordered workout days and exercises
+- Exercise library/autocomplete
+- Sets, reps, rest and working weights
+- RIR-based progression rule and configurable difficulty thresholds
+- Warm-up, ramp-up, working-set, rest, unloading and stretching phases
+- Exercise-aware ramp-up recommendations
+- Large pulsing active-set display
+- Custom working weight entry plus +/- 0.25 kg controls
+- Reps + Failure / RIR 0 / 1 / 2 / 3+ entry
+- Rest countdown, +/- 30 sec and skip
+- In-foreground sound/vibration cues
+- Logs, session detail and full-session deletion
+- Weight / Volume / e1RM progress charts
+- 1m / 3m / 6m / 1y / 5y / custom progress periods
+- IndexedDB local storage
+- Offline shell through a Service Worker
+- Android-compatible `gym-progress-backup-v3` full backup import/export
+- Detailed JSON and CSV export for analysis
+- Erase-all-data flow with strong confirmation
+
+## Important data behaviour
+
+Training data is **not uploaded to GitHub**. GitHub Pages hosts only the app files. Programme and workout history are stored in the browser's local IndexedDB on the device.
+
+Updating the files on GitHub Pages does not intentionally erase this local database. Still, use **Settings -> Data -> Full backup** periodically, especially before changing devices or experimenting with browser/storage settings.
+
+The PWA accepts the current Android full-backup schema `gym-progress-backup-v3`, so an Android backup can be restored into this PWA. The PWA's full backup is also written in that schema for portability back to the Android app.
+
+## iPhone limitation
+
+The PWA can keep the screen awake where the browser supports Screen Wake Lock and it calculates timers from timestamps, so switching screens or a brief suspension does not simply lose elapsed time.
+
+However, iOS does not give a PWA the same guaranteed background execution as the native Android foreground workout service. If the phone is locked or iOS suspends the PWA, exact background beeps cannot be guaranteed. When you return, the timer state is recalculated from its stored timestamps.
+
+## Easiest GitHub Pages deployment
+
+This project deliberately requires **no npm install and no build command**. `index.html` is already the deployable application.
+
+### 1. Extract the ZIP
+
+Unzip the project on your computer. Open the extracted `GymProgress-PWA` folder. You should immediately see files such as:
+
+- `index.html`
+- `app.js`
+- `styles.css`
+- `manifest.webmanifest`
+- `sw.js`
+- `icons` folder
+
+`index.html` must end up at the root of the GitHub repository, not inside another `GymProgress-PWA` subfolder.
+
+### 2. Create a GitHub repository
+
+1. Sign in to GitHub.
+2. Click the **+** menu in the top-right.
+3. Choose **New repository**.
+4. Name it, for example, `gym-progress-pwa`.
+5. For a normal free GitHub Pages setup, choose **Public**.
+6. You can leave README, `.gitignore`, and licence creation off because this package already contains a README.
+7. Click **Create repository**.
+
+### 3. Upload the project
+
+On the repository page:
+
+1. Choose **Add file -> Upload files** (for a completely empty repository GitHub may instead show an **uploading an existing file** link).
+2. On your computer, open the extracted `GymProgress-PWA` folder.
+3. Select the **contents inside the folder** — `index.html`, JavaScript files, CSS, manifest, README and the `icons` folder.
+4. Drag them onto GitHub's upload page.
+5. Confirm that `index.html` appears at repository root.
+6. Enter a commit message such as `Initial Gym Progress PWA`.
+7. Click **Commit changes**.
+
+### 4. Turn on GitHub Pages
+
+1. Open the repository's **Settings** tab.
+2. In the left sidebar, open **Pages** under **Code and automation**.
+3. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
+4. Select branch **main** (or your repository's default branch if it has another name).
+5. Select folder **/(root)**.
+6. Click **Save**.
+
+GitHub will publish the site. It may take several minutes. The Pages settings screen will show a **Visit site** button once it is available.
+
+For a repository named `gym-progress-pwa`, the usual address is:
+
+`https://YOUR-GITHUB-USERNAME.github.io/gym-progress-pwa/`
+
+### 5. Install it on an iPhone
+
+1. Open the GitHub Pages address in **Safari** on the iPhone.
+2. Tap **Share**.
+3. Choose **Add to Home Screen**.
+4. If shown, enable **Open as Web App**.
+5. Tap **Add**.
+6. Launch **Gym Progress** using the new icon on the Home Screen.
+
+Use the Home Screen version for normal workouts rather than leaving it as an ordinary Safari tab.
+
+## Publishing later updates
+
+Upload the changed project files to the **same repository** and commit them to the same Pages branch. GitHub Pages republishes the site automatically.
+
+The Service Worker is network-first while online, so a published code update refreshes its cached copy instead of permanently trapping the installed app on the first version.
+
+Do not rename the repository or deliberately clear Safari website data without first creating a full JSON backup.
+
+## Local desktop test (optional)
+
+Because Service Workers and ES modules expect a web origin, do not test by double-clicking `index.html` as a `file://` URL. If you have Python installed, from inside the project folder run:
+
+```text
+python -m http.server 8000
+```
+
+Then visit:
+
+```text
+http://localhost:8000
+```
+
+This is optional; GitHub Pages itself provides the required HTTPS hosting for iPhone installation.

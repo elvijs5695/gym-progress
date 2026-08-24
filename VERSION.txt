@@ -1,0 +1,3 @@
+Gym Progress PWA 1.0.0
+Port basis: Gym Progress Android v1.1.2
+Backup compatibility: gym-progress-backup-v3

@@ -1,0 +1,315 @@
+import {loadState,saveState,wipeState} from './db.js';
+import {EXERCISES,ExerciseType,RampMode,bestMatch,byKey,recommendRamp} from './exercise-library.js';
+import {COLORS,roundQuarter,formatKg,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js';
+
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now=()=>Date.now();
+const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
+const appEl=$('#app');
+let state=null;
+let route={name:'home',id:null};
+let ui={selectedWorkoutId:null,progressExercise:'',progressRange:'3m',progressMetric:'WEIGHT',customStart:'',customEnd:'',toast:null};
+let tickHandle=null,wakeLock=null,audioCtx=null,lastReminderKey='';
+
+function defaults(){return {
+  internalVersion:1,
+  app_state:{id:1,nextWorkoutId:null,keepScreenAwake:true,progressionRirThreshold:2,difficultyComfortableMinRir:2.5,difficultyChallengingMinRir:1.5,difficultyHardMinRir:0.5},
+  workout_templates:[],template_exercises:[],workout_sessions:[],session_exercises:[],performed_sets:[],runtime:null
+};}
+function normalize(s){
+  const d=defaults(),x={...d,...(s||{})};
+  x.app_state={...d.app_state,...(x.app_state||{})};
+  for(const k of ['workout_templates','template_exercises','workout_sessions','session_exercises','performed_sets']) if(!Array.isArray(x[k]))x[k]=[];
+  ensureRotation(x);return x;
+}
+function ensureRotation(s=state){
+  const active=s.workout_templates.filter(w=>w.isActive!==false).sort((a,b)=>a.position-b.position);
+  if(!active.length){s.app_state.nextWorkoutId=null;return;}
+  if(!active.some(w=>w.id===s.app_state.nextWorkoutId))s.app_state.nextWorkoutId=active[0].id;
+}
+async function persist(){await saveState(state);}
+function toast(msg){ui.toast=msg;render();setTimeout(()=>{if(ui.toast===msg){ui.toast=null;render();}},1800);}
+function nav(name,id=null){route={name,id};window.scrollTo({top:0,behavior:'instant'});render();}
+function activeSession(){return state.workout_sessions.find(s=>s.status==='ACTIVE')||null;}
+function getWorkout(id){return state.workout_templates.find(w=>w.id===Number(id));}
+function getTemplateExercises(workoutId){return state.template_exercises.filter(e=>e.workoutId===Number(workoutId)).sort((a,b)=>a.position-b.position);}
+function getSession(id){return state.workout_sessions.find(s=>s.id===Number(id));}
+function getSessionExercise(id){return state.session_exercises.find(e=>e.id===Number(id));}
+function getSet(id){return state.performed_sets.find(s=>s.id===Number(id));}
+function runtime(){return state.runtime;}
+function fmtPct(v){return v==null?'—':`${v>=0?'+':''}${v.toFixed(1)}%`;}
+function nextWorkoutAfter(workoutId){const all=state.workout_templates.filter(w=>w.isActive!==false).sort((a,b)=>a.position-b.position);if(!all.length)return null;const i=all.findIndex(w=>w.id===workoutId);return all[(i<0?0:(i+1)%all.length)].id;}
+
+async function init(){
+  state=normalize(await loadState());
+  if(!state.app_state.nextWorkoutId&&state.workout_templates.length)ensureRotation();
+  ui.selectedWorkoutId=state.app_state.nextWorkoutId;
+  await persist();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if(navigator.storage?.persist) navigator.storage.persist().catch(()=>{});
+  tickHandle=setInterval(tick,250);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
+  render();
+}
+
+function shell(content,{topbar=null,navBar=true}={}){
+  return `<div class="app-shell">${topbar||''}<main class="view ${topbar?'with-top':''}">${content}</main>${navBar?bottomNav():''}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}<div id="dialog-root"></div></div>`;
+}
+function bottomNav(){return `<nav class="nav">
+  ${navButton('home','⌂','Home')}${navButton('logs','▤','Logs')}${navButton('progress','↗','Progress')}${navButton('settings','⚙','Settings')}
+</nav>`;}
+function navButton(name,icon,label){return `<button class="${route.name===name?'active':''}" onclick="gp.nav('${name}')"><span class="nav-icon">${icon}</span><span>${label}</span></button>`;}
+function topbar(title,back='home',right=''){return `<div class="topbar"><button class="icon-btn" onclick="gp.nav('${back}')">‹</button><div class="topbar-title">${esc(title)}</div>${right}</div>`;}
+
+function render(){
+  if(!state)return;
+  if(route.name!=='active'&&activeSession()&&state.runtime?.sessionId===activeSession().id&&route.name==='home'){}
+  let html;
+  switch(route.name){
+    case'logs':html=renderLogs();break;case'progress':html=renderProgress();break;case'settings':html=renderSettings();break;
+    case'programme':html=renderProgramme();break;case'workout':html=renderWorkoutEditor(route.id);break;case'session':html=renderSessionDetail(route.id);break;
+    case'active':html=renderActive();break;default:html=renderHome();
+  }
+  appEl.innerHTML=html;
+  if(route.name==='active') afterActiveRender();
+}
+
+function renderHome(){
+  const workouts=state.workout_templates.filter(w=>w.isActive!==false).sort((a,b)=>a.position-b.position);
+  const active=activeSession();
+  if(ui.selectedWorkoutId==null)ui.selectedWorkoutId=state.app_state.nextWorkoutId;
+  let content=`<h1>Gym Progress</h1>`;
+  if(active){content+=`<div class="card selected-due"><div class="card-row"><div class="grow"><div class="small">WORKOUT IN PROGRESS</div><div class="title">${esc(active.workoutName)}</div></div><button class="icon-btn play-btn" onclick="gp.resume(${active.id})">▶</button></div></div>`;}
+  else if(!workouts.length){content+=`<div class="card empty"><h3>No programme yet</h3><button onclick="gp.nav('programme')">Create programme</button></div>`;}
+  else{
+    content+=`<div class="section-title">Workout rotation</div>`;
+    workouts.forEach((w,i)=>{
+      const due=w.id===state.app_state.nextWorkoutId,sel=w.id===ui.selectedWorkoutId,ex=getTemplateExercises(w.id);
+      content+=`<div class="card clickable ${sel&&due?'selected-due':sel?'selected-override':''}" onclick="gp.selectWorkout(${w.id})"><div class="card-row"><div class="pill">${i+1}</div><div class="grow"><div class="title">${esc(w.name)}</div><div class="subtitle">${ex.length} exercise${ex.length===1?'':'s'}${due?' · next':''}</div></div>${sel?`<button class="icon-btn play-btn" onclick="event.stopPropagation();gp.requestStart(${w.id})">▶</button>`:''}</div></div>`;
+    });
+  }
+  if(!window.matchMedia('(display-mode: standalone)').matches && /iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    content+=`<div class="card install-note"><div class="title">Install on iPhone</div><div class="subtitle">In Safari: Share → Add to Home Screen → Add.</div></div>`;
+  }
+  return shell(content);
+}
+function selectWorkout(id){ui.selectedWorkoutId=Number(id);render();}
+function requestStart(id){
+  id=Number(id); if(id!==state.app_state.nextWorkoutId){const w=getWorkout(id);confirmDialog(`Start ${w?.name||'workout'}?`,`This is not the workout currently due. When you complete it, the rotation will continue from this workout.`,`Start anyway`,()=>startWorkout(id));}else startWorkout(id);
+}
+async function startWorkout(workoutId){
+  if(activeSession()){toast('A workout is already active');return;}
+  const w=getWorkout(workoutId),templates=getTemplateExercises(workoutId);if(!w||!templates.length){alertDialog('Can’t start workout','Add at least one exercise first.');return;}
+  await enableAudio();
+  const t=now(),sid=uid(state.workout_sessions);
+  state.workout_sessions.push({id:sid,workoutId:w.id,workoutName:w.name,startedAt:t,endedAt:null,status:'ACTIVE',note:'',advancesRotation:true,warmupStartedAt:t,warmupEndedAt:null,warmupSkipped:false,stretchStartedAt:null,stretchEndedAt:null,stretchSkipped:false});
+  for(const te of templates){
+    const eid=uid(state.session_exercises);const plan=recommendRamp(te.initialWeightKg,te.reps,te.exerciseType);
+    state.session_exercises.push({id:eid,sessionId:sid,templateExerciseId:te.id,name:te.name,position:te.position,targetSets:te.sets,targetReps:te.reps,plannedRestSeconds:te.restSeconds,plannedWeightKg:te.initialWeightKg,startedAt:null,endedAt:null,status:'PENDING',progressionOffered:false,progressionAccepted:false,nextWeightKg:null,exerciseKey:te.exerciseKey??null,exerciseType:te.exerciseType||ExerciseType.MODERATE_COMPOUND,rampMode:te.rampMode||RampMode.AUTO,removeWeights:!!te.removeWeights,rampStartedAt:null,rampEndedAt:null,rampSkipped:false,rampPlanJson:JSON.stringify(plan),unloadStartedAt:null,unloadEndedAt:null,unloadSkipped:false});
+    for(let i=0;i<te.sets;i++)state.performed_sets.push({id:uid(state.performed_sets),sessionExerciseId:eid,setNumber:i+1,targetReps:te.reps,actualReps:null,plannedWeightKg:te.initialWeightKg,actualWeightKg:null,rir:null,failure:false,plannedRestSeconds:te.restSeconds,actualRestSeconds:null,status:'PENDING',completedAt:null});
+  }
+  state.runtime={sessionId:sid,phase:'WARMUP',phaseStartedAt:t,currentExerciseIndex:0,currentSetIndex:0,workingWeight:templates[0].initialWeightKg,entry:null,rest:null,nextAction:null,reminderStartedAt:null};
+  await persist();requestWakeLock();nav('active');
+}
+function resume(id){if(state.runtime?.sessionId!==Number(id))rebuildRuntime(Number(id));requestWakeLock();nav('active');}
+function rebuildRuntime(sessionId){
+  const ex=sessionExercises(state,sessionId),firstPending=ex.find(e=>exerciseSets(state,e.id).some(s=>s.status==='PENDING'));
+  if(!firstPending){state.runtime={sessionId,phase:'STRETCH',phaseStartedAt:now(),currentExerciseIndex:ex.length-1,currentSetIndex:0,workingWeight:0};return;}
+  const ei=ex.findIndex(e=>e.id===firstPending.id),sets=exerciseSets(state,firstPending.id),si=sets.findIndex(s=>s.status==='PENDING');
+  state.runtime={sessionId,phase:'SET',phaseStartedAt:now(),currentExerciseIndex:ei,currentSetIndex:Math.max(0,si),workingWeight:sets[Math.max(0,si)]?.plannedWeightKg||firstPending.plannedWeightKg,entry:null,rest:null,nextAction:null,reminderStartedAt:now()};
+}
+
+function renderSettings(){
+  const a=state.app_state;
+  const content=`<h1>Settings</h1>
+  <div class="section-title">Training</div>
+  <div class="card clickable" onclick="gp.nav('programme')"><div class="card-row"><div class="grow"><div class="title">Programme</div><div class="subtitle">Workout days and exercises</div></div><span>›</span></div></div>
+  <div class="card"><div class="card-row"><div class="grow"><div class="title">Progression rule</div><div class="subtitle">Minimum RIR required in every successful set</div></div><button class="icon-btn" onclick="gp.changeRirThreshold(-1)">−</button><strong>RIR ≥ ${a.progressionRirThreshold}</strong><button class="icon-btn" onclick="gp.changeRirThreshold(1)">+</button></div></div>
+  <div class="card clickable" onclick="gp.editDifficulty()"><div class="card-row"><div class="grow"><div class="title">Difficulty levels</div><div class="subtitle">Comfortable / challenging / hard thresholds</div></div><span>›</span></div></div>
+  <div class="card"><div class="card-row"><div class="grow"><div class="title">Keep screen awake</div></div><input style="width:auto" type="checkbox" ${a.keepScreenAwake?'checked':''} onchange="gp.toggleAwake(this.checked)"></div></div>
+  <div class="section-title">Data</div>
+  <div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()">Full backup</button><button class="secondary full" onclick="gp.pickRestore()">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()">Erase all data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>`;
+  return shell(content);
+}
+async function changeRirThreshold(d){state.app_state.progressionRirThreshold=Math.max(0,Math.min(3,state.app_state.progressionRirThreshold+d));await persist();render();}
+async function toggleAwake(v){state.app_state.keepScreenAwake=!!v;await persist();if(v)requestWakeLock();else releaseWakeLock();}
+function editDifficulty(){
+  const a=state.app_state;formDialog('Difficulty levels',`<label class="field">Comfortable starts at average RIR</label><input id="f-comf" type="number" step="0.5" min="1" max="3" value="${a.difficultyComfortableMinRir}"><label class="field">Challenging starts at</label><input id="f-chal" type="number" step="0.5" min="0.5" max="2.5" value="${a.difficultyChallengingMinRir}"><label class="field">Hard starts at</label><input id="f-hard" type="number" step="0.5" min="0" max="2" value="${a.difficultyHardMinRir}">`,'Save',async()=>{const c=Number($('#f-comf').value),ch=Number($('#f-chal').value),h=Number($('#f-hard').value);state.app_state.difficultyComfortableMinRir=Math.max(1,Math.min(3,c));state.app_state.difficultyChallengingMinRir=Math.max(.5,Math.min(state.app_state.difficultyComfortableMinRir-.5,ch));state.app_state.difficultyHardMinRir=Math.max(0,Math.min(state.app_state.difficultyChallengingMinRir-.5,h));await persist();closeDialog();render();});
+}
+
+function renderProgramme(){
+  const ws=state.workout_templates.slice().sort((a,b)=>a.position-b.position);
+  let c=`<div class="row between"><h2 style="margin:10px 0">Programme</h2><button class="small-btn" onclick="gp.addWorkout()">+ Day</button></div>`;
+  if(!ws.length)c+=`<div class="empty">No workout days yet.</div>`;
+  ws.forEach((w,i)=>c+=`<div class="card clickable" onclick="gp.nav('workout',${w.id})"><div class="card-row"><div class="pill">${i+1}</div><div class="grow"><div class="title">${esc(w.name)}</div><div class="subtitle">${getTemplateExercises(w.id).length} exercises</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.moveWorkout(${w.id},-1)">↑</button><button class="icon-btn" onclick="event.stopPropagation();gp.moveWorkout(${w.id},1)">↓</button><button class="icon-btn" onclick="event.stopPropagation();gp.renameWorkout(${w.id})">✎</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteWorkout(${w.id})">⌫</button></div></div>`);
+  return shell(c,{topbar:topbar('Programme','settings'),navBar:false});
+}
+function addWorkout(){formDialog('New workout day',`<label class="field">Name</label><input id="f-name" value="Day ${state.workout_templates.length+1}">`,'Add',async()=>{const name=$('#f-name').value.trim()||`Day ${state.workout_templates.length+1}`;state.workout_templates.push({id:uid(state.workout_templates),name,position:state.workout_templates.length,isActive:true});ensureRotation();await persist();closeDialog();render();});}
+function renameWorkout(id){const w=getWorkout(id);formDialog('Rename workout',`<label class="field">Name</label><input id="f-name" value="${esc(w.name)}">`,'Save',async()=>{w.name=$('#f-name').value.trim()||w.name;await persist();closeDialog();render();});}
+async function moveWorkout(id,d){const a=state.workout_templates.sort((x,y)=>x.position-y.position),i=a.findIndex(x=>x.id===Number(id)),j=Math.max(0,Math.min(a.length-1,i+d));if(i<0||i===j)return;const [x]=a.splice(i,1);a.splice(j,0,x);a.forEach((w,k)=>w.position=k);await persist();render();}
+function deleteWorkout(id){const w=getWorkout(id);confirmDialog(`Delete ${w.name}?`,'This deletes the workout template. Historical completed sessions are kept.','Delete',async()=>{state.template_exercises=state.template_exercises.filter(e=>e.workoutId!==w.id);state.workout_templates=state.workout_templates.filter(x=>x.id!==w.id).sort((a,b)=>a.position-b.position);state.workout_templates.forEach((x,i)=>x.position=i);ensureRotation();await persist();closeDialog();render();},true);}
+
+function renderWorkoutEditor(id){const w=getWorkout(id);if(!w)return shell('<div class="empty">Workout not found.</div>',{topbar:topbar('Workout','programme'),navBar:false});const es=getTemplateExercises(w.id);let c=`<div class="row between"><div><h2 style="margin:8px 0 2px">${esc(w.name)}</h2><div class="small">${es.length} exercise${es.length===1?'':'s'}</div></div><button class="small-btn" onclick="gp.addExercise(${w.id})">+ Exercise</button></div><div class="stack" style="margin-top:16px">`;
+  es.forEach((e,i)=>c+=`<div class="card clickable" onclick="gp.editExercise(${e.id})"><div class="card-row"><div class="grow"><div class="title">${esc(e.name)}</div><div class="subtitle">${e.sets} × ${e.reps} · ${formatDuration(e.restSeconds*1000)} rest · ${formatKg(e.initialWeightKg)}</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.moveExercise(${e.id},-1)">↑</button><button class="icon-btn" onclick="event.stopPropagation();gp.moveExercise(${e.id},1)">↓</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteExercise(${e.id})">⌫</button></div></div>`);c+='</div>';
+  return shell(c,{topbar:topbar(w.name,'programme'),navBar:false});
+}
+function exerciseForm(e={}){
+  const names=EXERCISES.map(x=>`<option value="${esc(x.name)}"></option>`).join('');
+  return `<div class="form-grid"><div class="span2"><label class="field">Exercise</label><input id="f-name" list="exercise-list" value="${esc(e.name||'')}"><datalist id="exercise-list">${names}</datalist></div><div><label class="field">Sets</label><input id="f-sets" type="number" min="1" value="${e.sets||3}"></div><div><label class="field">Reps</label><input id="f-reps" type="number" min="1" value="${e.reps||8}"></div><div><label class="field">Rest (seconds)</label><input id="f-rest" type="number" min="0" step="15" value="${e.restSeconds??120}"></div><div><label class="field">Working weight (kg)</label><input id="f-weight" type="number" min="0" step="0.25" value="${e.initialWeightKg??20}"></div><div><label class="field">Ramp-up</label><select id="f-ramp"><option value="AUTO" ${(e.rampMode||'AUTO')==='AUTO'?'selected':''}>Automatic</option><option value="ALWAYS" ${e.rampMode==='ALWAYS'?'selected':''}>Always</option><option value="NEVER" ${e.rampMode==='NEVER'?'selected':''}>Never</option></select></div><div><label class="field">Exercise type</label><select id="f-type">${Object.values(ExerciseType).map(t=>`<option value="${t}" ${(e.exerciseType||ExerciseType.MODERATE_COMPOUND)===t?'selected':''}>${t.replaceAll('_',' ').toLowerCase()}</option>`).join('')}</select></div><div class="span2 row"><input style="width:auto" id="f-remove" type="checkbox" ${e.removeWeights?'checked':''}><label for="f-remove">Remove weights after exercise</label></div></div>`;
+}
+function readExerciseForm(workoutId,old=null){const name=$('#f-name').value.trim()||'Exercise',match=bestMatch(name);return {id:old?.id||uid(state.template_exercises),workoutId:Number(workoutId),name,position:old?.position??getTemplateExercises(workoutId).length,sets:Math.max(1,Number($('#f-sets').value)||1),reps:Math.max(1,Number($('#f-reps').value)||1),restSeconds:Math.max(0,Number($('#f-rest').value)||0),initialWeightKg:roundQuarter(Math.max(0,Number($('#f-weight').value)||0)),exerciseKey:match?.key||old?.exerciseKey||null,exerciseType:$('#f-type').value||match?.type||ExerciseType.MODERATE_COMPOUND,rampMode:$('#f-ramp').value||RampMode.AUTO,removeWeights:$('#f-remove').checked};}
+function addExercise(workoutId){formDialog('Add exercise',exerciseForm({exerciseType:ExerciseType.MODERATE_COMPOUND}),'Add',async()=>{const e=readExerciseForm(workoutId);const m=bestMatch(e.name);if(m){e.exerciseKey=m.key;if($('#f-type').value===ExerciseType.MODERATE_COMPOUND)e.exerciseType=m.type;if(!$('#f-remove').checked)e.removeWeights=m.defaultRemoveWeights;}state.template_exercises.push(e);await persist();closeDialog();render();});}
+function editExercise(id){const e=state.template_exercises.find(x=>x.id===Number(id));formDialog('Edit exercise',exerciseForm(e),'Save',async()=>{const n=readExerciseForm(e.workoutId,e);Object.assign(e,n);await persist();closeDialog();render();});}
+async function moveExercise(id,d){const e=state.template_exercises.find(x=>x.id===Number(id)),a=getTemplateExercises(e.workoutId),i=a.findIndex(x=>x.id===e.id),j=Math.max(0,Math.min(a.length-1,i+d));if(i<0||i===j)return;const [x]=a.splice(i,1);a.splice(j,0,x);a.forEach((q,k)=>q.position=k);await persist();render();}
+function deleteExercise(id){const e=state.template_exercises.find(x=>x.id===Number(id));confirmDialog(`Delete ${e.name}?`,'Historical workout data is not affected.','Delete',async()=>{state.template_exercises=state.template_exercises.filter(x=>x.id!==e.id);getTemplateExercises(e.workoutId).forEach((x,i)=>x.position=i);await persist();closeDialog();render();},true);}
+
+function renderLogs(){
+  const sessions=state.workout_sessions.filter(s=>s.status==='COMPLETE').sort((a,b)=>b.startedAt-a.startedAt);let c=`<h1>Logs</h1>`;
+  if(!sessions.length)c+=`<div class="empty">No completed workouts yet.</div>`;
+  sessions.forEach(s=>{const m=sessionMetrics(state,s),diff=difficultyLevel(m.avgRir,m.failureCount,state.app_state),dur=(s.endedAt||s.startedAt)-s.startedAt;c+=`<div class="card clickable" onclick="gp.nav('session',${s.id})"><div class="log-date">${dateOnly(s.startedAt)}</div><div class="log-name">${esc(s.workoutName)}</div><div class="metric-grid" style="margin-top:12px"><div class="metric"><div class="metric-label">Duration</div><div class="metric-value">${formatDuration(dur)}</div></div><div class="metric"><div class="metric-label">Volume</div><div class="metric-value">${formatKg(m.volume)}</div></div><div class="metric"><div class="metric-label">Volume progress</div><div class="metric-value">${fmtPct(m.progressPercent)}</div></div></div><div class="row between" style="margin-top:12px"><span class="small">Effort</span><span class="difficulty ${diff.key}">${diff.label}</span></div></div>`;});
+  return shell(c);
+}
+function renderSessionDetail(id){const s=getSession(id);if(!s)return shell('',{topbar:topbar('Log','logs'),navBar:false});const es=sessionExercises(state,s.id);let c=`<div class="small">${dateTime(s.startedAt)}</div>${s.note?`<div class="note">${esc(s.note)}</div>`:''}<div class="phase-grid" style="margin-top:14px"><div class="phase-item"><strong>Warm-up</strong>${phaseDuration(s.warmupStartedAt,s.warmupEndedAt,s.warmupSkipped)}</div><div class="phase-item"><strong>Stretching</strong>${phaseDuration(s.stretchStartedAt,s.stretchEndedAt,s.stretchSkipped)}</div></div>`;
+  es.forEach(e=>{const m=exerciseMetrics(state,e),diff=difficultyLevel(m.avgRir,m.failureCount,state.app_state);c+=`<div class="card" style="margin-top:12px"><div class="row between"><div><div class="title">${esc(e.name)}</div><div class="subtitle">${e.status==='SKIPPED'?'Skipped':`${formatKg(m.volume)} volume`}</div></div><span class="difficulty ${diff.key}">${diff.label}</span></div>${e.rampStartedAt||e.rampSkipped?`<div class="small" style="margin-top:8px">Ramp-up · ${phaseDuration(e.rampStartedAt,e.rampEndedAt,e.rampSkipped)}</div>`:''}${e.unloadStartedAt||e.unloadSkipped?`<div class="small">Remove weights · ${phaseDuration(e.unloadStartedAt,e.unloadEndedAt,e.unloadSkipped)}</div>`:''}<div style="margin-top:8px">${exerciseSets(state,e.id).map(set=>`<div class="set-row"><strong>${set.setNumber}</strong><span>${set.status==='SKIPPED'?'Skipped':`${set.actualReps??'—'} reps`}</span><span>${set.status==='COMPLETE'?formatKg(set.actualWeightKg):''}</span><span>${set.failure?'Failure':set.rir!=null?`RIR ${set.rir}`:''}</span></div>`).join('')}</div></div>`;});
+  c+=`<button class="danger full" style="margin-top:18px" onclick="gp.deleteSession(${s.id})">Delete this workout</button>`;
+  return shell(c,{topbar:topbar(s.workoutName,'logs'),navBar:false});
+}
+function deleteSession(id){confirmDialog('Delete this workout?','This removes the complete session and all of its recorded sets. This cannot be undone.','Delete',async()=>{const exIds=state.session_exercises.filter(e=>e.sessionId===Number(id)).map(e=>e.id);state.performed_sets=state.performed_sets.filter(s=>!exIds.includes(s.sessionExerciseId));state.session_exercises=state.session_exercises.filter(e=>e.sessionId!==Number(id));state.workout_sessions=state.workout_sessions.filter(s=>s.id!==Number(id));await persist();closeDialog();nav('logs');},true);}
+
+function progressExerciseNames(){return [...new Set([...state.template_exercises.map(e=>e.name),...state.session_exercises.map(e=>e.name)])].sort();}
+function rangeStartMs(){const end=now(),d=new Date();if(ui.progressRange==='1m')d.setMonth(d.getMonth()-1);else if(ui.progressRange==='3m')d.setMonth(d.getMonth()-3);else if(ui.progressRange==='6m')d.setMonth(d.getMonth()-6);else if(ui.progressRange==='1y')d.setFullYear(d.getFullYear()-1);else if(ui.progressRange==='5y')d.setFullYear(d.getFullYear()-5);else if(ui.progressRange==='custom'&&ui.customStart)return new Date(`${ui.customStart}T00:00:00`).getTime();return d.getTime();}
+function rangeEndMs(){return ui.progressRange==='custom'&&ui.customEnd?new Date(`${ui.customEnd}T23:59:59`).getTime():now();}
+function historyRows(name){return state.session_exercises.filter(e=>e.name===name).map(e=>{const ses=getSession(e.sessionId),m=exerciseMetrics(state,e);return {...m,sessionStartedAt:ses?.startedAt||0,sessionId:e.sessionId,status:e.status};}).filter(x=>getSession(x.sessionId)?.status==='COMPLETE').sort((a,b)=>a.sessionStartedAt-b.sessionStartedAt);}
+function buildChartPoints(rows,metric,start,end){const out=[];let prev=null;for(const r of rows){const inRange=r.sessionStartedAt>=start&&r.sessionStartedAt<=end,skipped=r.completedSets<=0;if(skipped){if(inRange&&metric==='WEIGHT'&&prev)out.push({time:r.sessionStartedAt,value:prev.maxWeight,cls:'SKIPPED'});continue;}let cls=classifyProgress(r,prev,metric);if(inRange){const value=metric==='WEIGHT'?r.maxWeight:metric==='VOLUME'?r.volume:r.bestE1rm;out.push({time:r.sessionStartedAt,value,cls});}prev=r;}return out;}
+function classifyProgress(cur,prev,metric){if(cur.failureCount>0)return'FAILURE';if(!prev)return'FIRST';const cv=metric==='WEIGHT'?cur.maxWeight:metric==='VOLUME'?cur.volume:cur.bestE1rm,pv=metric==='WEIGHT'?prev.maxWeight:metric==='VOLUME'?prev.volume:prev.bestE1rm;if(cv>pv+.001)return'UP';if(cv<pv-.001)return'DOWN';if(metric==='WEIGHT'&&cur.avgRir!=null&&prev.avgRir!=null&&cur.avgRir>prev.avgRir+.05)return'BETTER';return'SAME';}
+function progressColor(cls){return {FIRST:COLORS.blue,UP:COLORS.green,BETTER:COLORS.lightgreen,SAME:COLORS.yellow,DOWN:COLORS.red,FAILURE:COLORS.deepred,SKIPPED:COLORS.gray}[cls]||COLORS.blue;}
+function renderChart(points,metric){if(!points.length)return`<div class="empty">No data in this period.</div>`;const W=640,H=250,L=64,R=10,T=12,B=12,vals=points.map(p=>p.value),min=Math.min(...vals),max=Math.max(...vals),raw=max-min,pad=raw>.001?raw*.15:Math.max(Math.abs(max)*.05,1),low=Math.max(0,min-pad),high=max+pad,range=Math.max(.001,high-low),minT=Math.min(...points.map(p=>p.time)),maxT=Math.max(...points.map(p=>p.time));const x=t=>maxT===minT?L+(W-L-R)/2:L+(W-L-R)*(t-minT)/(maxT-minT),y=v=>T+(H-T-B)*(1-(v-low)/range);let defs='',lines='',grid='';for(let i=0;i<4;i++){const f=i/3,yy=T+(H-T-B)*f,tick=high-range*f,label=metric==='VOLUME'?(Math.abs(tick)>=1000?`${(tick/1000).toFixed(1)}k`:tick.toFixed(0)):`${tick>=100?tick.toFixed(0):tick.toFixed(1)} kg`;grid+=`<line class="chart-grid" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/><text class="chart-axis" x="${L-8}" y="${yy+4}" text-anchor="end">${label}</text>`;}if(points.length===1){const p=points[0];lines=`<line x1="${x(p.time)-10}" y1="${y(p.value)}" x2="${x(p.time)+10}" y2="${y(p.value)}" stroke="${progressColor(p.cls)}" class="chart-line"/>`;}else points.slice(0,-1).forEach((a,i)=>{const b=points[i+1],id=`g${i}`,ca=progressColor(a.cls),cb=progressColor(b.cls);defs+=`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x(a.time)}" y1="${y(a.value)}" x2="${x(b.time)}" y2="${y(b.value)}"><stop offset="0" stop-color="${ca}"/><stop offset="1" stop-color="${cb}"/></linearGradient>`;lines+=`<line x1="${x(a.time)}" y1="${y(a.value)}" x2="${x(b.time)}" y2="${y(b.value)}" stroke="url(#${id})" class="chart-line"/>`;});return`<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs>${defs}</defs>${grid}${lines}</svg></div>`;}
+function renderProgress(){const names=progressExerciseNames();if(!ui.progressExercise&&names.length)ui.progressExercise=names[0];const rows=ui.progressExercise?historyRows(ui.progressExercise):[],points=buildChartPoints(rows,ui.progressMetric,rangeStartMs(),rangeEndMs());let c=`<h1>Progress</h1><div class="stack"><div><label class="field">Period</label><select onchange="gp.setProgressRange(this.value)"><option value="1m" ${ui.progressRange==='1m'?'selected':''}>1 month</option><option value="3m" ${ui.progressRange==='3m'?'selected':''}>3 months</option><option value="6m" ${ui.progressRange==='6m'?'selected':''}>6 months</option><option value="1y" ${ui.progressRange==='1y'?'selected':''}>1 year</option><option value="5y" ${ui.progressRange==='5y'?'selected':''}>5 years</option><option value="custom" ${ui.progressRange==='custom'?'selected':''}>Custom</option></select></div>${ui.progressRange==='custom'?`<div class="form-grid"><div><label class="field">From</label><input type="date" value="${ui.customStart}" onchange="gp.setCustomStart(this.value)"></div><div><label class="field">To</label><input type="date" value="${ui.customEnd}" onchange="gp.setCustomEnd(this.value)"></div></div>`:''}<div><label class="field">Exercise</label><select onchange="gp.setProgressExercise(this.value)">${names.map(n=>`<option ${n===ui.progressExercise?'selected':''}>${esc(n)}</option>`).join('')}</select></div></div><div class="segmented" style="margin-top:12px">${['WEIGHT','VOLUME','E1RM'].map(m=>`<button class="${ui.progressMetric===m?'active':''}" onclick="gp.setProgressMetric('${m}')">${m==='E1RM'?'e1RM':m[0]+m.slice(1).toLowerCase()}</button>`).join('')}</div>${renderChart(points,ui.progressMetric)}`;
+  const recent=rows.filter(r=>r.sessionStartedAt>=rangeStartMs()&&r.sessionStartedAt<=rangeEndMs()).slice().reverse().slice(0,12);if(recent.length){c+=`<div class="section-title">Recent</div>`;recent.forEach(r=>{const d=difficultyLevel(r.avgRir,r.failureCount,state.app_state);c+=`<div class="card"><div class="row between"><strong>${dateOnly(r.sessionStartedAt)}</strong><span>${r.completedSets?formatKg(r.maxWeight):'Skipped'}</span></div>${r.completedSets?`<div class="row between" style="margin-top:8px"><span class="small">Volume ${formatKg(r.volume)}</span><span class="difficulty ${d.key}">${d.label}</span></div>`:''}</div>`;});}return shell(c);}
+function setProgressRange(v){ui.progressRange=v;if(v==='custom'&&!ui.customStart){const d=new Date();const e=d.toISOString().slice(0,10);d.setMonth(d.getMonth()-3);ui.customStart=d.toISOString().slice(0,10);ui.customEnd=e;}render();}function setProgressExercise(v){ui.progressExercise=v;render();}function setProgressMetric(v){ui.progressMetric=v;render();}function setCustomStart(v){ui.customStart=v;render();}function setCustomEnd(v){ui.customEnd=v;render();}
+
+function currentActiveContext(){
+  const rt=runtime(),s=rt?getSession(rt.sessionId):null;if(!rt||!s)return{};
+  const exs=sessionExercises(state,s.id),e=exs[rt.currentExerciseIndex]||null,sets=e?exerciseSets(state,e.id):[],set=sets[rt.currentSetIndex]||null;
+  return {rt,s,exs,e,sets,set};
+}
+function shouldRamp(e){if(!e)return false;if(e.rampMode==='ALWAYS')return true;if(e.rampMode==='NEVER')return false;const lib=byKey(e.exerciseKey)||bestMatch(e.name);return lib?.automaticRampUp??(e.exerciseType!==ExerciseType.ISOLATION);}
+function rampPlan(e){try{return JSON.parse(e.rampPlanJson||'[]')}catch{return recommendRamp(e.plannedWeightKg,e.targetReps,e.exerciseType)}}
+function renderActive(){
+  const {rt,s,e,sets,set}=currentActiveContext();if(!rt||!s)return shell(`<div class="empty">No active workout.</div>`,{navBar:false});
+  const canUndo=state.performed_sets.some(x=>sessionExercises(state,s.id).some(e=>e.id===x.sessionExerciseId)&&x.status==='COMPLETE');const top=`<div class="topbar"><div class="topbar-title">${esc(s.workoutName)} <span class="small">${formatDuration(now()-s.startedAt)}</span></div>${canUndo?`<button class="icon-btn" onclick="gp.undoLastSet()" aria-label="Undo last set">↶</button>`:''}<button class="icon-btn" onclick="gp.requestAbort()">×</button></div>`;
+  let c='';
+  if(rt.phase==='WARMUP'){
+    c=phasePanel('WARM-UP',rt.phaseStartedAt,'Finish warm-up','gp.finishWarmup(false)','gp.finishWarmup(true)');
+  }else if(rt.phase==='RAMP_PROMPT'){
+    const plan=rampPlan(e);c=`<div class="section-title">${esc(e.name)}</div><h2>Suggested ramp-up</h2><div class="ramp-list">${plan.length?plan.map(p=>`<div class="ramp-line"><span class="ramp-primary">${formatKg(p.weightKg)} × ${p.reps}</span><span class="ramp-rest">${p.restSeconds}s</span></div>`).join(''):`<div class="small">No ramp-up sets suggested.</div>`}</div><div class="row" style="margin-top:20px"><button class="secondary grow" onclick="gp.skipRamp()">Skip</button><button class="grow" onclick="gp.startRamp()">Start ramp-up</button></div>`;
+  }else if(rt.phase==='RAMP_ACTIVE'){
+    const plan=rampPlan(e);c=`<div class="timer-panel focus"><div class="timer-label">RAMP-UP · ${esc(e.name)}</div><div class="countup">${formatDuration(now()-rt.phaseStartedAt)}</div></div><div class="ramp-list">${plan.map(p=>`<div class="ramp-line"><span class="ramp-primary">${formatKg(p.weightKg)} × ${p.reps}</span><span class="ramp-rest">${p.restSeconds}s</span></div>`).join('')}</div><button class="full" style="margin-top:18px" onclick="gp.finishRamp(false)">Finish ramp-up</button>`;
+  }else if(rt.phase==='SET'){
+    const weight=Number(rt.workingWeight??set?.plannedWeightKg??e?.plannedWeightKg??0);c=`<div class="pulse-wrap"><div class="pulse-circle"><div class="pulse-inner"><div class="pulse-exercise">${esc(e.name)}</div><div class="pulse-target" onclick="gp.customWeight()">${formatKg(weight)} × ${set.targetReps}</div><div class="pulse-set">SET ${set.setNumber} / ${sets.length}</div></div></div></div><div class="weight-control"><button class="icon-btn" onclick="gp.adjustWeight(-.25)">−</button><div class="weight-value" onclick="gp.customWeight()">${formatKg(weight)}</div><button class="icon-btn" onclick="gp.adjustWeight(.25)">+</button></div><button class="full" style="margin-top:24px" onclick="gp.setComplete()">SET COMPLETE</button><div class="row center" style="margin-top:10px"><button class="ghost small-btn" onclick="gp.skipSet()">Skip set</button><button class="ghost small-btn" onclick="gp.skipExercise()">Skip exercise</button></div>`;
+  }else if(rt.phase==='ENTRY'){
+    const remaining=restRemaining(rt);c=`${restPanel(remaining,false)}<div class="section-title" style="text-align:center">Reps</div><div class="row center"><button class="icon-btn" onclick="gp.adjustEntryReps(-1)">−</button><div class="entry-number">${rt.entry.reps}</div><button class="icon-btn" onclick="gp.adjustEntryReps(1)">+</button></div><div class="section-title" style="text-align:center;margin-top:20px">RIR</div><div class="rir-row"><button class="secondary failure-btn ${rt.entry.failure?'active':''}" onclick="gp.setRir('failure')">Failure</button>${[0,1,2,3].map(v=>`<button class="secondary" onclick="gp.setRir(${v})" style="${!rt.entry.failure&&rt.entry.rir===v?'outline:2px solid var(--text)':''}">${v===3?'3+':v}</button>`).join('')}</div><button class="full" style="margin-top:20px" onclick="gp.saveSet()">Save set</button>`;
+  }else if(rt.phase==='REST'){
+    c=restPanel(restRemaining(rt),true);
+  }else if(rt.phase==='UNLOAD'){
+    c=phasePanel('REMOVE WEIGHTS',rt.phaseStartedAt,'Finished','gp.finishUnload(false)','gp.finishUnload(true)',e?.name||'');
+  }else if(rt.phase==='STRETCH'){
+    c=phasePanel('STRETCHING',rt.phaseStartedAt,'Finish workout','gp.finishStretch(false)','gp.finishStretch(true)');
+  }else c=`<div class="empty">Workout complete.</div>`;
+  return shell(c,{topbar:top,navBar:false});
+}
+function phasePanel(title,startedAt,primary,onPrimary,onSkip,subtitle=''){return `<div class="timer-panel focus"><div class="timer-label">${esc(title)}</div>${subtitle?`<div class="title" style="margin-top:6px">${esc(subtitle)}</div>`:''}<div class="countup">${formatDuration(now()-startedAt)}</div></div><div class="row"><button class="secondary grow" onclick="${onSkip}">Skip</button><button class="grow" onclick="${onPrimary}">${esc(primary)}</button></div>`;}
+function restRemaining(rt){if(!rt.rest)return 0;return Math.max(0,rt.rest.endsAt-now());}
+function restPanel(rem,focus){return `<div class="timer-panel ${focus?'focus':''}"><div class="timer-label">REST</div><div class="timer">${formatDuration(rem)}</div><div class="row center"><button class="secondary small-btn" onclick="gp.shiftRest(-30)">−30 s</button><button class="ghost small-btn" onclick="gp.skipRest()">Skip</button><button class="secondary small-btn" onclick="gp.shiftRest(30)">+30 s</button></div></div>`;}
+function afterActiveRender(){if(state.app_state.keepScreenAwake)requestWakeLock();}
+async function finishWarmup(skipped){const {rt,s,e}=currentActiveContext(),t=now();s.warmupEndedAt=t;s.warmupSkipped=!!skipped;rt.phaseStartedAt=t;await persist();enterExercise(0,true);}
+async function enterExercise(index,isFirst=false){const {rt,s,exs}=currentActiveContext();const e=exs[index];if(!e){beginStretch();return;}rt.currentExerciseIndex=index;rt.currentSetIndex=Math.max(0,exerciseSets(state,e.id).findIndex(x=>x.status==='PENDING'));rt.workingWeight=e.plannedWeightKg;rt.phaseStartedAt=now();rt.entry=null;rt.rest=null;rt.nextAction=null;if(shouldRamp(e)){rt.phase='RAMP_PROMPT';}else{e.rampSkipped=true;e.rampEndedAt=now();e.startedAt=e.startedAt||now();e.status='ACTIVE';rt.phase='SET';rt.reminderStartedAt=now();}await persist();render();}
+async function startRamp(){const {rt,e}=currentActiveContext();const t=now();e.startedAt=e.startedAt||t;e.status='ACTIVE';e.rampStartedAt=e.rampStartedAt||t;e.rampSkipped=false;rt.phase='RAMP_ACTIVE';rt.phaseStartedAt=t;await persist();render();}
+async function skipRamp(){const {rt,e}=currentActiveContext(),t=now();e.startedAt=e.startedAt||t;e.status='ACTIVE';e.rampEndedAt=t;e.rampSkipped=true;rt.phase='SET';rt.phaseStartedAt=t;rt.reminderStartedAt=t;await persist();render();}
+async function finishRamp(skipped=false){const {rt,e}=currentActiveContext(),t=now();e.rampStartedAt=e.rampStartedAt||t;e.rampEndedAt=t;e.rampSkipped=!!skipped;e.startedAt=e.startedAt||t;e.status='ACTIVE';rt.phase='SET';rt.phaseStartedAt=t;rt.reminderStartedAt=t;await persist();render();}
+async function adjustWeight(d){const rt=runtime();rt.workingWeight=roundQuarter((Number(rt.workingWeight)||0)+d);if(rt.workingWeight<0)rt.workingWeight=0;await persist();render();}
+function customWeight(){const rt=runtime();formDialog('Working weight',`<label class="field">kg</label><input id="f-weight-custom" type="number" step="0.01" min="0" value="${Number(rt.workingWeight||0)}">`,'Set',async()=>{rt.workingWeight=Math.max(0,Number($('#f-weight-custom').value)||0);await persist();closeDialog();render();});}
+async function setComplete(){const {rt,set}=currentActiveContext();if(!set)return;await enableAudio();const t=now();rt.entry={setId:set.id,reps:set.targetReps,rir:null,failure:false,weight:Number(rt.workingWeight||set.plannedWeightKg),completedPressedAt:t};rt.rest={setId:set.id,startedAt:t,endsAt:t+set.plannedRestSeconds*1000,plannedSeconds:set.plannedRestSeconds,warned30:false,beeped0:false};rt.phase='ENTRY';rt.phaseStartedAt=t;await persist();render();}
+async function adjustEntryReps(d){const rt=runtime();rt.entry.reps=Math.max(0,Number(rt.entry.reps||0)+d);await persist();render();}
+async function setRir(v){const rt=runtime();if(v==='failure'){rt.entry.failure=true;rt.entry.rir=null;}else{rt.entry.failure=false;rt.entry.rir=Number(v);}await persist();render();}
+function progressionQualifies(e,sets){const done=sets.filter(s=>s.status==='COMPLETE');const threshold=state.app_state.progressionRirThreshold;return done.length===e.targetSets&&done.every(s=>!s.failure&&(s.actualReps||0)>=s.targetReps&&(s.rir??-1)>=threshold);}
+async function saveSet(){
+  const {rt,s,exs,e,sets,set}=currentActiveContext();const entry=rt.entry;if(!entry||set.id!==entry.setId)return;const t=now();set.actualReps=entry.reps;set.rir=entry.failure?null:entry.rir;set.failure=!!entry.failure;set.actualWeightKg=Math.round(entry.weight*100)/100;set.status='COMPLETE';set.completedAt=t;
+  rt.entry=null;const pendingSame=sets.findIndex(x=>x.status==='PENDING');const exerciseDone=pendingSame<0;
+  if(exerciseDone){e.endedAt=t;e.status='COMPLETE';e.progressionOffered=progressionQualifies(e,sets);if(e.progressionOffered){const base=Math.min(...sets.filter(x=>x.status==='COMPLETE').map(x=>Number(x.actualWeightKg)||0));offerProgression(e,roundQuarter(base+.25));}}
+  // If unloading is required, it is a separate load phase and the programmed rest restarts after it.
+  if(exerciseDone&&e.removeWeights){rt.deferredRestSetId=set.id;rt.rest=null;rt.phase='UNLOAD';rt.phaseStartedAt=t;e.unloadStartedAt=t;e.unloadSkipped=false;rt.nextAction=nextActionAfterExercise(exs,e);}
+  else{rt.nextAction=exerciseDone?nextActionAfterExercise(exs,e):{type:'SET',exerciseIndex:rt.currentExerciseIndex,setIndex:pendingSame};rt.phase='REST';rt.phaseStartedAt=t;}
+  await persist();render();
+}
+function nextActionAfterExercise(exs,e){const i=exs.findIndex(x=>x.id===e.id);if(i<exs.length-1)return{type:'EXERCISE',exerciseIndex:i+1};return{type:'STRETCH'};}
+function offerProgression(e,nextWeight){
+  setTimeout(()=>{confirmDialog('Ready to progress',`All required sets reached target reps with RIR ≥ ${state.app_state.progressionRirThreshold}. Suggested next working weight: ${formatKg(nextWeight)}.`,`Use next time`,async()=>{e.progressionAccepted=true;e.nextWeightKg=nextWeight;const te=state.template_exercises.find(x=>x.id===e.templateExerciseId);if(te)te.initialWeightKg=nextWeight;await persist();closeDialog();render();},false,async()=>{e.progressionAccepted=false;e.nextWeightKg=e.plannedWeightKg;await persist();closeDialog();});},20);
+}
+async function finishUnload(skipped){const {rt,e}=currentActiveContext(),t=now();e.unloadEndedAt=t;e.unloadSkipped=!!skipped;const action=rt.nextAction;rt.rest={setId:rt.deferredRestSetId??null,startedAt:t,endsAt:t+e.plannedRestSeconds*1000,plannedSeconds:e.plannedRestSeconds,warned30:false,beeped0:false};delete rt.deferredRestSetId;rt.phase='REST';rt.phaseStartedAt=t;rt.nextAction=action;await persist();render();}
+async function shiftRest(seconds){const rt=runtime();if(!rt.rest)return;rt.rest.endsAt=Math.max(now(),rt.rest.endsAt+seconds*1000);rt.rest.plannedSeconds=Math.max(0,(rt.rest.endsAt-rt.rest.startedAt)/1000);rt.rest.warned30=false;await persist();render();}
+async function skipRest(){const rt=runtime();if(!rt?.rest)return;if(rt.phase==='ENTRY'){const set=rt.rest.setId?getSet(rt.rest.setId):null;if(set)set.actualRestSeconds=Math.max(0,Math.round((now()-rt.rest.startedAt)/1000));rt.rest.endsAt=now();rt.rest.beeped0=true;await persist();render();return;}finalizeRest();await afterRest();}
+function finalizeRest(){const rt=runtime();if(!rt?.rest)return;const set=rt.rest.setId?getSet(rt.rest.setId):null;if(set)set.actualRestSeconds=Math.max(0,Math.round((now()-rt.rest.startedAt)/1000));rt.rest=null;}
+async function afterRest(){const rt=runtime(),action=rt.nextAction;rt.nextAction=null;if(!action){beginStretch();return;}if(action.type==='SET'){rt.currentSetIndex=action.setIndex;const {e,set}=currentActiveContext();const prev=exerciseSets(state,e.id).filter(x=>x.status==='COMPLETE').sort((a,b)=>b.setNumber-a.setNumber)[0];rt.workingWeight=prev?.actualWeightKg??set?.plannedWeightKg??e.plannedWeightKg;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();await persist();render();return;}if(action.type==='EXERCISE'){await enterExercise(action.exerciseIndex);return;}beginStretch();}
+async function skipSet(){const {rt,exs,e,sets,set}=currentActiveContext();if(!set)return;set.status='SKIPPED';set.completedAt=now();const next=sets.findIndex(x=>x.status==='PENDING');if(next>=0){rt.currentSetIndex=next;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();}else{e.status='COMPLETE';e.endedAt=now();const action=nextActionAfterExercise(exs,e);if(e.removeWeights){e.unloadStartedAt=now();rt.phase='UNLOAD';rt.phaseStartedAt=now();rt.nextAction=action;}else{rt.nextAction=action;rt.rest={setId:null,startedAt:now(),endsAt:now()+e.plannedRestSeconds*1000,plannedSeconds:e.plannedRestSeconds,warned30:false,beeped0:false};rt.phase='REST';}}await persist();render();}
+async function skipExercise(){const {rt,exs,e,sets}=currentActiveContext(),t=now();sets.filter(x=>x.status==='PENDING').forEach(x=>{x.status='SKIPPED';x.completedAt=t;});e.status='SKIPPED';e.endedAt=t;const action=nextActionAfterExercise(exs,e);rt.nextAction=action;rt.rest={setId:null,startedAt:t,endsAt:t+e.plannedRestSeconds*1000,plannedSeconds:e.plannedRestSeconds,warned30:false,beeped0:false};rt.phase='REST';rt.phaseStartedAt=t;await persist();render();}
+function beginStretch(){const rt=runtime(),s=getSession(rt.sessionId),t=now();s.stretchStartedAt=s.stretchStartedAt||t;rt.phase='STRETCH';rt.phaseStartedAt=s.stretchStartedAt;rt.rest=null;rt.nextAction=null;persist().then(render);}
+async function finishStretch(skipped){const rt=runtime(),s=getSession(rt.sessionId),t=now();s.stretchStartedAt=s.stretchStartedAt||t;s.stretchEndedAt=t;s.stretchSkipped=!!skipped;formDialog('Finish workout',`<label class="field">Workout note (optional)</label><textarea id="f-note" placeholder="Anything worth remembering?">${esc(s.note||'')}</textarea>`,'Finish',async()=>{s.note=$('#f-note').value.trim();s.endedAt=now();s.status='COMPLETE';if(s.advancesRotation&&s.workoutId!=null)state.app_state.nextWorkoutId=nextWorkoutAfter(s.workoutId);state.runtime=null;ui.selectedWorkoutId=state.app_state.nextWorkoutId;await persist();releaseWakeLock();closeDialog();nav('home');toast('Workout saved');});}
+
+async function undoLastSet(){
+  const rt=runtime();if(!rt)return;const exs=sessionExercises(state,rt.sessionId),ids=new Set(exs.map(e=>e.id));
+  const last=state.performed_sets.filter(x=>ids.has(x.sessionExerciseId)&&x.status==='COMPLETE').sort((a,b)=>(b.completedAt||0)-(a.completedAt||0))[0];
+  if(!last){toast('Nothing to undo');return;}
+  const e=getSessionExercise(last.sessionExerciseId),ei=exs.findIndex(x=>x.id===e.id),sets=exerciseSets(state,e.id),si=sets.findIndex(x=>x.id===last.id);
+  if(e.progressionAccepted&&e.templateExerciseId!=null){const te=state.template_exercises.find(x=>x.id===e.templateExerciseId);if(te)te.initialWeightKg=e.plannedWeightKg;}
+  Object.assign(last,{actualReps:null,actualWeightKg:null,rir:null,failure:false,actualRestSeconds:null,status:'PENDING',completedAt:null});
+  e.endedAt=null;e.status='ACTIVE';e.progressionOffered=false;e.progressionAccepted=false;e.nextWeightKg=null;
+  rt.currentExerciseIndex=Math.max(0,ei);rt.currentSetIndex=Math.max(0,si);rt.workingWeight=last.plannedWeightKg;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();rt.entry=null;rt.rest=null;rt.nextAction=null;delete rt.deferredRestSetId;
+  await persist();render();toast('Last set restored');
+}
+
+function requestAbort(){confirmDialog('End workout?','The workout will remain in history as aborted.','End workout',async()=>{const s=activeSession();if(s){s.status='ABORTED';s.endedAt=now();}state.runtime=null;await persist();releaseWakeLock();closeDialog();nav('home');},true);}
+
+async function tick(){
+  if(!state||route.name!=='active'||!runtime())return;const rt=runtime();const dialogOpen=!!document.querySelector('.dialog-backdrop');
+  if((rt.phase==='REST'||rt.phase==='ENTRY')&&rt.rest){
+    const rem=rt.rest.endsAt-now();
+    if(rem<=30000&&rem>0&&!rt.rest.warned30){rt.rest.warned30=true;beep(1);persist();}
+    if(rem<=0){
+      if(!rt.rest.beeped0){rt.rest.beeped0=true;beep(3);await persist();}
+      if(rt.phase==='REST'){finalizeRest();await afterRest();return;}
+    }
+    if(!dialogOpen)render();return;
+  }
+  if(rt.phase==='SET'&&rt.reminderStartedAt){const mins=Math.floor((now()-rt.reminderStartedAt)/60000);if(mins>=1){const key=`${rt.sessionId}/${rt.currentExerciseIndex}/${rt.currentSetIndex}/${mins}`;if(key!==lastReminderKey){lastReminderKey=key;beep(1);}}}
+  if(!dialogOpen)render();
+}
+async function enableAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')await audioCtx.resume();}catch{}}
+function beep(count=1){if(!audioCtx)return;for(let i=0;i<count;i++){const t=audioCtx.currentTime+i*.22,o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(i===0?620:720,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.13);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+.15);}if(navigator.vibrate)navigator.vibrate(count===1?80:[80,100,80,100,80]);}
+async function requestWakeLock(){if(!state?.app_state.keepScreenAwake||!('wakeLock'in navigator)||document.hidden)return;try{wakeLock=await navigator.wakeLock.request('screen');}catch{}}
+async function releaseWakeLock(){try{await wakeLock?.release();}catch{}wakeLock=null;}
+
+function backupObject(){return {schema:'gym-progress-backup-v3',exported_at_ms:now(),app_state:{...state.app_state},workout_templates:state.workout_templates.map(({...x})=>x),template_exercises:state.template_exercises.map(({...x})=>x),workout_sessions:state.workout_sessions.map(({...x})=>x),session_exercises:state.session_exercises.map(({...x})=>x),performed_sets:state.performed_sets.map(({...x})=>x)};}
+function download(name,text,type='application/json'){const blob=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},200);}
+function stamp(){return new Date().toISOString().replace(/[:T]/g,'-').slice(0,16);}
+function downloadBackup(){download(`gym_progress_backup_${stamp()}.json`,JSON.stringify(backupObject(),null,2));}
+function pickRestore(){$('#restore-file')?.click();}
+async function restoreFile(file){if(!file)return;let parsed;try{parsed=JSON.parse(await file.text());}catch{alertDialog('Invalid file','The selected file is not valid JSON.');return;}if(!['gym-progress-backup-v3','progression-backup-v2','progression-backup-v1'].includes(parsed.schema)){alertDialog('Unsupported backup','This is not a supported Gym Progress backup.');return;}confirmDialog('Restore backup?','This replaces all current data in this PWA with the selected backup.','Restore',async()=>{const d=defaults();state=normalize({...d,app_state:{...d.app_state,...(parsed.app_state||{})},workout_templates:parsed.workout_templates||[],template_exercises:(parsed.template_exercises||[]).map(e=>{const m=bestMatch(e.name);return{...e,exerciseKey:e.exerciseKey??m?.key??null,exerciseType:e.exerciseType||m?.type||ExerciseType.MODERATE_COMPOUND,rampMode:e.rampMode||RampMode.AUTO,removeWeights:e.removeWeights??m?.defaultRemoveWeights??false};}),workout_sessions:(parsed.workout_sessions||[]).map(s=>({...s,note:s.note||'',warmupSkipped:!!s.warmupSkipped,stretchSkipped:!!s.stretchSkipped})),session_exercises:(parsed.session_exercises||[]).map(e=>{const m=bestMatch(e.name);return{...e,exerciseKey:e.exerciseKey??m?.key??null,exerciseType:e.exerciseType||m?.type||ExerciseType.MODERATE_COMPOUND,rampMode:e.rampMode||RampMode.AUTO,removeWeights:e.removeWeights??m?.defaultRemoveWeights??false,rampPlanJson:e.rampPlanJson||JSON.stringify(recommendRamp(e.plannedWeightKg,e.targetReps,e.exerciseType||m?.type||ExerciseType.MODERATE_COMPOUND)),rampSkipped:!!e.rampSkipped,unloadSkipped:!!e.unloadSkipped};}),performed_sets:(parsed.performed_sets||[]).map(s=>({...s,failure:!!s.failure})),runtime:null});ensureRotation();ui.selectedWorkoutId=state.app_state.nextWorkoutId;await persist();closeDialog();nav('home');toast('Backup restored');});}
+function exportRows(){const rows=[];for(const e of state.session_exercises){const s=getSession(e.sessionId);for(const set of exerciseSets(state,e.id))rows.push({session_id:s.id,date:iso(s.startedAt),workout:s.workoutName,session_started_at:iso(s.startedAt),session_ended_at:iso(s.endedAt),session_status:s.status,session_note:s.note,warmup_started_at:iso(s.warmupStartedAt),warmup_ended_at:iso(s.warmupEndedAt),warmup_skipped:s.warmupSkipped,stretch_started_at:iso(s.stretchStartedAt),stretch_ended_at:iso(s.stretchEndedAt),stretch_skipped:s.stretchSkipped,exercise_id:e.id,exercise_name:e.name,exercise_order:e.position,exercise_started_at:iso(e.startedAt),exercise_ended_at:iso(e.endedAt),exercise_status:e.status,exercise_type:e.exerciseType,ramp_started_at:iso(e.rampStartedAt),ramp_ended_at:iso(e.rampEndedAt),ramp_skipped:e.rampSkipped,ramp_plan_json:e.rampPlanJson,unload_started_at:iso(e.unloadStartedAt),unload_ended_at:iso(e.unloadEndedAt),unload_skipped:e.unloadSkipped,set_no:set.setNumber,target_reps:set.targetReps,actual_reps:set.actualReps,planned_weight_kg:set.plannedWeightKg,actual_weight_kg:set.actualWeightKg,rir:set.rir,failure:set.failure,planned_rest_s:set.plannedRestSeconds,actual_rest_s:set.actualRestSeconds,set_status:set.status,completed_at:iso(set.completedAt),progression_offered:e.progressionOffered,progression_accepted:e.progressionAccepted,next_weight_kg:e.nextWeightKg});}return rows;}
+function csvCell(v){if(v==null)return'';const s=String(v);return /[,"\n\r]/.test(s)?`"${s.replaceAll('"','""')}"`:s;}
+function downloadCsv(){const rows=exportRows(),headers=rows.length?Object.keys(rows[0]):['session_id','date','workout'];download(`gym_progress_${stamp()}.csv`,[headers.join(','),...rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))].join('\n'),'text/csv');}
+function detailedJsonObject(){const sessions=state.workout_sessions.map(s=>({session_id:s.id,workout:s.workoutName,started_at:iso(s.startedAt),ended_at:iso(s.endedAt),status:s.status,note:s.note,warmup:{started_at:iso(s.warmupStartedAt),ended_at:iso(s.warmupEndedAt),skipped:s.warmupSkipped,duration_s:s.warmupStartedAt&&s.warmupEndedAt?Math.max(0,Math.floor((s.warmupEndedAt-s.warmupStartedAt)/1000)):null},stretching:{started_at:iso(s.stretchStartedAt),ended_at:iso(s.stretchEndedAt),skipped:s.stretchSkipped,duration_s:s.stretchStartedAt&&s.stretchEndedAt?Math.max(0,Math.floor((s.stretchEndedAt-s.stretchStartedAt)/1000)):null},exercises:sessionExercises(state,s.id).map(e=>({exercise_id:e.id,name:e.name,order:e.position,type:e.exerciseType,started_at:iso(e.startedAt),ended_at:iso(e.endedAt),status:e.status,ramp_up:{started_at:iso(e.rampStartedAt),ended_at:iso(e.rampEndedAt),skipped:e.rampSkipped,duration_s:e.rampStartedAt&&e.rampEndedAt?Math.max(0,Math.floor((e.rampEndedAt-e.rampStartedAt)/1000)):null,suggested_plan:(()=>{try{return JSON.parse(e.rampPlanJson||'[]')}catch{return null}})()},unload:{started_at:iso(e.unloadStartedAt),ended_at:iso(e.unloadEndedAt),skipped:e.unloadSkipped,duration_s:e.unloadStartedAt&&e.unloadEndedAt?Math.max(0,Math.floor((e.unloadEndedAt-e.unloadStartedAt)/1000)):null},progression_offered:e.progressionOffered,progression_accepted:e.progressionAccepted,next_weight_kg:e.nextWeightKg,sets:exerciseSets(state,e.id).map(x=>({set_no:x.setNumber,target_reps:x.targetReps,actual_reps:x.actualReps,planned_weight_kg:x.plannedWeightKg,actual_weight_kg:x.actualWeightKg,rir:x.rir,failure:x.failure,planned_rest_s:x.plannedRestSeconds,actual_rest_s:x.actualRestSeconds,status:x.status,completed_at:iso(x.completedAt)}))}))}));return{schema:'gym-progress-export-v3',exported_at:new Date().toISOString(),sessions};}
+function downloadDetailedJson(){download(`gym_progress_detailed_${stamp()}.json`,JSON.stringify(detailedJsonObject(),null,2));}
+function eraseData(){confirmDialog('Erase all data?','This permanently deletes your programme, working weights, settings and complete training history from this PWA. Recovery is possible only from a full backup you already saved.','Continue',()=>{closeDialog();setTimeout(()=>confirmDialog('Final warning','There is no undo. Cancel now if you need to create a backup first.','ERASE EVERYTHING',async()=>{await wipeState();state=defaults();await persist();ui.selectedWorkoutId=null;closeDialog();nav('home');toast('All data erased');},true),30);},true);}
+
+function alertDialog(title,text){openDialog(`<h2>${esc(title)}</h2><div class="muted">${esc(text)}</div><div class="dialog-actions"><button onclick="gp.closeDialog()">OK</button></div>`);}
+function confirmDialog(title,text,confirmLabel,onConfirm,danger=false,onCancel=null){window.__gpConfirm=onConfirm;window.__gpCancel=onCancel;openDialog(`<h2>${esc(title)}</h2><div class="muted">${esc(text)}</div><div class="dialog-actions"><button class="secondary" onclick="gp.cancelConfirm()">Cancel</button><button class="${danger?'danger':''}" onclick="gp.confirmNow()">${esc(confirmLabel)}</button></div>`);}
+function formDialog(title,body,confirmLabel,onConfirm){window.__gpFormConfirm=onConfirm;openDialog(`<h2>${esc(title)}</h2>${body}<div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">Cancel</button><button onclick="gp.formConfirm()">${esc(confirmLabel)}</button></div>`);}
+function openDialog(inner){let root=$('#dialog-root');if(!root){document.body.insertAdjacentHTML('beforeend','<div id="dialog-root"></div>');root=$('#dialog-root');}root.innerHTML=`<div class="dialog-backdrop" onclick="if(event.target===this)gp.closeDialog()"><div class="dialog">${inner}</div></div>`;}
+function closeDialog(){const r=$('#dialog-root');if(r)r.innerHTML='';window.__gpConfirm=window.__gpCancel=window.__gpFormConfirm=null;}
+function confirmNow(){const f=window.__gpConfirm;if(f)f();}function cancelConfirm(){const f=window.__gpCancel;closeDialog();if(f)f();}function formConfirm(){window.__gpFormConfirm?.();}
+
+window.gp={nav,selectWorkout,requestStart,startWorkout,resume,changeRirThreshold,toggleAwake,editDifficulty,addWorkout,renameWorkout,moveWorkout,deleteWorkout,addExercise,editExercise,moveExercise,deleteExercise,deleteSession,setProgressRange,setProgressExercise,setProgressMetric,setCustomStart,setCustomEnd,finishWarmup,startRamp,skipRamp,finishRamp,adjustWeight,customWeight,setComplete,adjustEntryReps,setRir,saveSet,finishUnload,shiftRest,skipRest,skipSet,skipExercise,finishStretch,undoLastSet,requestAbort,downloadBackup,pickRestore,restoreFile,downloadCsv,downloadDetailedJson,eraseData,closeDialog,confirmNow,cancelConfirm,formConfirm};
+
+init().catch(err=>{console.error(err);appEl.innerHTML=`<div class="view"><h1>Gym Progress</h1><div class="card danger-zone"><div class="title">Could not start</div><div class="note">${esc(err?.message||err)}</div></div></div>`;});
