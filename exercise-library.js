@@ -40,6 +40,21 @@ export function bestMatch(name=''){
   return EXERCISES.find(e=>[e.name,...e.aliases].some(n=>n.toLowerCase()===q))||null;
 }
 export function byKey(key){return EXERCISES.find(e=>e.key===key)||null;}
+
+export function warmupFamily(key,name=''){
+  const resolved=byKey(key)||bestMatch(name);
+  switch(resolved?.key){
+    case 'barbell_bench_press':case 'incline_barbell_press':case 'dumbbell_bench_press':case 'incline_dumbbell_press':case 'chest_press_machine':case 'pec_deck':case 'cable_fly':return 'CHEST_PRESS';
+    case 'overhead_press':case 'dumbbell_shoulder_press':case 'shoulder_press_machine':case 'lateral_raise':return 'SHOULDER_PRESS';
+    case 'back_squat':case 'front_squat':case 'leg_press':case 'hack_squat':case 'split_squat':case 'leg_extension':return 'KNEE_DOMINANT';
+    case 'deadlift':case 'sumo_deadlift':case 'romanian_deadlift':case 'hip_thrust':case 'leg_curl':return 'HIP_HINGE';
+    case 'barbell_row':case 'lat_pulldown':case 'seated_cable_row':case 'pull_up':case 'biceps_curl':return 'UPPER_PULL';
+    case 'triceps_pushdown':return 'TRICEPS';
+    case 'calf_raise':return 'CALF';
+    default:return null;
+  }
+}
+
 export function suggestions(query='',limit=8){
   const q=query.trim().toLowerCase();
   if(!q) return EXERCISES.slice(0,limit);

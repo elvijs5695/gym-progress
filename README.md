@@ -4,23 +4,25 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 
 ## What is included
 
-- Workout-day rotation with manual override
-- Programme editor with ordered workout days and exercises
-- Exercise library/autocomplete
-- Sets, reps, rest and working weights
-- RIR-based progression rule and configurable difficulty thresholds
+- Workout-day rotation with manual override and unique workout names
+- Home keeps the complete workout rotation visible while a session is active
+- Persistent live workout banner across Home, Logs, Progress, Settings, Programme and Manual
+- Programme editor with ordered workout days and visual reorder feedback
+- Exercise library/autocomplete and exercise types for ramp-up logic
+- Automatic context-aware ramp-up: similar movements later in the workout receive a shorter suggestion
 - Warm-up, ramp-up, working-set, rest, unloading and stretching phases
-- Exercise-aware ramp-up recommendations
-- Large pulsing active-set display
+- Large active-set display with a deliberately slower, calmer pulse
 - Custom working weight entry plus +/- 0.25 kg controls
-- Reps + Failure / RIR 0 / 1 / 2 / 3+ entry
-- Rest countdown, +/- 30 sec and skip
-- In-foreground sound/vibration cues
-- Logs, session detail and full-session deletion
+- Flexible RIR input: Compact 3+ or Extended 5+, with configurable target RIR range
+- Conservative performance red flags after unexpected failure, rep misses or RIR collapse, with optional next-set adjustments
+- Rest countdown, +/- 30 sec and skip, plus in-foreground sound/vibration cues
+- Clear set-skip animation and exercise-skip confirmation
+- Inline optional workout note on the final Finish & Save screen
+- Logs with rounded volume, session detail and full-session deletion
+- Interactive workout-frequency timeline: 1-month initial view, drag to pan and pinch/wheel to zoom
 - Weight / Volume / e1RM progress charts
-- 1m / 3m / 6m / 1y / 5y / custom progress periods
-- IndexedDB local storage
-- Offline shell through a Service Worker
+- Visual English/Latvian Manual under Settings
+- IndexedDB local storage and offline shell through a Service Worker
 - Android-compatible `gym-progress-backup-v3` full backup import/export
 - Detailed JSON and CSV export for analysis
 - Erase-all-data flow with strong confirmation
@@ -108,7 +110,7 @@ Use the Home Screen version for normal workouts rather than leaving it as an ord
 
 Upload the changed project files to the **same repository** and commit them to the same Pages branch. GitHub Pages republishes the site automatically.
 
-The Service Worker is network-first while online, so a published code update refreshes its cached copy instead of permanently trapping the installed app on the first version.
+The Service Worker is network-first while online, so a published code update refreshes its cached copy instead of permanently trapping the installed app on the first version. This release uses a new cache version, so after publishing an update, open the PWA once while online and refresh/relaunch it if the old interface is still visible.
 
 Do not rename the repository or deliberately clear Safari website data without first creating a full JSON backup.
 

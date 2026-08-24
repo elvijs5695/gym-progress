@@ -1,7 +1,7 @@
 {
   "name": "Gym Progress",
   "short_name": "Gym Progress",
-  "description": "Local-first strength training tracker with RIR-based progression.",
+  "description": "Local-first resistance training tracker with RIR-based progression and conservative autoregulation.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -10,7 +10,17 @@
   "theme_color": "#0a0a0b",
   "orientation": "portrait-primary",
   "icons": [
-    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
