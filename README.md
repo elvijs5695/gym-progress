@@ -129,3 +129,14 @@ http://localhost:8000
 ```
 
 This is optional; GitHub Pages itself provides the required HTTPS hosting for iPhone installation.
+
+
+## v1.1.1 interaction refinements
+
+- Workout and phase count-up seconds now step on the same wall-clock second boundary.
+- Active-workout title/timer are visually muted behind the current exercise.
+- Skipped-set feedback temporarily replaces the set label instead of duplicating it.
+- Saving set data animates the compact rest panel into its focused size.
+- Final save screen no longer duplicates the workout timer.
+- Home workout rows expand to show a short, non-interactive exercise list; the active workout remains lightly blue.
+- At the closest (7-day) Logs timeline zoom, workout dots can be tapped/clicked to scroll to and briefly highlight the corresponding log card.
