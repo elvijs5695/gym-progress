@@ -145,3 +145,8 @@ This is optional; GitHub Pages itself provides the required HTTPS hosting for iP
 ## v1.2.0 parity update
 
 This release brings the PWA in line with the latest Android behaviour: partial vs discarded early endings, Aborted session status, difficulty-coloured frequency timeline dots, fixed Progress summary geometry, singular/plural count fixes, and practical 5 kg ramp-up increments for recognised barbell exercises. Aborted sessions remain in Logs but are excluded from Progress history and future progression comparison baselines.
+
+
+## v1.2.1 visual refinement
+
+- Active-set pulse now animates only the circular background/halo. Exercise, weight, reps and set text remain completely static.
