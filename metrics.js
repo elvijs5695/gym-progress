@@ -1,10 +1,10 @@
 export const COLORS={blue:'#92b8e8',green:'#70b995',lightgreen:'#a6d9b8',yellow:'#e8cf80',red:'#e99b9b',deepred:'#d97777',orange:'#e9ad83',gray:'#b8bcc4'};
 export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 export function formatKg(v){
-export function formatKgRounded(v){const n=Math.round(Number(v)||0);return `${n.toLocaleString('en-US').replaceAll(',', ' ')} kg`;}
   if(v==null||Number.isNaN(Number(v))) return '—';
   const n=Number(v); return `${Number.isInteger(n)?n:n.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')} kg`;
 }
+export function formatKgRounded(v){const n=Math.round(Number(v)||0);return `${n.toLocaleString('en-US').replaceAll(',', ' ')} kg`;}
 export function formatDuration(ms){
   const total=Math.max(0,Math.floor((ms||0)/1000)); const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
   return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')}`;
