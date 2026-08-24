@@ -69,7 +69,12 @@ export function suggestions(query='',limit=8){
 }
 
 const q25=n=>Math.round(n*4)/4;
-export function recommendRamp(workingWeightKg,targetReps,exerciseType){
+const q5=n=>Math.round(n/5)*5;
+const BARBELL_KEYS=new Set(['barbell_bench_press','back_squat','deadlift','sumo_deadlift','front_squat','overhead_press','incline_barbell_press','romanian_deadlift','barbell_row','hip_thrust']);
+export function isBarbellExercise(exerciseKey=null,exerciseName=''){
+  return BARBELL_KEYS.has(exerciseKey)||String(exerciseName).toLowerCase().includes('barbell');
+}
+export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName=''){
   if(!(workingWeightKg>0)) return [];
   let raw;
   if(exerciseType===ExerciseType.HEAVY_COMPOUND){
@@ -81,8 +86,8 @@ export function recommendRamp(workingWeightKg,targetReps,exerciseType){
   }else if(exerciseType===ExerciseType.MACHINE_COMPOUND){ raw=[[.50,6,60],[.75,3,75]]; }
   else if(exerciseType===ExerciseType.ISOLATION){ raw=[[.50,8,45]]; }
   else raw=[[.50,6,60],[.75,3,75]];
-  const seen=new Set();
-  return raw.map(([p,reps,rest])=>({weightKg:q25(workingWeightKg*p),reps,restSeconds:rest,percentOfWorkingWeight:Math.trunc(p*100)}))
+  const seen=new Set(),barbell=isBarbellExercise(exerciseKey,exerciseName);
+  return raw.map(([p,reps,rest])=>({weightKg:barbell?q5(workingWeightKg*p):q25(workingWeightKg*p),reps,restSeconds:rest,percentOfWorkingWeight:Math.trunc(p*100)}))
     .filter(s=>s.weightKg>0&&s.weightKg<workingWeightKg)
     .filter(s=>{const k=`${s.weightKg}/${s.reps}`;if(seen.has(k))return false;seen.add(k);return true;});
 }

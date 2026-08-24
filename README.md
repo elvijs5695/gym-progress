@@ -9,7 +9,7 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 - Persistent live workout banner across Home, Logs, Progress, Settings, Programme and Manual
 - Programme editor with ordered workout days and visual reorder feedback
 - Exercise library/autocomplete and exercise types for ramp-up logic
-- Automatic context-aware ramp-up: similar movements later in the workout receive a shorter suggestion
+- Automatic context-aware ramp-up: similar movements later in the workout receive a shorter suggestion; recognised barbell ramp-up weights snap to practical 5 kg steps
 - Warm-up, ramp-up, working-set, rest, unloading and stretching phases
 - Large active-set display with a deliberately slower, calmer pulse
 - Custom working weight entry plus +/- 0.25 kg controls
@@ -17,10 +17,10 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 - Conservative performance red flags after unexpected failure, rep misses or RIR collapse, with optional next-set adjustments
 - Rest countdown, +/- 30 sec and skip, plus in-foreground sound/vibration cues
 - Clear set-skip animation and exercise-skip confirmation
-- Inline optional workout note on the final Finish & Save screen
-- Logs with rounded volume, session detail and full-session deletion
+- Inline optional workout note on the final Finish & Save screen, plus Finish as partial / Discard workout choices when ending early
+- Logs with rounded volume, session detail, difficulty-coloured frequency dots, Aborted partial sessions and full-session deletion
 - Interactive workout-frequency timeline: 1-month initial view, drag to pan and pinch/wheel to zoom
-- Weight / Volume / e1RM progress charts
+- Weight / Volume / e1RM progress charts with fixed-width Current / First / Progress summaries; Aborted sessions are excluded
 - Visual English/Latvian Manual under Settings
 - IndexedDB local storage and offline shell through a Service Worker
 - Android-compatible `gym-progress-backup-v3` full backup import/export
@@ -140,3 +140,8 @@ This is optional; GitHub Pages itself provides the required HTTPS hosting for iP
 - Final save screen no longer duplicates the workout timer.
 - Home workout rows expand to show a short, non-interactive exercise list; the active workout remains lightly blue.
 - At the closest (7-day) Logs timeline zoom, workout dots can be tapped/clicked to scroll to and briefly highlight the corresponding log card.
+
+
+## v1.2.0 parity update
+
+This release brings the PWA in line with the latest Android behaviour: partial vs discarded early endings, Aborted session status, difficulty-coloured frequency timeline dots, fixed Progress summary geometry, singular/plural count fixes, and practical 5 kg ramp-up increments for recognised barbell exercises. Aborted sessions remain in Logs but are excluded from Progress history and future progression comparison baselines.

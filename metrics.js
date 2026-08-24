@@ -40,7 +40,8 @@ export function previousIdenticalSession(state,current){
   return state.workout_sessions.filter(s=>s.id!==current.id&&s.status==='COMPLETE'&&s.startedAt<current.startedAt&&
     (current.workoutId!=null?s.workoutId===current.workoutId:s.workoutName===current.workoutName)).sort((a,b)=>b.startedAt-a.startedAt)[0]||null;
 }
-export function difficultyLevel(avgRir,failureCount,appState){
+export function difficultyLevel(avgRir,failureCount,appState,sessionStatus=null){
+  if(sessionStatus==='ABORTED')return {key:'aborted',label:'Aborted',color:COLORS.deepred};
   if(failureCount>0)return {key:'failure',label:'Failure',color:COLORS.deepred};
   if(avgRir==null)return {key:'unknown',label:'No effort data',color:COLORS.gray};
   if(avgRir>=appState.difficultyComfortableMinRir)return {key:'comfortable',label:'Comfortable',color:COLORS.green};

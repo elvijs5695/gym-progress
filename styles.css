@@ -50,3 +50,14 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .timer-panel.rest-expand{animation:restPanelGrow .48s cubic-bezier(.2,.8,.2,1) both}@keyframes restPanelGrow{0%{padding-top:20px;padding-bottom:20px;transform:scale(.985);background:var(--surface)}100%{padding-top:34px;padding-bottom:34px;transform:scale(1);background:var(--surface)}}
 .final-workout{padding-top:32px}.final-workout>.small{margin-bottom:4px}.final-workout .countup{display:none}
 .timeline-card canvas.dots-clickable{cursor:pointer}.log-session-card.timeline-target{animation:timelineTarget 1.9s ease both}@keyframes timelineTarget{0%{background:#203341;border-color:#4b809e;transform:scale(.992)}18%{background:#1b2d39;border-color:#4b809e;transform:scale(1)}100%{background:var(--surface);border-color:rgba(255,255,255,.045)}}
+
+
+/* v1.2 parity with Android v1.1.8 */
+.difficulty.aborted{color:#d97777}
+.session-status-line{margin-top:10px;padding:8px 0 2px}
+.progress-summary{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px;margin:14px 0 12px}
+.progress-summary .metric{min-width:0}
+.progress-summary .metric-label{min-height:30px;display:flex;align-items:flex-start}
+.progress-summary .metric-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abort-actions{flex-wrap:wrap}.abort-actions .danger{margin-right:auto}
+@media(max-width:390px){.progress-summary{grid-template-columns:1fr 1fr 1.35fr;gap:6px}.progress-summary .metric{padding-left:9px;padding-right:9px}.progress-summary .metric-label{font-size:10px}}
