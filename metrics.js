@@ -57,3 +57,26 @@ export function exerciseProgressPercent(state,e,previous){
   const oldVol=exerciseMetrics(state,old).volume; return oldVol>0?(m.volume/oldVol-1)*100:null;
 }
 export function phaseDuration(start,end,skipped){return skipped?'Skipped':start!=null&&end!=null?formatDuration(end-start):'—';}
+
+export function sessionDifficultyLevel(state,session){
+  if(session?.status==='ABORTED')return {key:'aborted',label:'Aborted',color:COLORS.deepred};
+  const groups=sessionExercises(state,session.id).map(e=>({e,sets:exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE')})).filter(x=>x.sets.length);
+  const complete=groups.flatMap(x=>x.sets);
+  if(!complete.length)return {key:'unknown',label:'No effort data',color:COLORS.gray};
+  const failureCount=complete.filter(s=>s.failure).length;
+  const failureExercises=groups.filter(x=>x.sets.some(s=>s.failure)).length;
+  const failureRate=failureCount/complete.length;
+  // Session Failure is deliberately workout-wide. One bad exercise can make the day
+  // feel harder, but cannot label a multi-exercise workout Failure by itself.
+  const workoutWideFailure=groups.length<=1
+    ? failureCount>=2&&failureRate>=.50
+    : failureCount>=2&&failureExercises>=2&&(failureRate>=.20||failureExercises/groups.length>=.50);
+  if(workoutWideFailure)return {key:'failure',label:'Failure',color:COLORS.deepred};
+  const effort=complete.map(s=>s.failure?-.5:(s.rir==null?null:Number(s.rir))).filter(v=>v!=null&&!Number.isNaN(v));
+  if(!effort.length)return {key:'unknown',label:'No effort data',color:COLORS.gray};
+  const avg=effort.reduce((a,b)=>a+b,0)/effort.length,a=state.app_state;
+  if(avg>=a.difficultyComfortableMinRir)return {key:'comfortable',label:'Comfortable',color:COLORS.green};
+  if(avg>=a.difficultyChallengingMinRir)return {key:'challenging',label:'Challenging',color:COLORS.yellow};
+  if(avg>=a.difficultyHardMinRir)return {key:'hard',label:'Hard',color:COLORS.orange};
+  return {key:'very-hard',label:'Very hard',color:COLORS.red};
+}

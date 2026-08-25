@@ -66,3 +66,15 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .next-date-overdue{color:#e36f76!important;font-weight:800}.schedule-actions{flex-direction:column;align-items:flex-end;gap:4px}.schedule-actions button{width:auto}
 
 .progression-edit{display:flex;align-items:flex-end;gap:10px;margin:16px 0 8px}.progression-edit label{margin:0}.progression-edit input{text-align:center;font-weight:700;font-size:1.15rem}
+
+/* v1.2.5 scheduling + stable progression controls */
+.workout-action-slot{width:auto;min-width:48px;height:48px;display:flex;align-items:center;justify-content:flex-end;gap:2px;flex:0 0 auto}
+.calendar-symbol{width:17px;height:16px;border:1.7px solid currentColor;border-radius:3px;display:inline-block;position:relative;box-sizing:border-box}
+.calendar-symbol::before{content:"";position:absolute;left:2px;right:2px;top:4px;border-top:1.7px solid currentColor}
+.calendar-symbol::after{content:"";position:absolute;width:2px;height:3px;border-left:1.7px solid currentColor;border-right:1.7px solid currentColor;left:5px;top:-3px;box-sizing:content-box;padding-left:4px}
+.reminder-time-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px}
+.reminder-time-row input[type="time"]{width:auto;min-width:108px}
+.progression-edit{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:end;gap:10px;margin:16px 0 8px}
+.progression-edit .icon-btn{width:44px;height:44px;min-width:44px}
+.progression-edit label{margin:0;min-width:0}
+.progression-edit input{width:100%;box-sizing:border-box;text-align:center;font-weight:700;font-size:1.15rem}

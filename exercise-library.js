@@ -90,15 +90,16 @@ export function stepSelectable(value,direction,equipment){
   return Math.max(0,next*step);
 }
 export function volumeMultiplier(equipment,dumbbellLoad){return equipment===Equipment.DUMBBELL&&dumbbellLoad===DumbbellLoad.PAIR?2:1;}
-export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND){
-  base=Number(base||0);
-  if(equipment===Equipment.DUMBBELL)return base>=20?1:.5; // per dumbbell
-  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=100?5:2.5;}
-  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=100?5:2.5;
-  if(equipment===Equipment.BODYWEIGHT)return 2.5;
-  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100?5:2.5;
+export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,effortMarginRir=0){
+  base=Number(base||0); effortMarginRir=Number(effortMarginRir||0);
+  if(equipment===Equipment.BODYWEIGHT)return 0;
+  if(equipment===Equipment.DUMBBELL)return base>=20&&effortMarginRir>=1?1:.5; // per dumbbell
+  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=100&&effortMarginRir>=1?5:2.5;}
+  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=100&&effortMarginRir>=1?5:2.5;
+  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&effortMarginRir>=1?5:2.5;
 }
-export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType),equipment);}
+export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,effortMarginRir=0){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,effortMarginRir),equipment);}
+export function suggestedNextReps(currentTarget,equipment){return equipment===Equipment.BODYWEIGHT?Math.max(1,Number(currentTarget||1))+1:Number(currentTarget||1);}
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName)){
   if(!(workingWeightKg>0)) return [];
   let raw;
