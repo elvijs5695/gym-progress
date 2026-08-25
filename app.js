@@ -109,36 +109,65 @@ function render(){
 }
 
 function bindProgrammeReorder(){
-  document.querySelectorAll('.drag-handle[data-reorder-kind]').forEach(handle=>{
-    handle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
-    handle.addEventListener('pointerdown',e=>{
-      if(e.button!=null&&e.button!==0)return;
-      e.preventDefault();e.stopPropagation();
-      const row=handle.closest('.reorder-row');if(!row)return;
-      const kind=handle.dataset.reorderKind,id=Number(handle.dataset.reorderId);
+  document.querySelectorAll('.drag-grip[data-reorder-kind]').forEach(grip=>{
+    grip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+    grip.addEventListener('pointerdown',startEvent=>{
+      if(startEvent.button!=null&&startEvent.button!==0)return;
+      const row=grip.closest('.reorder-row');if(!row)return;
+      startEvent.preventDefault();startEvent.stopPropagation();
+      const kind=grip.dataset.reorderKind,id=Number(grip.dataset.reorderId);
       const selector=kind==='workout'?'.programme-day.reorder-row':'.exercise-programme-row.reorder-row';
       const rows=[...document.querySelectorAll(selector)];
       const from=rows.indexOf(row);if(from<0)return;
-      const centers=rows.map(r=>{const b=r.getBoundingClientRect();return b.top+b.height/2;});
-      const startY=e.clientY,startCenter=centers[from];let target=from,moved=false;
-      handle.setPointerCapture?.(e.pointerId);row.classList.add('dragging');
+      const pointerId=startEvent.pointerId;
+      const startY=startEvent.clientY;
+      const startRect=row.getBoundingClientRect();
+      let target=from,moved=false,lastY=startEvent.clientY;
+      row.classList.add('dragging');document.body.classList.add('programme-dragging');
+      grip.setPointerCapture?.(pointerId);
+
       const clearMarkers=()=>rows.forEach(r=>r.classList.remove('drop-before','drop-after'));
+      const updateTarget=y=>{
+        target=from;
+        for(let i=0;i<rows.length;i++){
+          if(i===from)continue;
+          const b=rows[i].getBoundingClientRect(),mid=b.top+b.height/2;
+          if(y>mid&&i>from)target=i;
+          if(y<mid&&i<from){target=i;break;}
+        }
+        clearMarkers();
+        if(target!==from)rows[target].classList.add(target<from?'drop-before':'drop-after');
+      };
+      const autoscroll=y=>{
+        const edge=84,step=12;
+        if(y<edge)window.scrollBy(0,-step);
+        else if(y>window.innerHeight-edge)window.scrollBy(0,step);
+      };
       const move=ev=>{
-        if(ev.pointerId!==e.pointerId)return;ev.preventDefault();ev.stopPropagation();
-        const dy=ev.clientY-startY;if(Math.abs(dy)>5)moved=true;row.style.transform=`translateY(${dy}px)`;
-        const center=startCenter+dy;target=from;
-        if(center<centers[from]){for(let i=from-1;i>=0;i--){if(center<centers[i])target=i;else break;}}
-        else if(center>centers[from]){for(let i=from+1;i<centers.length;i++){if(center>centers[i])target=i;else break;}}
-        clearMarkers();if(target!==from){rows[target].classList.add(target<from?'drop-before':'drop-after');}
+        if(ev.pointerId!==pointerId)return;
+        ev.preventDefault();ev.stopPropagation();lastY=ev.clientY;
+        const dy=ev.clientY-startY;if(Math.abs(dy)>4)moved=true;
+        row.style.transform=`translateY(${dy}px)`;
+        updateTarget(ev.clientY);autoscroll(ev.clientY);
       };
-      const end=async ev=>{
-        if(ev.pointerId!==e.pointerId)return;ev.preventDefault();ev.stopPropagation();
-        handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',end);handle.removeEventListener('pointercancel',end);
-        clearMarkers();row.classList.remove('dragging');row.style.transform='';
-        if(moved&&target!==from){const delta=target-from;if(kind==='workout')await moveWorkout(id,delta);else await moveExercise(id,delta);}
+      const finish=async ev=>{
+        if(ev.pointerId!==pointerId)return;
+        ev.preventDefault();ev.stopPropagation();
+        document.removeEventListener('pointermove',move,true);
+        document.removeEventListener('pointerup',finish,true);
+        document.removeEventListener('pointercancel',finish,true);
+        clearMarkers();row.classList.remove('dragging');document.body.classList.remove('programme-dragging');row.style.transform='';
+        try{grip.releasePointerCapture?.(pointerId);}catch{}
+        if(moved&&target!==from){
+          const delta=target-from;
+          if(kind==='workout')await moveWorkout(id,delta);else await moveExercise(id,delta);
+        }
       };
-      handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
-    });
+      document.addEventListener('pointermove',move,{capture:true,passive:false});
+      document.addEventListener('pointerup',finish,{capture:true,passive:false});
+      document.addEventListener('pointercancel',finish,{capture:true,passive:false});
+      updateTarget(lastY);
+    },{passive:false});
   });
 }
 
@@ -161,7 +190,9 @@ function showAutoregulationAdvice(advice){
 }
 async function applyAutoregulation(){const advice=window.__gpAdvice,next=advice?getSet(advice.nextSetId):null;if(next&&next.status==='PENDING'){const ex=getSessionExercise(next.sessionExerciseId);if(ex?.equipment!==Equipment.BODYWEIGHT)next.plannedWeightKg=snapSelectable(advice.suggestedWeightKg,ex?.equipment||Equipment.OTHER);next.targetReps=advice.suggestedReps;next.autoregulated=true;await persist();}window.__gpAdvice=null;closeDialog();toast('Next set adjusted');}
 function keepAutoregulationCurrent(){window.__gpAdvice=null;closeDialog();}
-async function finishAndSave(){const rt=runtime(),s=rt?getSession(rt.sessionId):null;if(!rt||!s)return;const finishedAt=now();s.note=$('#final-note')?.value.trim()||'';s.endedAt=finishedAt;s.status='COMPLETE';if(s.advancesRotation&&s.workoutId!=null)state.app_state.nextWorkoutId=nextWorkoutAfter(s.workoutId);state.app_state.lastInactivityReminderFor=null;state.runtime=null;ui.selectedWorkoutId=state.app_state.nextWorkoutId;await persist();releaseWakeLock();nav('home');toast('Workout saved');if(state.app_state.motivationEnabled)showNextSessionPrompt(finishedAt);}
+async function finishAndSave(){const rt=runtime(),s=rt?getSession(rt.sessionId):null;if(!rt||!s)return;const finishedAt=now();s.note=$('#final-note')?.value.trim()||'';s.endedAt=finishedAt;s.status='COMPLETE';if(s.advancesRotation&&s.workoutId!=null)state.app_state.nextWorkoutId=nextWorkoutAfter(s.workoutId);state.app_state.lastInactivityReminderFor=null;state.runtime=null;ui.selectedWorkoutId=state.app_state.nextWorkoutId;await persist();releaseWakeLock();nav('home');showWorkoutCelebration(finishedAt);}
+function showWorkoutCelebration(finishedAt){window.__gpCelebrationFinishedAt=Number(finishedAt);let root=$('#dialog-root');if(!root){document.body.insertAdjacentHTML('beforeend','<div id="dialog-root"></div>');root=$('#dialog-root');}root.innerHTML=`<div class="dialog-backdrop celebration-backdrop" onclick="if(event.target===this)gp.closeWorkoutCelebration()"><div class="dialog centered celebration-dialog"><div class="workout-celebration"><img class="celebration-photo" src="./assets/workout-complete.png" alt="Workout complete"><div class="celebration-message">Malacis, es lepojos!</div><button class="full celebration-continue" onclick="gp.closeWorkoutCelebration()">${esc(t('Continue',languageCode(state)))}</button></div></div></div>`;}
+function closeWorkoutCelebration(){const finishedAt=Number(window.__gpCelebrationFinishedAt);window.__gpCelebrationFinishedAt=null;closeDialog();if(state.app_state.motivationEnabled&&Number.isFinite(finishedAt))setTimeout(()=>showNextSessionPrompt(finishedAt),100);}
 function nextSessionDialog(baseAt,{reschedule=false}={}){const suggestedAt=Number(baseAt||suggestedNextSessionAt());window.__gpNextSessionSuggestedAt=suggestedAt;openDialog(`<h2>${reschedule?'Reschedule next session':'Next session?'}</h2><div class="dialog-copy">Suggested date: <strong>${esc(dateOnly(suggestedAt))}</strong></div><label class="field">Date</label><input id="next-session-date" type="date" value="${localDateInput(suggestedAt)}"><div class="dialog-actions schedule-actions"><button onclick="gp.scheduleNextSession()">${reschedule?'Save date':'Schedule'}</button>${reschedule?`<button class="secondary" onclick="gp.skipNextSession()">Clear schedule</button><button class="ghost" onclick="gp.closeDialog()">Cancel</button>`:`<button class="secondary" onclick="gp.skipNextSession()">Skip</button>`}</div>`);}
 function showNextSessionPrompt(finishedAt){nextSessionDialog(suggestedNextSessionAt(finishedAt));}
 function rescheduleNextSession(){const current=state.app_state.nextSessionAt;if(current==null)return;nextSessionDialog(Number(current),{reschedule:true});}
@@ -289,9 +320,9 @@ function editDifficulty(){
 }
 function renderProgramme(){
   const ws=state.workout_templates.slice().sort((a,b)=>a.position-b.position);
-  let c=`<div class="row between"><h2 style="margin:10px 0">Programme</h2><button class="small-btn" onclick="gp.addWorkout()">+ Day</button></div>`;
+  let c=`<div class="row between"><h2 style="margin:10px 0">Programme</h2><button class="small-btn" onclick="gp.addWorkout()">+ Day</button></div><div class="reorder-hint"><span class="drag-grip-sample" aria-hidden="true"><i></i></span><span>Drag the grip to reorder.</span></div>`;
   if(!ws.length)c+=`<div class="empty">No workout days yet.</div>`;
-  ws.forEach((w,i)=>c+=`<div class="card clickable programme-day reorder-row ${ui.movedWorkoutId===w.id?'recently-moved':''}" onclick="gp.nav('workout',${w.id})"><div class="card-row"><button class="drag-handle" data-reorder-kind="workout" data-reorder-id="${w.id}" aria-label="Drag to reorder">☰</button><div class="pill">${i+1}</div><div class="grow min-zero"><div class="title single-line">${esc(w.name)}</div><div class="subtitle">${getTemplateExercises(w.id).length} exercise${getTemplateExercises(w.id).length===1?'':'s'}</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.renameWorkout(${w.id})">✎</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteWorkout(${w.id})">⌫</button></div></div>`);
+  ws.forEach((w,i)=>c+=`<div class="card clickable programme-day reorder-row ${ui.movedWorkoutId===w.id?'recently-moved':''}" onclick="gp.nav('workout',${w.id})"><div class="card-row"><span class="drag-grip" role="button" tabindex="0" data-reorder-kind="workout" data-reorder-id="${w.id}" aria-label="Drag to reorder"><i></i></span><div class="pill">${i+1}</div><div class="grow min-zero"><div class="title single-line">${esc(w.name)}</div><div class="subtitle">${getTemplateExercises(w.id).length} exercise${getTemplateExercises(w.id).length===1?'':'s'}</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.renameWorkout(${w.id})">✎</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteWorkout(${w.id})">⌫</button></div></div>`);
   return shell(c,{topbar:topbar('Programme','settings'),navBar:false});
 }
 function addWorkout(){formDialog('New workout day',`<label class="field">Name</label><input id="f-name" value="Day ${state.workout_templates.length+1}">`,'Add',async()=>{const input=$('#f-name'),name=input.value.trim()||`Day ${state.workout_templates.length+1}`;if(workoutNameExists(name)){input.setCustomValidity('Workout names must be unique');input.reportValidity();return;}input.setCustomValidity('');state.workout_templates.push({id:uid(state.workout_templates),name,position:state.workout_templates.length,isActive:true});ensureRotation();await persist();closeDialog();render();});}
@@ -299,8 +330,8 @@ function renameWorkout(id){const w=getWorkout(id);formDialog('Rename workout',`<
 async function moveWorkout(id,d){const a=state.workout_templates.sort((x,y)=>x.position-y.position),i=a.findIndex(x=>x.id===Number(id)),j=Math.max(0,Math.min(a.length-1,i+d));if(i<0||i===j)return;const [x]=a.splice(i,1);a.splice(j,0,x);a.forEach((w,k)=>w.position=k);ui.movedWorkoutId=x.id;await persist();render();setTimeout(()=>{if(ui.movedWorkoutId===x.id){ui.movedWorkoutId=null;render();}},1600);}
 function deleteWorkout(id){const w=getWorkout(id);confirmDialog(`Delete ${w.name}?`,'This deletes the workout template. Historical completed sessions are kept.','Delete',async()=>{state.template_exercises=state.template_exercises.filter(e=>e.workoutId!==w.id);state.workout_templates=state.workout_templates.filter(x=>x.id!==w.id).sort((a,b)=>a.position-b.position);state.workout_templates.forEach((x,i)=>x.position=i);ensureRotation();await persist();closeDialog();render();},true);}
 
-function renderWorkoutEditor(id){const w=getWorkout(id);if(!w)return shell('<div class="empty">Workout not found.</div>',{topbar:topbar('Workout','programme'),navBar:false});const es=getTemplateExercises(w.id);let c=`<div class="row between"><div><h2 style="margin:8px 0 2px">${esc(w.name)}</h2><div class="small">${es.length} exercise${es.length===1?'':'s'}</div></div><button class="small-btn" onclick="gp.addExercise(${w.id})">+ Exercise</button></div><div class="stack" style="margin-top:16px">`;
-  es.forEach((e,i)=>c+=`<div class="card clickable exercise-programme-row reorder-row" onclick="gp.editExercise(${e.id})"><div class="card-row"><button class="drag-handle" data-reorder-kind="exercise" data-reorder-id="${e.id}" aria-label="Drag to reorder">☰</button><div class="grow min-zero"><div class="title single-line">${esc(e.name)}</div><div class="subtitle single-line">${e.sets} × ${e.reps} × <strong>${e.equipment===Equipment.BODYWEIGHT?t('Bodyweight',languageCode(state)):formatKg(e.initialWeightKg)}</strong> · ${formatDuration(e.restSeconds*1000)} rest</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.deleteExercise(${e.id})">⌫</button></div></div>`);c+='</div>';
+function renderWorkoutEditor(id){const w=getWorkout(id);if(!w)return shell('<div class="empty">Workout not found.</div>',{topbar:topbar('Workout','programme'),navBar:false});const es=getTemplateExercises(w.id);let c=`<div class="row between"><div><h2 style="margin:8px 0 2px">${esc(w.name)}</h2><div class="small">${es.length} exercise${es.length===1?'':'s'}</div></div><button class="small-btn" onclick="gp.addExercise(${w.id})">+ Exercise</button></div><div class="reorder-hint"><span class="drag-grip-sample" aria-hidden="true"><i></i></span><span>Drag the grip to reorder.</span></div><div class="stack" style="margin-top:12px">`;
+  es.forEach((e,i)=>c+=`<div class="card clickable exercise-programme-row reorder-row" onclick="gp.editExercise(${e.id})"><div class="card-row"><span class="drag-grip" role="button" tabindex="0" data-reorder-kind="exercise" data-reorder-id="${e.id}" aria-label="Drag to reorder"><i></i></span><div class="grow min-zero"><div class="title single-line">${esc(e.name)}</div><div class="subtitle single-line">${e.sets} × ${e.reps} × <strong>${e.equipment===Equipment.BODYWEIGHT?t('Bodyweight',languageCode(state)):formatKg(e.initialWeightKg)}</strong> · ${formatDuration(e.restSeconds*1000)} rest</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.deleteExercise(${e.id})">⌫</button></div></div>`);c+='</div>';
   return shell(c,{topbar:topbar(w.name,'programme'),navBar:false});
 }
 function exerciseForm(e={}){
@@ -496,6 +527,6 @@ function openDialog(inner){let root=$('#dialog-root');if(!root){document.body.in
 function closeDialog(){const r=$('#dialog-root');if(r)r.innerHTML='';window.__gpConfirm=window.__gpCancel=window.__gpFormConfirm=null;}
 function confirmNow(){const f=window.__gpConfirm;if(f)f();}function cancelConfirm(){const f=window.__gpCancel;closeDialog();if(f)f();}function formConfirm(){window.__gpFormConfirm?.();}
 
-window.gp={nav,selectWorkout,toggleWorkoutDetails,requestStart,startWorkout,resume,changeRirThreshold,changeTargetRirMin,changeTargetRirMax,setRirInputMax,setLanguage,openStarterWizard,starterSelectValue,renderStarterWizard,finishStarterProgramme,starterManualSetup,dismissStarterForNow,toggleAwake,toggleMotivation,changeInactivityDays,setReminderTime,requestNotificationPermission,scheduleNextSession,skipNextSession,rescheduleNextSession,editDifficulty,addWorkout,renameWorkout,moveWorkout,deleteWorkout,addExercise,editExercise,exerciseNameChanged,exerciseEquipmentChanged,moveExercise,deleteExercise,deleteSession,setProgressRange,setProgressExercise,setProgressMetric,setCustomStart,setCustomEnd,finishWarmup,startRamp,skipRamp,finishRamp,adjustWeight,customWeight,setComplete,adjustEntryReps,setRir,saveSet,finishUnload,shiftRest,skipRest,skipSet,skipExercise,finishStretch,finishAndSave,applyAutoregulation,keepAutoregulationCurrent,applyFutureAdjustment,keepFutureAdjustmentCurrent,shiftProgression,acceptProgressionEdited,shiftProgressionReps,acceptProgressionReps,keepProgressionCurrent,undoLastSet,requestAbort,finishPartialWorkout,discardActiveWorkout,downloadBackup,pickRestore,restoreFile,downloadCsv,downloadDetailedJson,eraseData,eraseExerciseLogs,closeDialog,confirmNow,cancelConfirm,formConfirm};
+window.gp={nav,selectWorkout,toggleWorkoutDetails,requestStart,startWorkout,resume,changeRirThreshold,changeTargetRirMin,changeTargetRirMax,setRirInputMax,setLanguage,openStarterWizard,starterSelectValue,renderStarterWizard,finishStarterProgramme,starterManualSetup,dismissStarterForNow,toggleAwake,toggleMotivation,changeInactivityDays,setReminderTime,requestNotificationPermission,scheduleNextSession,skipNextSession,rescheduleNextSession,editDifficulty,addWorkout,renameWorkout,moveWorkout,deleteWorkout,addExercise,editExercise,exerciseNameChanged,exerciseEquipmentChanged,moveExercise,deleteExercise,deleteSession,setProgressRange,setProgressExercise,setProgressMetric,setCustomStart,setCustomEnd,finishWarmup,startRamp,skipRamp,finishRamp,adjustWeight,customWeight,setComplete,adjustEntryReps,setRir,saveSet,finishUnload,shiftRest,skipRest,skipSet,skipExercise,finishStretch,finishAndSave,closeWorkoutCelebration,applyAutoregulation,keepAutoregulationCurrent,applyFutureAdjustment,keepFutureAdjustmentCurrent,shiftProgression,acceptProgressionEdited,shiftProgressionReps,acceptProgressionReps,keepProgressionCurrent,undoLastSet,requestAbort,finishPartialWorkout,discardActiveWorkout,downloadBackup,pickRestore,restoreFile,downloadCsv,downloadDetailedJson,eraseData,eraseExerciseLogs,closeDialog,confirmNow,cancelConfirm,formConfirm};
 
 init().catch(err=>{console.error(err);appEl.innerHTML=`<div class="view"><h1>Gym Progress</h1><div class="card danger-zone"><div class="title">Could not start</div><div class="note">${esc(err?.message||err)}</div></div></div>`;});

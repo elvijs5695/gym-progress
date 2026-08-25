@@ -1,3 +1,20 @@
+# Gym Progress PWA v1.2.10 – post-workout celebration
+
+## v1.2.10
+- After a fully completed workout is successfully saved, show the supplied celebration portrait with **“Malacis, es lepojos!”**.
+- The celebration is PWA-only and is not shown for partial/aborted or discarded workouts.
+- Closing the celebration continues into the existing next-session scheduling prompt when Motivation is enabled.
+- Added the portrait to the offline Service Worker shell and bumped cache/version identifiers.
+
+# Gym Progress PWA v1.2.9 – robust visible drag reordering
+
+## v1.2.9
+- Replaced ambiguous menu-style reorder icon with a visible six-dot drag grip.
+- Added a short drag hint on workout-day and exercise programme screens.
+- Reworked reordering to document-level Pointer Events for more reliable touch/mouse dragging.
+- Added edge auto-scroll while dragging.
+- Versioned main CSS/JS shell URLs and bumped Service Worker cache to avoid stale v1.2.8 UI.
+
 # Gym Progress PWA v1.2.8 – touch drag programme reordering
 
 ## v1.2.8
