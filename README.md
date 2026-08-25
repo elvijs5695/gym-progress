@@ -1,3 +1,12 @@
+# Gym Progress PWA v1.2.8 – touch drag programme reordering
+
+## v1.2.8
+
+- Replaced workout-day and exercise reorder arrows with compact finger/mouse drag handles.
+- Dragged rows lift visually and show the insertion edge before drop.
+- Programme names gain substantially more horizontal space.
+- Service Worker shell cache bumped for the new UI assets.
+
 # Gym Progress PWA v1.2.7 – validation, starter estimates & load-coaching consistency
 ## v1.2.7
 

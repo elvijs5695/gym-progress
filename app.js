@@ -104,7 +104,42 @@ function render(){
   updateLiveClocks();
   if(route.name==='active')afterActiveRender();
   if(route.name==='logs')requestAnimationFrame(bindWorkoutTimeline);
+  if(route.name==='programme'||route.name==='workout')requestAnimationFrame(bindProgrammeReorder);
   if(route.name==='home'&&!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed){setTimeout(()=>{if(!document.querySelector('.dialog-backdrop'))showEmptyStarterPrompt();},0);}
+}
+
+function bindProgrammeReorder(){
+  document.querySelectorAll('.drag-handle[data-reorder-kind]').forEach(handle=>{
+    handle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+    handle.addEventListener('pointerdown',e=>{
+      if(e.button!=null&&e.button!==0)return;
+      e.preventDefault();e.stopPropagation();
+      const row=handle.closest('.reorder-row');if(!row)return;
+      const kind=handle.dataset.reorderKind,id=Number(handle.dataset.reorderId);
+      const selector=kind==='workout'?'.programme-day.reorder-row':'.exercise-programme-row.reorder-row';
+      const rows=[...document.querySelectorAll(selector)];
+      const from=rows.indexOf(row);if(from<0)return;
+      const centers=rows.map(r=>{const b=r.getBoundingClientRect();return b.top+b.height/2;});
+      const startY=e.clientY,startCenter=centers[from];let target=from,moved=false;
+      handle.setPointerCapture?.(e.pointerId);row.classList.add('dragging');
+      const clearMarkers=()=>rows.forEach(r=>r.classList.remove('drop-before','drop-after'));
+      const move=ev=>{
+        if(ev.pointerId!==e.pointerId)return;ev.preventDefault();ev.stopPropagation();
+        const dy=ev.clientY-startY;if(Math.abs(dy)>5)moved=true;row.style.transform=`translateY(${dy}px)`;
+        const center=startCenter+dy;target=from;
+        if(center<centers[from]){for(let i=from-1;i>=0;i--){if(center<centers[i])target=i;else break;}}
+        else if(center>centers[from]){for(let i=from+1;i<centers.length;i++){if(center>centers[i])target=i;else break;}}
+        clearMarkers();if(target!==from){rows[target].classList.add(target<from?'drop-before':'drop-after');}
+      };
+      const end=async ev=>{
+        if(ev.pointerId!==e.pointerId)return;ev.preventDefault();ev.stopPropagation();
+        handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',end);handle.removeEventListener('pointercancel',end);
+        clearMarkers();row.classList.remove('dragging');row.style.transform='';
+        if(moved&&target!==from){const delta=target-from;if(kind==='workout')await moveWorkout(id,delta);else await moveExercise(id,delta);}
+      };
+      handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
+    });
+  });
 }
 
 function syncedElapsed(start,at=now()){const wall=Math.floor(Number(at)/1000)*1000,origin=Math.floor(Number(start)/1000)*1000;return Math.max(0,wall-origin);}
@@ -256,7 +291,7 @@ function renderProgramme(){
   const ws=state.workout_templates.slice().sort((a,b)=>a.position-b.position);
   let c=`<div class="row between"><h2 style="margin:10px 0">Programme</h2><button class="small-btn" onclick="gp.addWorkout()">+ Day</button></div>`;
   if(!ws.length)c+=`<div class="empty">No workout days yet.</div>`;
-  ws.forEach((w,i)=>c+=`<div class="card clickable programme-day ${ui.movedWorkoutId===w.id?'recently-moved':''}" onclick="gp.nav('workout',${w.id})"><div class="card-row"><div class="pill">${i+1}</div><div class="grow"><div class="title">${esc(w.name)}</div><div class="subtitle">${getTemplateExercises(w.id).length} exercise${getTemplateExercises(w.id).length===1?'':'s'}</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.moveWorkout(${w.id},-1)">↑</button><button class="icon-btn" onclick="event.stopPropagation();gp.moveWorkout(${w.id},1)">↓</button><button class="icon-btn" onclick="event.stopPropagation();gp.renameWorkout(${w.id})">✎</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteWorkout(${w.id})">⌫</button></div></div>`);
+  ws.forEach((w,i)=>c+=`<div class="card clickable programme-day reorder-row ${ui.movedWorkoutId===w.id?'recently-moved':''}" onclick="gp.nav('workout',${w.id})"><div class="card-row"><button class="drag-handle" data-reorder-kind="workout" data-reorder-id="${w.id}" aria-label="Drag to reorder">☰</button><div class="pill">${i+1}</div><div class="grow min-zero"><div class="title single-line">${esc(w.name)}</div><div class="subtitle">${getTemplateExercises(w.id).length} exercise${getTemplateExercises(w.id).length===1?'':'s'}</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.renameWorkout(${w.id})">✎</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteWorkout(${w.id})">⌫</button></div></div>`);
   return shell(c,{topbar:topbar('Programme','settings'),navBar:false});
 }
 function addWorkout(){formDialog('New workout day',`<label class="field">Name</label><input id="f-name" value="Day ${state.workout_templates.length+1}">`,'Add',async()=>{const input=$('#f-name'),name=input.value.trim()||`Day ${state.workout_templates.length+1}`;if(workoutNameExists(name)){input.setCustomValidity('Workout names must be unique');input.reportValidity();return;}input.setCustomValidity('');state.workout_templates.push({id:uid(state.workout_templates),name,position:state.workout_templates.length,isActive:true});ensureRotation();await persist();closeDialog();render();});}
@@ -265,7 +300,7 @@ async function moveWorkout(id,d){const a=state.workout_templates.sort((x,y)=>x.p
 function deleteWorkout(id){const w=getWorkout(id);confirmDialog(`Delete ${w.name}?`,'This deletes the workout template. Historical completed sessions are kept.','Delete',async()=>{state.template_exercises=state.template_exercises.filter(e=>e.workoutId!==w.id);state.workout_templates=state.workout_templates.filter(x=>x.id!==w.id).sort((a,b)=>a.position-b.position);state.workout_templates.forEach((x,i)=>x.position=i);ensureRotation();await persist();closeDialog();render();},true);}
 
 function renderWorkoutEditor(id){const w=getWorkout(id);if(!w)return shell('<div class="empty">Workout not found.</div>',{topbar:topbar('Workout','programme'),navBar:false});const es=getTemplateExercises(w.id);let c=`<div class="row between"><div><h2 style="margin:8px 0 2px">${esc(w.name)}</h2><div class="small">${es.length} exercise${es.length===1?'':'s'}</div></div><button class="small-btn" onclick="gp.addExercise(${w.id})">+ Exercise</button></div><div class="stack" style="margin-top:16px">`;
-  es.forEach((e,i)=>c+=`<div class="card clickable" onclick="gp.editExercise(${e.id})"><div class="card-row"><div class="grow"><div class="title">${esc(e.name)}</div><div class="subtitle">${e.sets} × ${e.reps} × <strong>${e.equipment===Equipment.BODYWEIGHT?t('Bodyweight',languageCode(state)):formatKg(e.initialWeightKg)}</strong> · ${formatDuration(e.restSeconds*1000)} rest</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.moveExercise(${e.id},-1)">↑</button><button class="icon-btn" onclick="event.stopPropagation();gp.moveExercise(${e.id},1)">↓</button><button class="icon-btn" onclick="event.stopPropagation();gp.deleteExercise(${e.id})">⌫</button></div></div>`);c+='</div>';
+  es.forEach((e,i)=>c+=`<div class="card clickable exercise-programme-row reorder-row" onclick="gp.editExercise(${e.id})"><div class="card-row"><button class="drag-handle" data-reorder-kind="exercise" data-reorder-id="${e.id}" aria-label="Drag to reorder">☰</button><div class="grow min-zero"><div class="title single-line">${esc(e.name)}</div><div class="subtitle single-line">${e.sets} × ${e.reps} × <strong>${e.equipment===Equipment.BODYWEIGHT?t('Bodyweight',languageCode(state)):formatKg(e.initialWeightKg)}</strong> · ${formatDuration(e.restSeconds*1000)} rest</div></div><button class="icon-btn" onclick="event.stopPropagation();gp.deleteExercise(${e.id})">⌫</button></div></div>`);c+='</div>';
   return shell(c,{topbar:topbar(w.name,'programme'),navBar:false});
 }
 function exerciseForm(e={}){
