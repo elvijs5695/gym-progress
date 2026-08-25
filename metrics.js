@@ -22,16 +22,12 @@ export function exerciseMetrics(state,e){
   const rirs=complete.filter(s=>!s.failure&&s.rir!=null).map(s=>Number(s.rir));
   const bestE1rm=complete.reduce((best,s)=>Math.max(best,(Number(s.actualWeightKg)||0)*(1+(Number(s.actualReps)||0)/30)),0);
   const maxWeight=complete.reduce((best,s)=>Math.max(best,Number(s.actualWeightKg)||0),0);
-  return {volume,avgRir:rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null,completedSets:complete.length,bestE1rm,maxWeight,failureCount:complete.filter(s=>s.failure).length};
+  const failureCount=complete.filter(s=>s.failure).length,effective=complete.map(s=>s.failure?-1:(s.rir==null?null:Number(s.rir))).filter(v=>v!=null);return {volume,avgRir:rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null,effectiveRirAvg:effective.length?effective.reduce((a,b)=>a+b,0)/effective.length:null,completedSets:complete.length,bestE1rm,maxWeight,failureCount};
 }
 export function sessionMetrics(state,session){
   const es=sessionExercises(state,session.id); const em=es.map(e=>exerciseMetrics(state,e));
   const volume=em.reduce((a,m)=>a+m.volume,0); const failures=em.reduce((a,m)=>a+m.failureCount,0);
-  const complete=es.flatMap(e=>exerciseSets(state,e.id)).filter(s=>s.status==='COMPLETE');
-  // A failed, incomplete repetition is never counted in actualReps. At day level
-  // failed sets contribute an effective RIR of -1 rather than automatically
-  // making the whole workout Failure.
-  const effectiveRirs=complete.map(s=>s.failure?-1:(s.rir==null?null:Number(s.rir))).filter(v=>v!=null);
+  const rirs=[]; es.forEach(e=>exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE'&&!s.failure&&s.rir!=null).forEach(s=>rirs.push(Number(s.rir))));
   const prev=previousIdenticalSession(state,session);
   let progressPercent=null;
   if(prev){
@@ -40,26 +36,22 @@ export function sessionMetrics(state,session){
     for(const e of es){const m=exerciseMetrics(state,e),old=oldByName.get(e.name);if(m.completedSets&&old?.volume>0)changes.push((m.volume/old.volume-1)*100);}
     if(changes.length)progressPercent=changes.reduce((a,b)=>a+b,0)/changes.length;
   }
-  const completedExercises=es.filter(e=>exerciseSets(state,e.id).some(s=>s.status==='COMPLETE')).length;
-  const failedExerciseCount=es.filter(e=>exerciseSets(state,e.id).some(s=>s.status==='COMPLETE'&&s.failure)).length;
-  return {volume,avgRir:effectiveRirs.length?effectiveRirs.reduce((a,b)=>a+b,0)/effectiveRirs.length:null,progressPercent,failureCount:failures,completedSets:complete.length,failedExerciseCount,completedExercises};
+  const completeSets=es.flatMap(e=>exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE')),effective=completeSets.map(s=>s.failure?-1:(s.rir==null?null:Number(s.rir))).filter(v=>v!=null);return {volume,avgRir:rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null,effectiveRirAvg:effective.length?effective.reduce((a,b)=>a+b,0)/effective.length:null,completedSets:completeSets.length,progressPercent,failureCount:failures};
 }
 export function previousIdenticalSession(state,current){
   return state.workout_sessions.filter(s=>s.id!==current.id&&s.status==='COMPLETE'&&s.startedAt<current.startedAt&&
     (current.workoutId!=null?s.workoutId===current.workoutId:s.workoutName===current.workoutName)).sort((a,b)=>b.startedAt-a.startedAt)[0]||null;
 }
-export function difficultyLevel(avgRir,failureCount,appState,sessionStatus=null,completedSets=0,failedExerciseCount=0,completedExercises=0){
+export function difficultyLevel(avgRir,failureCount,appState,sessionStatus=null,completedSets=0,effectiveRirAvg=null){
   if(sessionStatus==='ABORTED')return {key:'aborted',label:'Aborted',color:COLORS.deepred};
-  // Exercise-level calls have no sessionStatus and still show Failure when that
-  // exercise contains a failed set. Day-level Failure requires repeated,
-  // substantial failure: at least two sets and >=25% of completed sets; if
-  // multiple exercises were completed, failures must span at least two exercises.
-  if(sessionStatus!=null&&completedSets>0&&failureCount>=2&&failureCount/completedSets>=.25&&(completedExercises<=1||failedExerciseCount>=2))return {key:'failure',label:'Failure',color:COLORS.deepred};
-  if(sessionStatus==null&&failureCount>0)return {key:'failure',label:'Failure',color:COLORS.deepred};
-  if(avgRir==null)return {key:'unknown',label:'No effort data',color:COLORS.gray};
-  if(avgRir>=appState.difficultyComfortableMinRir)return {key:'comfortable',label:'Comfortable',color:COLORS.green};
-  if(avgRir>=appState.difficultyChallengingMinRir)return {key:'challenging',label:'Challenging',color:COLORS.yellow};
-  if(avgRir>=appState.difficultyHardMinRir)return {key:'hard',label:'Hard',color:COLORS.orange};
+  const count=Math.max(0,Number(completedSets||0)),failures=Math.max(0,Number(failureCount||0)),failureRate=count?failures/count:0,targetMin=Number(appState.targetRirMin??1);
+  const dayFailure=failures>=2&&(failureRate>=.25||(effectiveRirAvg!=null&&Number(effectiveRirAvg)<=targetMin-1))||failures>=3&&failureRate>=.15;
+  if(dayFailure)return {key:'failure',label:'Failure',color:COLORS.deepred};
+  const score=effectiveRirAvg!=null?Number(effectiveRirAvg):(avgRir==null?null:Number(avgRir));
+  if(score==null)return failures?{key:'very-hard',label:'Very hard',color:COLORS.red}:{key:'unknown',label:'No effort data',color:COLORS.gray};
+  if(score>=appState.difficultyComfortableMinRir)return {key:'comfortable',label:'Comfortable',color:COLORS.green};
+  if(score>=appState.difficultyChallengingMinRir)return {key:'challenging',label:'Challenging',color:COLORS.yellow};
+  if(score>=appState.difficultyHardMinRir)return {key:'hard',label:'Hard',color:COLORS.orange};
   return {key:'very-hard',label:'Very hard',color:COLORS.red};
 }
 export function exerciseProgressPercent(state,e,previous){

@@ -1,1 +1,1 @@
-1.2.5
+Gym Progress PWA v1.2.5

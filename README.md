@@ -1,5 +1,16 @@
+# Gym Progress PWA v1.2.5 – scheduling & progression refinement
 
-## v1.2.5 – equipment-aware loading
+- Fixed post-workout next-session dialog persistence.
+- Scheduled next session can be rescheduled from the Home calendar button.
+- Reminder times are configurable in Settings.
+- Suggested next-session UI no longer explains the 72-hour calculation.
+- Barbell progression uses +2.5 kg when close to the progression RIR threshold; +5 kg is reserved for clearly comfortable heavy lower-body work.
+- Progression −/+ buttons now use physical equipment grading (0.25 kg barbell, 0.5 kg dumbbell) and stay in fixed positions.
+- Bodyweight progression increases reps instead of kilograms.
+- A single failed set/exercise no longer automatically labels the whole workout as Failure; day-level Failure requires repeated/high-density failure or a large session-level effort deficit.
+
+
+## v1.2.4 – equipment-aware loading
 
 - Exercise definition now includes Equipment; dumbbell exercises can be Single or Pair.
 - Dumbbell weight is entered per dumbbell; Pair volume counts both dumbbells.
@@ -7,10 +18,6 @@
 - Progression suggestions are equipment-aware, no longer default to +0.25 kg, and can be manually edited before acceptance.
 - Barbell ramp-up remains practical in 5 kg steps; dumbbell ramp-up uses 0.5 kg steps.
 - Exercise suggestions/lists are alphabetical.
-- Bodyweight progression is rep-based (+1 rep by default) rather than kg-based.
-- Normal barbell progression is typically +2.5 kg; +5 kg is reserved for large lower-body lifts with clearly ample RIR reserve, while manual − / + adjustment stays on the 0.25 kg selectable grid.
-- Fixed the post-workout next-session dialog re-render race; scheduled dates can be rescheduled from Home and reminder times are configurable.
-- Failure logging counts only completed clean reps. Workout-level Failure now requires repeated, substantial failure and, in multi-exercise workouts, failures across more than one exercise.
 
 # Gym Progress PWA
 
@@ -180,5 +187,3 @@ This release brings the PWA in line with the latest Android behaviour: partial v
 - Home shows the scheduled date beside `next`; overdue dates turn red.
 - Reminder targets are 19:00 the evening before and 08:00 on the scheduled day.
 - Browser notification delivery is best effort: a static GitHub Pages PWA cannot reliably wake a fully closed iPhone/desktop browser without a push backend.
-
-Latest parity update: stable next-session scheduling dialog, Home reschedule calendar, configurable reminder times, bodyweight rep progression, RIR-aware load progression, fixed +/- positions, and day-level Failure thresholding. Failed incomplete reps are not counted.

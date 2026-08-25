@@ -80,34 +80,25 @@ export function gradingIncrement(equipment){
   if(equipment===Equipment.BARBELL)return .25;
   if(equipment===Equipment.DUMBBELL)return .5;
   if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return 2.5;
-  if(equipment===Equipment.BODYWEIGHT)return 0;
+  if(equipment===Equipment.BODYWEIGHT)return .5;
   return .25;
 }
-export function snapSelectable(value,equipment){
-  if(equipment===Equipment.BODYWEIGHT)return 0;
-  return Math.max(0,snap(value,gradingIncrement(equipment)));
-}
+export function snapSelectable(value,equipment){return Math.max(0,snap(value,gradingIncrement(equipment)));}
 export function stepSelectable(value,direction,equipment){
-  if(equipment===Equipment.BODYWEIGHT)return 0;
   const step=gradingIncrement(equipment),scaled=Number(value||0)/step,near=Math.abs(scaled-Math.round(scaled))<.0001;
   const next=direction>0?(near?Math.round(scaled)+1:Math.ceil(scaled)):(near?Math.round(scaled)-1:Math.floor(scaled));
   return Math.max(0,next*step);
 }
 export function volumeMultiplier(equipment,dumbbellLoad){return equipment===Equipment.DUMBBELL&&dumbbellLoad===DumbbellLoad.PAIR?2:1;}
-export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,averageRir=null,targetRirMax=2){
-  base=Number(base||0);
-  const ampleReserve=averageRir!=null&&Number(averageRir)>=Number(targetRirMax)+.75;
-  if(equipment===Equipment.DUMBBELL)return ampleReserve&&base>=20?1:.5; // per dumbbell
-  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=80&&ampleReserve?5:2.5;}
-  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=80&&ampleReserve?5:2.5;
+export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,rirMargin=0){
+  base=Number(base||0);rirMargin=Number(rirMargin||0);
+  if(equipment===Equipment.DUMBBELL)return base>=20&&rirMargin>=1?1:.5; // per dumbbell
+  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=100&&rirMargin>=1?5:2.5;}
+  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=100&&rirMargin>=1?5:2.5;
   if(equipment===Equipment.BODYWEIGHT)return 0;
-  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=80&&ampleReserve?5:2.5;
+  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&rirMargin>=1?5:2.5;
 }
-export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,averageRir=null,targetRirMax=2){
-  if(equipment===Equipment.BODYWEIGHT)return 0;
-  return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,averageRir,targetRirMax),equipment);
-}
-export function suggestedNextReps(currentTargetReps){return Math.max(1,Number(currentTargetReps||1))+1;}
+export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,rirMargin=0){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,rirMargin),equipment);}
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName)){
   if(!(workingWeightKg>0)) return [];
   let raw;
