@@ -1,17 +1,5 @@
-## v1.2.5 – scheduling and progression refinement
 
-- Fixed the post-workout next-session prompt disappearing after a few seconds.
-- Added Home calendar rescheduling beside the due workout's Play action.
-- Simplified next-session copy to show the proposed date rather than exposing elapsed-hour logic.
-- Evening-before and session-day reminder times are configurable in Settings.
-- Bodyweight exercises progress by reps rather than kg.
-- Heavy barbell/machine progression can use a larger jump only when the progression threshold was cleared comfortably; closer-to-failure sessions stay conservative. Barbell ramp-up remains 5 kg.
-- Progression −/+ uses the equipment's selectable grading (barbell 0.25 kg, dumbbell 0.5 kg each) and stays in fixed positions while the value changes.
-- One failed exercise no longer makes a multi-exercise workout Failure. Session Failure now requires repeated failure spread across the workout.
-- Service Worker cache bumped for clean GitHub Pages updates.
-
-
-## v1.2.4 – equipment-aware loading
+## v1.2.5 – equipment-aware loading
 
 - Exercise definition now includes Equipment; dumbbell exercises can be Single or Pair.
 - Dumbbell weight is entered per dumbbell; Pair volume counts both dumbbells.
@@ -19,6 +7,10 @@
 - Progression suggestions are equipment-aware, no longer default to +0.25 kg, and can be manually edited before acceptance.
 - Barbell ramp-up remains practical in 5 kg steps; dumbbell ramp-up uses 0.5 kg steps.
 - Exercise suggestions/lists are alphabetical.
+- Bodyweight progression is rep-based (+1 rep by default) rather than kg-based.
+- Normal barbell progression is typically +2.5 kg; +5 kg is reserved for large lower-body lifts with clearly ample RIR reserve, while manual − / + adjustment stays on the 0.25 kg selectable grid.
+- Fixed the post-workout next-session dialog re-render race; scheduled dates can be rescheduled from Home and reminder times are configurable.
+- Failure logging counts only completed clean reps. Workout-level Failure now requires repeated, substantial failure and, in multi-exercise workouts, failures across more than one exercise.
 
 # Gym Progress PWA
 
@@ -183,8 +175,10 @@ This release brings the PWA in line with the latest Android behaviour: partial v
 
 ## v1.2.3
 - Optional Motivation & reminders.
-- Inactivity reminder defaults to 3 days.
-- Completed workouts offer a sensible next-session date.
+- Inactivity reminder defaults to 3 days = exactly 72 elapsed hours.
+- Completed workouts offer a next-session date exactly 72 hours later.
 - Home shows the scheduled date beside `next`; overdue dates turn red.
-- Evening-before and session-day reminder times can be changed in Settings.
+- Reminder targets are 19:00 the evening before and 08:00 on the scheduled day.
 - Browser notification delivery is best effort: a static GitHub Pages PWA cannot reliably wake a fully closed iPhone/desktop browser without a push backend.
+
+Latest parity update: stable next-session scheduling dialog, Home reschedule calendar, configurable reminder times, bodyweight rep progression, RIR-aware load progression, fixed +/- positions, and day-level Failure thresholding. Failed incomplete reps are not counted.
