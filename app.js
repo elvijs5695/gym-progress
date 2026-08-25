@@ -10,6 +10,7 @@ import {evaluateFutureAdjustment} from './future-adjustment.js';
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
+const APP_VERSION='1.2.13';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 let state=null;
@@ -48,7 +49,7 @@ function ensureRotation(s=state){
 }
 async function persist(){await saveState(state);}
 function toast(msg){ui.toast=msg;render();setTimeout(()=>{if(ui.toast===msg){ui.toast=null;const el=document.querySelector('.toast');if(el)el.remove();else render();}},1800);}
-function nav(name,id=null){route={name,id};window.scrollTo({top:0,behavior:'instant'});render();}
+function nav(name,id=null){if(name==='logs'&&route.name!=='logs'){ui.timelineDays=30;ui.timelineEndMs=null;}route={name,id};window.scrollTo({top:0,behavior:'instant'});render();}
 function activeSession(){return state.workout_sessions.find(s=>s.status==='ACTIVE')||null;}
 function getWorkout(id){return state.workout_templates.find(w=>w.id===Number(id));}
 function getTemplateExercises(workoutId){return state.template_exercises.filter(e=>e.workoutId===Number(workoutId)).sort((a,b)=>a.position-b.position);}
@@ -115,40 +116,108 @@ function bindProgrammeReorder(){
       if(startEvent.button!=null&&startEvent.button!==0)return;
       const row=grip.closest('.reorder-row');if(!row)return;
       startEvent.preventDefault();startEvent.stopPropagation();
+
       const kind=grip.dataset.reorderKind,id=Number(grip.dataset.reorderId);
       const selector=kind==='workout'?'.programme-day.reorder-row':'.exercise-programme-row.reorder-row';
-      const rows=[...document.querySelectorAll(selector)];
-      const from=rows.indexOf(row);if(from<0)return;
-      const pointerId=startEvent.pointerId;
-      const startY=startEvent.clientY;
+      const originalRows=[...document.querySelectorAll(selector)];
+      const from=originalRows.indexOf(row);if(from<0)return;
+      const parent=row.parentElement,pointerId=startEvent.pointerId;
       const startRect=row.getBoundingClientRect();
-      let target=from,moved=false,lastY=startEvent.clientY;
-      row.classList.add('dragging');document.body.classList.add('programme-dragging');
+      const pointerOffsetY=startEvent.clientY-startRect.top;
+      let pointerY=startEvent.clientY,moved=false,scrollFrame=null,lastTarget=from;
+
+      // Keep the list's full height while the dragged card floats above it.
+      const placeholder=document.createElement('div');
+      placeholder.className='reorder-placeholder';
+      placeholder.style.height=`${startRect.height}px`;
+      const computed=getComputedStyle(row);
+      placeholder.style.marginBottom=computed.marginBottom;
+      parent.insertBefore(placeholder,row);
+
+      row.classList.add('dragging');
+      document.body.classList.add('programme-dragging');
+      Object.assign(row.style,{
+        position:'fixed',left:`${startRect.left}px`,top:`${startRect.top}px`,
+        width:`${startRect.width}px`,height:`${startRect.height}px`,margin:'0',
+        zIndex:'140',pointerEvents:'none',transform:'translate3d(0,0,0) scale(1.015)'
+      });
+      document.body.appendChild(row);
       grip.setPointerCapture?.(pointerId);
 
-      const clearMarkers=()=>rows.forEach(r=>r.classList.remove('drop-before','drop-after'));
-      const updateTarget=y=>{
-        target=from;
-        for(let i=0;i<rows.length;i++){
-          if(i===from)continue;
-          const b=rows[i].getBoundingClientRect(),mid=b.top+b.height/2;
-          if(y>mid&&i>from)target=i;
-          if(y<mid&&i<from){target=i;break;}
+      const rowsInList=()=>[...parent.querySelectorAll(selector)];
+      const currentTarget=()=>{
+        let index=0;
+        for(const child of parent.children){
+          if(child===placeholder)return index;
+          if(child.matches?.(selector))index++;
         }
-        clearMarkers();
-        if(target!==from)rows[target].classList.add(target<from?'drop-before':'drop-after');
+        return index;
       };
-      const autoscroll=y=>{
-        const edge=84,step=12;
-        if(y<edge)window.scrollBy(0,-step);
-        else if(y>window.innerHeight-edge)window.scrollBy(0,step);
+      const activeAnimations=new Map();
+      const animateReflow=mutate=>{
+        const rows=rowsInList();
+        const before=new Map(rows.map(r=>[r,r.getBoundingClientRect()]));
+        for(const r of rows){const a=activeAnimations.get(r);if(a){a.cancel();activeAnimations.delete(r);}}
+        mutate();
+        for(const r of rows){
+          const a=before.get(r),b=r.getBoundingClientRect();if(!a)continue;
+          const dx=a.left-b.left,dy=a.top-b.top;
+          if(Math.abs(dx)<.5&&Math.abs(dy)<.5)continue;
+          const anim=r.animate([
+            {transform:`translate3d(${dx}px,${dy}px,0)`},
+            {transform:'translate3d(0,0,0)'}
+          ],{duration:190,easing:'cubic-bezier(.2,.8,.2,1)'});
+          activeAnimations.set(r,anim);
+          anim.onfinish=()=>activeAnimations.delete(r);
+          anim.oncancel=()=>activeAnimations.delete(r);
+        }
+      };
+      const movePlaceholder=y=>{
+        const rows=rowsInList();
+        let before=null;
+        for(const r of rows){
+          const b=r.getBoundingClientRect();
+          if(y<b.top+b.height/2){before=r;break;}
+        }
+        const alreadyBefore=before?placeholder.nextElementSibling===before:placeholder.nextElementSibling==null;
+        if(alreadyBefore)return;
+        animateReflow(()=>{
+          if(before)parent.insertBefore(placeholder,before);
+          else if(rows.length)parent.insertBefore(placeholder,rows[rows.length-1].nextSibling);
+          else parent.appendChild(placeholder);
+        });
+        lastTarget=currentTarget();
+      };
+      const updateFloatingRow=()=>{
+        const top=pointerY-pointerOffsetY;
+        row.style.top=`${top}px`;
+      };
+      const edgeScroll=()=>{
+        const edge=96,maxStep=15;
+        let step=0;
+        if(pointerY<edge)step=-maxStep*(1-pointerY/edge);
+        else if(pointerY>window.innerHeight-edge)step=maxStep*(1-(window.innerHeight-pointerY)/edge);
+        if(Math.abs(step)>.2){
+          window.scrollBy(0,step);
+          movePlaceholder(pointerY);
+        }
+        scrollFrame=requestAnimationFrame(edgeScroll);
       };
       const move=ev=>{
         if(ev.pointerId!==pointerId)return;
-        ev.preventDefault();ev.stopPropagation();lastY=ev.clientY;
-        const dy=ev.clientY-startY;if(Math.abs(dy)>4)moved=true;
-        row.style.transform=`translateY(${dy}px)`;
-        updateTarget(ev.clientY);autoscroll(ev.clientY);
+        ev.preventDefault();ev.stopPropagation();
+        pointerY=ev.clientY;
+        if(Math.abs(ev.clientY-startEvent.clientY)>3)moved=true;
+        updateFloatingRow();
+        movePlaceholder(pointerY);
+      };
+      const cleanupFloating=()=>{
+        if(scrollFrame!=null)cancelAnimationFrame(scrollFrame);
+        for(const a of activeAnimations.values())a.cancel();
+        activeAnimations.clear();
+        row.classList.remove('dragging');document.body.classList.remove('programme-dragging');
+        row.removeAttribute('style');
+        try{grip.releasePointerCapture?.(pointerId);}catch{}
       };
       const finish=async ev=>{
         if(ev.pointerId!==pointerId)return;
@@ -156,17 +225,19 @@ function bindProgrammeReorder(){
         document.removeEventListener('pointermove',move,true);
         document.removeEventListener('pointerup',finish,true);
         document.removeEventListener('pointercancel',finish,true);
-        clearMarkers();row.classList.remove('dragging');document.body.classList.remove('programme-dragging');row.style.transform='';
-        try{grip.releasePointerCapture?.(pointerId);}catch{}
+        const target=currentTarget();
+        parent.insertBefore(row,placeholder);placeholder.remove();cleanupFloating();
         if(moved&&target!==from){
           const delta=target-from;
           if(kind==='workout')await moveWorkout(id,delta);else await moveExercise(id,delta);
         }
       };
+
       document.addEventListener('pointermove',move,{capture:true,passive:false});
       document.addEventListener('pointerup',finish,{capture:true,passive:false});
       document.addEventListener('pointercancel',finish,{capture:true,passive:false});
-      updateTarget(lastY);
+      scrollFrame=requestAnimationFrame(edgeScroll);
+      lastTarget=currentTarget();
     },{passive:false});
   });
 }
@@ -199,7 +270,8 @@ function rescheduleNextSession(){const current=state.app_state.nextSessionAt;if(
 async function scheduleNextSession(){const suggestedAt=Number(window.__gpNextSessionSuggestedAt||state.app_state.nextSessionAt||suggestedNextSessionAt()),input=$('#next-session-date')?.value;let chosen=suggestedAt;if(input&&input!==localDateInput(suggestedAt)){const [y,m,d]=input.split('-').map(Number),base=new Date(suggestedAt);chosen=new Date(y,m-1,d,base.getHours(),base.getMinutes(),base.getSeconds(),base.getMilliseconds()).getTime();}state.app_state.nextSessionAt=chosen;state.app_state.nextEveningReminderFor=null;state.app_state.nextMorningReminderFor=null;await persist();window.__gpNextSessionSuggestedAt=null;closeDialog();render();toast('Next session scheduled');}
 async function skipNextSession(){state.app_state.nextSessionAt=null;state.app_state.nextEveningReminderFor=null;state.app_state.nextMorningReminderFor=null;await persist();window.__gpNextSessionSuggestedAt=null;closeDialog();render();}
 function renderFrequencyTimeline(){return `<section class="timeline-card"><div class="row between timeline-head"><div><div class="title">Workout frequency</div><div class="small">Drag · pinch to zoom</div></div><div class="small" id="timeline-span">30 days</div></div><canvas id="workout-timeline" height="76" aria-label="Workout frequency timeline"></canvas><div class="timeline-labels"><span id="timeline-start"></span><span id="timeline-end"></span></div></section>`;}
-function bindWorkoutTimeline(){const canvas=$('#workout-timeline');if(!canvas)return;const sessions=state.workout_sessions.filter(s=>s.status==='COMPLETE'||s.status==='ABORTED').sort((a,b)=>a.startedAt-b.startedAt);if(!sessions.length)return;const latest=sessions.at(-1).startedAt,earliest=sessions[0].startedAt;const DAY=86400000,DEFAULT_DAYS=30,initialNow=now(),historyDays=Math.max((initialNow-earliest)/DAY,1/1440),shortHistory=historyDays<DEFAULT_DAYS,initialDays=shortHistory?historyDays:DEFAULT_DAYS,minDays=Math.min(7,initialDays);if(ui.timelineEndMs==null){ui.timelineDays=initialDays;ui.timelineEndMs=shortHistory?initialNow:Math.max(initialNow,latest+DAY/12);}const pointers=new Map();let lastSingleX=null,lastDistance=null,downPoint=null,dragged=false,hitDots=[];
+function defaultTimelineWindow(sessions,atMs=now()){const DAY=86400000,DEFAULT_DAYS=30;const sorted=[...sessions].sort((a,b)=>a.startedAt-b.startedAt);const earliest=Number(sorted[0]?.startedAt??atMs),latest=Number(sorted.at(-1)?.startedAt??atMs);const historyDays=Math.max((atMs-earliest)/DAY,1/1440);const shortHistory=historyDays<DEFAULT_DAYS;return{earliest,latest,historyDays,shortHistory,days:shortHistory?historyDays:DEFAULT_DAYS,endMs:shortHistory?atMs:Math.max(atMs,latest+DAY/12)}}
+function bindWorkoutTimeline(){const canvas=$('#workout-timeline');if(!canvas)return;const sessions=state.workout_sessions.filter(s=>s.status==='COMPLETE'||s.status==='ABORTED').sort((a,b)=>a.startedAt-b.startedAt);if(!sessions.length)return;const DAY=86400000,initial=defaultTimelineWindow(sessions),latest=initial.latest,earliest=initial.earliest,initialDays=initial.days,minDays=Math.min(7,initialDays);if(ui.timelineEndMs==null){ui.timelineDays=initialDays;ui.timelineEndMs=initial.endMs;}const pointers=new Map();let lastSingleX=null,lastDistance=null,downPoint=null,dragged=false,hitDots=[];
   const clampWindow=()=>{ui.timelineDays=Math.max(minDays,Math.min(3650,ui.timelineDays));const span=ui.timelineDays*DAY,maxEnd=Math.max(now(),latest+DAY/12),minEnd=earliest+span;ui.timelineEndMs=minEnd>maxEnd?maxEnd:Math.max(minEnd,Math.min(maxEnd,ui.timelineEndMs));};
   const draw=()=>{clampWindow();const cssW=Math.max(1,canvas.clientWidth),cssH=76,dpr=window.devicePixelRatio||1;canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);const start=ui.timelineEndMs-ui.timelineDays*DAY,y=38;ctx.strokeStyle='rgba(180,180,190,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(2,y);ctx.lineTo(cssW-2,y);ctx.stroke();hitDots=[];for(const ss of sessions){if(ss.startedAt<start||ss.startedAt>ui.timelineEndMs)continue;const rawX=((ss.startedAt-start)/(ui.timelineEndMs-start))*cssW,x=Math.max(5,Math.min(cssW-5,rawX)),sm=sessionMetrics(state,ss),sd=difficultyLevel(sm.avgRir,sm.failureCount,state.app_state,ss.status,sm.completedSets,sm.effectiveRirAvg);ctx.fillStyle=sd.color;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();hitDots.push({x,y,sessionId:ss.id});}$('#timeline-start').textContent=shortTimelineDate(start);$('#timeline-end').textContent=shortTimelineDate(ui.timelineEndMs);$('#timeline-span').textContent=t(timelineSpanLabel(ui.timelineDays),languageCode(state));canvas.classList.toggle('dots-clickable',ui.timelineDays<=7.05);};
   const pan=(dx)=>{ui.timelineEndMs-=(dx/Math.max(1,canvas.clientWidth))*ui.timelineDays*DAY;draw();};
@@ -279,7 +351,8 @@ function renderSettings(){
   <div class="card stack"><div class="card-row"><div class="grow"><div class="title">Motivation & reminders</div><div class="subtitle">Optional inactivity and next-session reminders</div></div><input style="width:auto" type="checkbox" ${a.motivationEnabled?'checked':''} onchange="gp.toggleMotivation(this.checked)"></div>${a.motivationEnabled?`${settingStepper('No workout for (days)',Math.round(a.inactivityReminderHours/24),"gp.changeInactivityDays(-1)","gp.changeInactivityDays(1)")}<div class="reminder-time-grid"><label><span class="field">Evening-before reminder</span><input type="time" value="${esc(a.eveningReminderTime)}" onchange="gp.setReminderTime('evening',this.value)"></label><label><span class="field">Workout-day reminder</span><input type="time" value="${esc(a.morningReminderTime)}" onchange="gp.setReminderTime('morning',this.value)"></label></div>${'Notification'in window&&Notification.permission!=='granted'?`<button class="secondary full" onclick="gp.requestNotificationPermission()">Allow browser notifications</button>`:''}<div class="small">PWA note: scheduled notifications are best effort. A static GitHub Pages PWA may not be woken by iOS/desktop browsers while fully closed.</div>`:''}</div>
   <div class="card"><div class="card-row"><div class="grow"><div class="title">Keep screen awake</div></div><input style="width:auto" type="checkbox" ${a.keepScreenAwake?'checked':''} onchange="gp.toggleAwake(this.checked)"></div></div>
   <div class="section-title">Data</div>
-  <div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()">Full backup</button><button class="secondary full" onclick="gp.pickRestore()">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()">Erase all data</button><button class="secondary full log-erase-btn" onclick="gp.eraseExerciseLogs()">Erase exercise log data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>`;
+  <div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()">Full backup</button><button class="secondary full" onclick="gp.pickRestore()">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()">Erase all data</button><button class="secondary full log-erase-btn" onclick="gp.eraseExerciseLogs()">Erase exercise log data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>
+  <div class="app-version">Gym Progress PWA v${APP_VERSION}</div>`;
   return shell(content);
 }
 async function setLanguage(code){state.app_state.languageCode=code==='lv'?'lv':'en';await persist();render();}

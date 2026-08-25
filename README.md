@@ -1,4 +1,21 @@
-# Gym Progress PWA v1.2.11 – adaptive short-history timeline
+# Gym Progress PWA v1.2.13 – animated live drag preview
+
+## v1.2.13
+
+- Programme reordering now previews the final order continuously while dragging.
+- Nearby workout/exercise cards slide out of the way as the drag grip crosses them.
+- A full-card placeholder shows exactly where the dragged item will land, replacing the narrow line-style drop target.
+- Edge auto-scroll remains active during long drags.
+- Existing post-workout celebration and adaptive Logs timeline behaviour are preserved.
+
+
+## v1.2.12
+
+- Settings now shows the exact running PWA version at the very bottom.
+- Entering Logs now resets the frequency timeline to its intended default viewport instead of reusing an older in-memory pan/zoom state.
+- With less than 30 days of recorded history, that default viewport is first recorded workout → today. With 30+ days, it remains about 30 days.
+- PWA-only workout-complete portrait greeting remains unchanged.
+
 
 ## v1.2.11
 
