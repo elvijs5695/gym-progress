@@ -1,3 +1,4 @@
+import {volumeMultiplier} from './exercise-library.js';
 export const COLORS={blue:'#92b8e8',green:'#70b995',lightgreen:'#a6d9b8',yellow:'#e8cf80',red:'#e99b9b',deepred:'#d97777',orange:'#e9ad83',gray:'#b8bcc4'};
 export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 export function formatKg(v){
@@ -16,7 +17,8 @@ export function exerciseSets(state,exerciseId){return state.performed_sets.filte
 export function sessionExercises(state,sessionId){return state.session_exercises.filter(e=>e.sessionId===sessionId).sort((a,b)=>a.position-b.position);}
 export function exerciseMetrics(state,e){
   const complete=exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE');
-  const volume=complete.reduce((a,s)=>a+(Number(s.actualWeightKg)||0)*(Number(s.actualReps)||0),0);
+  const multiplier=volumeMultiplier(e.equipment,e.dumbbellLoad);
+  const volume=complete.reduce((a,s)=>a+(Number(s.actualWeightKg)||0)*(Number(s.actualReps)||0)*multiplier,0);
   const rirs=complete.filter(s=>!s.failure&&s.rir!=null).map(s=>Number(s.rir));
   const bestE1rm=complete.reduce((best,s)=>Math.max(best,(Number(s.actualWeightKg)||0)*(1+(Number(s.actualReps)||0)/30)),0);
   const maxWeight=complete.reduce((best,s)=>Math.max(best,Number(s.actualWeightKg)||0),0);

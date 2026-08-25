@@ -59,5 +59,10 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .progress-summary .metric{min-width:0}
 .progress-summary .metric-label{min-height:30px;display:flex;align-items:flex-start}
 .progress-summary .metric-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.abort-actions{flex-wrap:wrap}.abort-actions .danger{margin-right:auto}
+.abort-actions{flex-direction:column;align-items:flex-end;gap:4px}.abort-actions button{width:auto}.abort-actions .danger{margin-right:0}
 @media(max-width:390px){.progress-summary{grid-template-columns:1fr 1fr 1.35fr;gap:6px}.progress-summary .metric{padding-left:9px;padding-right:9px}.progress-summary .metric-label{font-size:10px}}
+
+/* v1.2.3 motivation + next-session scheduling */
+.next-date-overdue{color:#e36f76!important;font-weight:800}.schedule-actions{flex-direction:column;align-items:flex-end;gap:4px}.schedule-actions button{width:auto}
+
+.progression-edit{display:flex;align-items:flex-end;gap:10px;margin:16px 0 8px}.progression-edit label{margin:0}.progression-edit input{text-align:center;font-weight:700;font-size:1.15rem}

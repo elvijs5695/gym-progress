@@ -1,3 +1,13 @@
+
+## v1.2.4 – equipment-aware loading
+
+- Exercise definition now includes Equipment; dumbbell exercises can be Single or Pair.
+- Dumbbell weight is entered per dumbbell; Pair volume counts both dumbbells.
+- Barbell selectable weights use 0.25 kg total grading; dumbbells use 0.5 kg per dumbbell.
+- Progression suggestions are equipment-aware, no longer default to +0.25 kg, and can be manually edited before acceptance.
+- Barbell ramp-up remains practical in 5 kg steps; dumbbell ramp-up uses 0.5 kg steps.
+- Exercise suggestions/lists are alphabetical.
+
 # Gym Progress PWA
 
 A local-first Progressive Web App port of the Gym Progress Android project, designed to run on iPhone/iPad from Safari and install to the Home Screen.
@@ -12,7 +22,7 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 - Automatic context-aware ramp-up: similar movements later in the workout receive a shorter suggestion; recognised barbell ramp-up weights snap to practical 5 kg steps
 - Warm-up, ramp-up, working-set, rest, unloading and stretching phases
 - Large active-set display with a deliberately slower, calmer pulse
-- Custom working weight entry plus +/- 0.25 kg controls
+- Custom working weight entry plus equipment-aware +/- controls (0.25 kg barbell total, 0.5 kg per dumbbell)
 - Flexible RIR input: Compact 3+ or Extended 5+, with configurable target RIR range
 - Conservative performance red flags after unexpected failure, rep misses or RIR collapse, with optional next-set adjustments
 - Rest countdown, +/- 30 sec and skip, plus in-foreground sound/vibration cues
@@ -22,6 +32,7 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 - Interactive workout-frequency timeline: 1-month initial view, drag to pan and pinch/wheel to zoom
 - Weight / Volume / e1RM progress charts with fixed-width Current / First / Progress summaries; Aborted sessions are excluded
 - Visual English/Latvian Manual under Settings
+- Optional Motivation & reminders: exact 72-hour default inactivity threshold, post-workout next-session scheduling, Home due-date/overdue status, and best-effort browser notifications
 - IndexedDB local storage and offline shell through a Service Worker
 - Android-compatible `gym-progress-backup-v3` full backup import/export
 - Detailed JSON and CSV export for analysis
@@ -150,3 +161,18 @@ This release brings the PWA in line with the latest Android behaviour: partial v
 ## v1.2.1 visual refinement
 
 - Active-set pulse now animates only the circular background/halo. Exercise, weight, reps and set text remain completely static.
+
+## v1.2.2 dialog refinement
+
+- **End workout early** actions are now a compact right-aligned vertical stack.
+- Action order is **Finish as partial → Discard workout → Cancel**, with Cancel last and visually quieter.
+
+
+
+## v1.2.3
+- Optional Motivation & reminders.
+- Inactivity reminder defaults to 3 days = exactly 72 elapsed hours.
+- Completed workouts offer a next-session date exactly 72 hours later.
+- Home shows the scheduled date beside `next`; overdue dates turn red.
+- Reminder targets are 19:00 the evening before and 08:00 on the scheduled day.
+- Browser notification delivery is best effort: a static GitHub Pages PWA cannot reliably wake a fully closed iPhone/desktop browser without a push backend.
