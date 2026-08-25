@@ -75,3 +75,13 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 
 /* v1.2.6 language + starter programme */
 .starter-entry-actions{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.starter-entry-actions button{width:auto}
+
+/* v1.2.7 validation + stable weight presentation */
+.home-weight{font-weight:800;color:var(--text)}
+.rir-choice-wrap{width:100%;border-radius:16px;padding:4px;transition:background .18s ease,box-shadow .18s ease}
+.rir-required-note{min-height:18px;margin-top:7px;text-align:center;font-size:.82rem;color:var(--danger,#d97777);opacity:0;transform:translateY(-2px);transition:opacity .16s ease,transform .16s ease}
+.rir-required-note.show{opacity:1;transform:translateY(0)}
+.rir-choice-wrap.rir-invalid{animation:rirInvalidPulse .52s ease 0s 2;background:rgba(217,119,119,.09);box-shadow:0 0 0 1px rgba(217,119,119,.45)}
+.rir-choice-wrap.rir-invalid .rir-row button{border-color:rgba(217,119,119,.85);color:var(--danger,#d97777)}
+@keyframes rirInvalidPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+.log-erase-btn{margin-top:2px}

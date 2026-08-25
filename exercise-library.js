@@ -83,11 +83,11 @@ export function gradingIncrement(equipment){
   if(equipment===Equipment.BODYWEIGHT)return .5;
   return .25;
 }
-export function snapSelectable(value,equipment){return Math.max(0,snap(value,gradingIncrement(equipment)));}
+export function snapSelectable(value,equipment){if(equipment===Equipment.BODYWEIGHT)return 0;const step=gradingIncrement(equipment);return Math.max(step,snap(Math.max(step,Number(value)||0),step));}
 export function stepSelectable(value,direction,equipment){
   const step=gradingIncrement(equipment),scaled=Number(value||0)/step,near=Math.abs(scaled-Math.round(scaled))<.0001;
   const next=direction>0?(near?Math.round(scaled)+1:Math.ceil(scaled)):(near?Math.round(scaled)-1:Math.floor(scaled));
-  return Math.max(0,next*step);
+  return equipment===Equipment.BODYWEIGHT?0:Math.max(step,next*step);
 }
 export function volumeMultiplier(equipment,dumbbellLoad){return equipment===Equipment.DUMBBELL&&dumbbellLoad===DumbbellLoad.PAIR?2:1;}
 export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){

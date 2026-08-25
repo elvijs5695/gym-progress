@@ -1,12 +1,13 @@
 // Conservative within-session autoregulation.
-// The evidence is stronger for the principles (proximity to failure is useful,
-// failure creates more acute fatigue, and performance should be autoregulated)
-// than for one universal percentage reduction. The small changes below are
-// therefore practical heuristics and are never applied without the user's choice.
+// Loaded exercises preserve the programmed rep target and reduce load.
+// Bodyweight exercises preserve load semantics and reduce reps instead.
+// Exact percentage reductions are practical heuristics and are never forced.
+
+import {Equipment} from './exercise-library.js';
 
 const q25 = n => Math.round(n * 4) / 4;
 
-export function evaluateAutoregulation(justCompleted, allSets, appState) {
+export function evaluateAutoregulation(justCompleted, allSets, appState, equipment=Equipment.OTHER) {
   const next = allSets
     .filter(s => s.status === 'PENDING' && s.setNumber > justCompleted.setNumber)
     .sort((a,b) => a.setNumber - b.setNumber)[0];
@@ -26,73 +27,110 @@ export function evaluateAutoregulation(justCompleted, allSets, appState) {
   const repDeficit = Math.max(0, Number(justCompleted.targetReps ?? 0) - actualReps);
   const firstSet = Number(justCompleted.setNumber) === 1;
   const currentRir = justCompleted.rir == null ? null : Number(justCompleted.rir);
+  const bodyweight = equipment === Equipment.BODYWEIGHT;
 
   const weightAdvice = (percent, reason) => ({
     title: 'Performance red flag',
     reason,
     nextSetId: next.id,
     nextSetNumber: next.setNumber,
-    suggestedWeightKg: Math.min(actualWeight, q25(actualWeight * (1 - percent / 100))),
+    suggestedWeightKg: Math.max(.25, Math.min(actualWeight, q25(actualWeight * (1 - percent / 100)))),
     suggestedReps: Number(next.targetReps),
     kind: 'REDUCE_WEIGHT'
   });
 
-  const repAdvice = (amount, reason) => {
-    const reduced = Math.max(1, Number(next.targetReps) - amount);
-    if (reduced === Number(next.targetReps)) return weightAdvice(5, reason);
-    return {
-      title: 'Performance red flag',
-      reason,
-      nextSetId: next.id,
-      nextSetNumber: next.setNumber,
-      suggestedWeightKg: actualWeight,
-      suggestedReps: reduced,
-      kind: 'REDUCE_REPS'
-    };
-  };
+  const repAdvice = (amount, reason) => ({
+    title: 'Performance red flag',
+    reason,
+    nextSetId: next.id,
+    nextSetNumber: next.setNumber,
+    suggestedWeightKg: actualWeight,
+    suggestedReps: Math.max(1, Number(next.targetReps) - amount),
+    kind: 'REDUCE_REPS'
+  });
+
+  const adjust = (weightPercent, repAmount, loadedReason, bodyweightReason=loadedReason) =>
+    bodyweight ? repAdvice(repAmount, bodyweightReason) : weightAdvice(weightPercent, loadedReason);
 
   if (justCompleted.failure && firstSet) {
     const reduction = repDeficit >= 3 ? 7.5 : 5;
-    return weightAdvice(
+    return adjust(
       reduction,
+      repDeficit >= 2 ? 2 : 1,
       repDeficit >= 2
-        ? 'Failure came on the first set and reps were well below target. Today’s load is probably too ambitious.'
-        : 'Failure came on the first set, before normal set-to-set fatigue should dominate. Reduce the next load slightly.'
+        ? 'Failure came on the first set and reps were well below target. Keep the rep target and reduce the next load.'
+        : 'Failure came on the first set, before normal set-to-set fatigue should dominate. Keep the rep target and reduce the next load slightly.',
+      repDeficit >= 2
+        ? 'Failure came on the first set and reps were well below target. Reduce the next rep target.'
+        : 'Failure came on the first set. Reduce the next rep target slightly.'
     );
   }
 
   if (justCompleted.failure && (failuresSoFar >= 2 || repDeficit >= 2)) {
-    return weightAdvice(5, 'Failure is repeating or the rep target was missed by several reps. Reduce load rather than repeatedly grinding.');
+    return adjust(
+      5,
+      2,
+      'Failure is repeating or the rep target was missed by several reps. Keep the rep target and reduce load for the next set.',
+      'Failure is repeating or the rep target was missed by several reps. Reduce the next bodyweight rep target.'
+    );
   }
 
   if (justCompleted.failure) {
-    return repAdvice(1, 'A later set reached failure near the rep target. Keep the load, but trim one rep from the next target to manage fatigue.');
+    return adjust(
+      2.5,
+      1,
+      'A later set reached failure near the rep target. Keep the rep target and reduce the next load slightly.',
+      'A later bodyweight set reached failure near the rep target. Trim one rep from the next target.'
+    );
   }
 
   if (repDeficit >= 2) {
-    return weightAdvice(5, 'The set finished several reps below target. Reduce the next load slightly and reassess.');
+    return adjust(
+      5,
+      1,
+      'The set finished several reps below target. Keep the rep target and reduce the next load slightly.',
+      'The set finished several reps below target. Reduce the next bodyweight rep target slightly.'
+    );
   }
 
   if (currentRir != null && currentRir < targetMin) {
     const belowTargetBy = targetMin - currentRir;
     if (firstSet) {
-      return belowTargetBy >= 2
-        ? weightAdvice(5, 'The first set was much closer to failure than your target RIR range. Reduce the next load slightly.')
-        : repAdvice(1, 'The first set was closer to failure than your target RIR range. Keep the load and trim one rep from the next target.');
+      return adjust(
+        belowTargetBy >= 2 ? 5 : 2.5,
+        1,
+        'The first set was closer to failure than your target RIR range. Keep the rep target and reduce the next load slightly.',
+        'The first set was closer to failure than your target RIR range. Trim one rep from the next bodyweight target.'
+      );
     }
 
     if (previousRir != null && previousRir - currentRir >= 2) {
-      return repAdvice(1, 'RIR dropped sharply compared with the previous set. That is a fatigue red flag, so trim one rep from the next target.');
+      return adjust(
+        2.5,
+        1,
+        'RIR dropped sharply compared with the previous set. Keep the rep target and reduce the next load slightly.',
+        'RIR dropped sharply compared with the previous set. Trim one rep from the next bodyweight target.'
+      );
     }
 
     const previousLast = previous.at(-1);
     const previousAlsoLow = !!previousLast && !previousLast.failure && previousLast.rir != null && Number(previousLast.rir) < targetMin;
     if (previousAlsoLow) {
-      return weightAdvice(2.5, 'Two sets in a row are harder than your target RIR range. Use a small load reduction for the next set.');
+      return adjust(
+        2.5,
+        1,
+        'Two sets in a row are harder than your target RIR range. Keep the rep target and use a small load reduction for the next set.',
+        'Two bodyweight sets in a row are harder than your target RIR range. Trim one rep from the next target.'
+      );
     }
 
     if (currentRir === 0 && targetMin >= 2) {
-      return repAdvice(1, 'This set reached 0 RIR while your target is farther from failure. Trim the next rep target and reassess.');
+      return adjust(
+        2.5,
+        1,
+        'This set reached 0 RIR while your target is farther from failure. Keep the rep target and reduce the next load slightly.',
+        'This bodyweight set reached 0 RIR while your target is farther from failure. Trim one rep from the next target.'
+      );
     }
   }
 

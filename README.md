@@ -1,4 +1,17 @@
-# Gym Progress PWA v1.2.6 – localisation, onboarding & future-session coaching
+# Gym Progress PWA v1.2.7 – validation, starter estimates & load-coaching consistency
+## v1.2.7
+
+- stable two-decimal working-weight display (`100.00 kg`, `100.25 kg`)
+- RIR or Failure is required before set data can be saved, with red validation feedback
+- Starter programme sits directly below Programme in Settings
+- missing starter weights trigger a warning and can be estimated from entered lifts; loaded starter exercises never become 0 kg
+- externally loaded programme exercises cannot be saved at 0 kg; Bodyweight has no external kg target
+- Home/Programme summaries use `sets × reps × weight` with weight emphasised
+- separate **Erase exercise log data** action keeps programme/settings/current working weights
+- loaded failure/autoregulation advice keeps target reps and reduces weight; rep reductions are Bodyweight-only
+- Bodyweight active sets no longer show `0.00 kg` or kg +/- controls
+- Service Worker cache bumped to v12
+
 
 ## v1.2.6
 
