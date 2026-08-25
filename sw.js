@@ -1,7 +1,7 @@
-const CACHE = 'gym-progress-pwa-shell-v10';
+const CACHE = 'gym-progress-pwa-shell-v11';
 const ASSETS = [
   './','./index.html','./styles.css','./app.js','./db.js','./exercise-library.js','./metrics.js',
-  './manifest.webmanifest','./autoregulation.js','./manual.js','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png'
+  './manifest.webmanifest','./autoregulation.js','./manual.js','./i18n.js','./starter-programme.js','./future-adjustment.js','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png'
 ];
 
 self.addEventListener('install', event => {

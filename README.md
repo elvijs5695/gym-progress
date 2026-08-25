@@ -1,4 +1,15 @@
-# Gym Progress PWA v1.2.5 – scheduling & progression refinement
+# Gym Progress PWA v1.2.6 – localisation, onboarding & future-session coaching
+
+## v1.2.6
+
+- English/Latvian application language switch in Settings
+- Manual follows the selected application language
+- beginner starter-programme onboarding + reusable Settings wizard
+- future-session target reduction suggestions after failed exercise sets
+- Android-parity progression comfort threshold
+- bodyweight next-rep analysis/export parity
+- Service Worker cache bumped and new modules added to the offline shell
+
 
 - Fixed post-workout next-session dialog persistence.
 - Scheduled next session can be rescheduled from the Home calendar button.

@@ -90,15 +90,15 @@ export function stepSelectable(value,direction,equipment){
   return Math.max(0,next*step);
 }
 export function volumeMultiplier(equipment,dumbbellLoad){return equipment===Equipment.DUMBBELL&&dumbbellLoad===DumbbellLoad.PAIR?2:1;}
-export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,rirMargin=0){
-  base=Number(base||0);rirMargin=Number(rirMargin||0);
-  if(equipment===Equipment.DUMBBELL)return base>=20&&rirMargin>=1?1:.5; // per dumbbell
-  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=100&&rirMargin>=1?5:2.5;}
-  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=100&&rirMargin>=1?5:2.5;
+export function progressionIncrement(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){
+  base=Number(base||0);const minRir=minCompletedRir==null?null:Number(minCompletedRir),comfortable=minRir!=null&&minRir>=Number(targetRirMax||0)+2;
+  if(equipment===Equipment.DUMBBELL)return base>=20?1:.5; // per dumbbell
+  if(equipment===Equipment.BARBELL){const lower=new Set(['back_squat','front_squat','deadlift','sumo_deadlift','hip_thrust']);return lower.has(exerciseKey)&&base>=100&&comfortable?5:2.5;}
+  if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return base>=100&&comfortable?5:2.5;
   if(equipment===Equipment.BODYWEIGHT)return 0;
-  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&rirMargin>=1?5:2.5;
+  return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&comfortable?5:2.5;
 }
-export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,rirMargin=0){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,rirMargin),equipment);}
+export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,minCompletedRir,targetRirMax),equipment);}
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName)){
   if(!(workingWeightKg>0)) return [];
   let raw;

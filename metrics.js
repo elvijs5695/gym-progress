@@ -10,8 +10,9 @@ export function formatDuration(ms){
   const total=Math.max(0,Math.floor((ms||0)/1000)); const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
   return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')}`;
 }
-export function dateOnly(ms){return new Intl.DateTimeFormat(undefined,{day:'numeric',month:'short',year:'numeric'}).format(new Date(ms));}
-export function dateTime(ms){return new Intl.DateTimeFormat(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(ms));}
+const appLocale=()=>typeof document!=='undefined'&&document.documentElement?.lang==='lv'?'lv-LV':'en-GB';
+export function dateOnly(ms){return new Intl.DateTimeFormat(appLocale(),{day:'numeric',month:'short',year:'numeric'}).format(new Date(ms));}
+export function dateTime(ms){return new Intl.DateTimeFormat(appLocale(),{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(ms));}
 export function iso(ms){return ms==null?null:new Date(ms).toISOString();}
 export function exerciseSets(state,exerciseId){return state.performed_sets.filter(s=>s.sessionExerciseId===exerciseId).sort((a,b)=>a.setNumber-b.setNumber);}
 export function sessionExercises(state,sessionId){return state.session_exercises.filter(e=>e.sessionId===sessionId).sort((a,b)=>a.position-b.position);}
