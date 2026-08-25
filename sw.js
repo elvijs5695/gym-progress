@@ -1,6 +1,6 @@
-const CACHE = 'gym-progress-pwa-shell-v15';
+const CACHE = 'gym-progress-pwa-shell-v16';
 const ASSETS = [
-  './','./index.html','./styles.css?v=1.2.10','./app.js?v=1.2.10','./db.js','./exercise-library.js','./metrics.js',
+  './','./index.html','./styles.css?v=1.2.11','./app.js?v=1.2.11','./db.js','./exercise-library.js','./metrics.js',
   './manifest.webmanifest','./assets/workout-complete.png','./autoregulation.js','./manual.js','./i18n.js','./starter-programme.js','./future-adjustment.js','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png'
 ];
 

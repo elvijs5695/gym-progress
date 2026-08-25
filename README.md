@@ -1,4 +1,11 @@
-# Gym Progress PWA v1.2.10 – post-workout celebration
+# Gym Progress PWA v1.2.11 – adaptive short-history timeline
+
+## v1.2.11
+
+- Logs frequency timeline now opens from the first recorded workout to today while total history is shorter than the normal 30-day default window.
+- Once workout history reaches 30 days, the existing ~30-day initial view remains.
+- Existing pan/zoom behaviour is preserved; histories shorter than 7 days can retain their tighter initial view instead of being forced back to 7 days.
+- The PWA-only post-workout portrait greeting remains unchanged.
 
 ## v1.2.10
 - After a fully completed workout is successfully saved, show the supplied celebration portrait with **“Malacis, es lepojos!”**.
