@@ -1,3 +1,10 @@
+# Gym Progress PWA v1.4.3
+
+- Friends header aligned to card edges: name upper-right, Add friend left, Edit name/Sign out right.
+- Friend list count and rendering now use the same de-duplicated accepted-friend set.
+- Disclosure chevron is fixed in place and only flips vertically.
+- Added a small gap between Friends and Shared rhythm.
+
 # Gym Progress PWA v1.4.2
 
 - Fixed social bulk publishing error `All object keys must match` by normalising every activity row to one complete schema before the Supabase insert.

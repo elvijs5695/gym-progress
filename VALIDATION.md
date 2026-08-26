@@ -1,3 +1,10 @@
+# v1.4.3 validation additions
+
+- Friends are de-duplicated by user_id before rendering/counting.
+- Header uses a two-row aligned layout.
+- Disclosure chevron uses a fixed-size SVG and only rotates.
+- Shared rhythm keeps an 8px visual gap after the Friends control/list.
+
 # Gym Progress PWA v1.4.1 — validation record
 
 

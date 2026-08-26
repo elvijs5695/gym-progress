@@ -11,7 +11,7 @@ import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,s
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.4.2';
+const APP_VERSION='1.4.3';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 let state=null;
@@ -630,6 +630,7 @@ function closeDialog(){const r=$('#dialog-root');if(r)r.innerHTML='';window.__gp
 function socialErrorMessage(err){return String(err?.message||err||S('Something went wrong.','Radās kļūda.'));}
 function socialEffortKey(value){const v=String(value||'').trim().toLowerCase().replaceAll('_','-').replaceAll(' ','-');if(v==='very-hard')return'very-hard';if(['comfortable','challenging','hard','failure','aborted','unknown'].includes(v))return v;return'unknown';}
 function socialEffortLabel(value){switch(socialEffortKey(value)){case'comfortable':return S('Comfortable','Komfortabli');case'challenging':return S('Challenging','Izaicinoši');case'hard':return S('Hard','Grūti');case'very-hard':return S('Very hard','Ļoti grūti');case'failure':return S('Failure','Neveiksme');case'aborted':return S('Aborted','Pārtraukts');default:return S('No effort data','Nav slodzes datu');}}
+function normalizeFriends(rows){const seen=new Set();return (Array.isArray(rows)?rows:[]).filter(f=>{const id=String(f?.user_id||'');if(!id||seen.has(id))return false;seen.add(id);return true;});}
 async function refreshSocialBadge(){
   if(!socialConfigured()||!socialSignedIn()){socialUi.unseen=false;render();return;}
   try{
@@ -662,7 +663,7 @@ async function enterFriends(){
     const [profile,friends,requests,notifications,timeline]=await Promise.all([
       getMyProfile(),listFriends(),listIncomingRequests(),listNotifications(20),getTimeline(new Date(Date.now()-30*86400000).toISOString())
     ]);
-    socialUi.profile=profile;socialUi.friends=friends||[];socialUi.requests=requests||[];socialUi.notifications=notifications||[];socialUi.timeline=timeline||[];
+    socialUi.profile=profile;socialUi.friends=normalizeFriends(friends);socialUi.requests=requests||[];socialUi.notifications=notifications||[];socialUi.timeline=timeline||[];
     socialUi.feed=[];socialUi.beforeAt=null;socialUi.beforeId=null;socialUi.hasMore=true;socialUi.loaded=true;
     await loadMoreFriendsFeed();await markSeen();socialUi.unseen=false;
   }catch(e){toast(socialErrorMessage(e));}
@@ -676,8 +677,7 @@ async function loadMoreFriendsFeed(){
 }
 function renderFriends(){
   const configured=socialConfigured(),signed=socialSignedIn(),profile=socialUi.profile;
-  const account=signed?`<div class="social-head-account"><div class="social-head-name">${esc(profile?.display_name||S('You','Tu'))}</div><div class="social-head-actions"><button class="tiny-btn ghost" onclick="gp.editSocialName()">${esc(S('Edit name','Mainīt vārdu'))}</button><button class="tiny-btn ghost" onclick="gp.socialSignOut()">${esc(S('Sign out','Iziet'))}</button></div><button class="tiny-btn ghost social-add-friend" onclick="gp.openAddFriend()">+ ${esc(S('Add friend','Pievienot draugu'))}</button></div>`:'';
-  let c=`<div class="friends-head"><h1>${esc(S('Friends','Draugi'))}</h1>${account}</div>`;
+  let c=`<div class="friends-head"><div class="friends-head-top"><h1>${esc(S('Friends','Draugi'))}</h1>${signed?`<div class="social-head-name friends-head-name">${esc(profile?.display_name||S('You','Tu'))}</div>`:''}</div>${signed?`<div class="friends-head-action-row"><button class="tiny-btn ghost social-add-friend" onclick="gp.openAddFriend()">+ ${esc(S('Add friend','Pievienot draugu'))}</button><div class="social-head-actions"><button class="tiny-btn ghost" onclick="gp.editSocialName()">${esc(S('Edit name','Mainīt vārdu'))}</button><button class="tiny-btn ghost" onclick="gp.socialSignOut()">${esc(S('Sign out','Iziet'))}</button></div></div>`:''}</div>`;
   if(!configured){c+=`<div class="card"><div class="title">${esc(S('Friends backend is not configured','Draugu serveris nav konfigurēts'))}</div><div class="note">${esc(S('Add your Supabase publishable key to social-config.js. Everything else in Gym Progress continues to work offline.','Ievieto Supabase publicējamo atslēgu social-config.js failā. Pārējā Gym Progress darbība turpinās bezsaistē.'))}</div></div>`;return shell(c);}
   if(!signed){c+=`<div class="card social-onboarding"><div class="title">${esc(S('Train locally. Share only when you want.','Trenējies lokāli. Kopīgo tikai tad, kad vēlies.'))}</div><div class="note">${esc(S('Create or open an account with an e-mail code. Friends can see only workout cards you explicitly publish; they cannot access your programme or private log.','Izveido vai atver kontu ar e-pastā saņemtu kodu. Draugi redz tikai tās treniņu kartītes, kuras pats publicē; viņiem nav piekļuves tavai programmai vai privātajam žurnālam.'))}</div><label class="field">${esc(S('E-mail','E-pasts'))}</label><input id="social-email" type="email" autocomplete="email" placeholder="name@example.com"><button class="full" onclick="gp.socialSendCode()">${esc(S('Send code','Nosūtīt kodu'))}</button></div>`;return shell(c);}
   if(socialUi.loading&&!socialUi.loaded)c+=`<div class="card"><div class="note">${esc(S('Loading friends…','Ielādē draugus…'))}</div></div>`;
@@ -686,7 +686,7 @@ function renderFriends(){
     if(acceptedUpdates.length){c+=`<div class="stack social-updates">${acceptedUpdates.map(n=>`<div class="card compact"><strong>${esc(S('Friend request accepted','Draudzības uzaicinājums apstiprināts'))}</strong><div class="small">${esc(`${n.display_name} ${S('accepted your friend request.','apstiprināja tavu draudzības uzaicinājumu.')}`)}</div></div>`).join('')}</div>`;}
     if(socialUi.requests.length){c+=`<h3>${esc(S('Friend requests','Draudzības uzaicinājumi'))}</h3><div class="stack">${socialUi.requests.map(r=>`<div class="card compact friend-request-card"><div class="row between"><strong>${esc(r.display_name)}</strong><div class="row"><button class="tiny-btn" onclick="gp.acceptSocialRequest('${r.request_id}')">${esc(S('Accept','Apstiprināt'))}</button><button class="ghost tiny-btn" onclick="gp.rejectSocialRequest('${r.request_id}')">${esc(S('Decline','Noraidīt'))}</button></div></div></div>`).join('')}</div>`;}
     if(socialUi.friends.length){
-      c+=`<button class="friends-list-toggle" onclick="gp.toggleFriendsList()"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span><span class="friends-toggle-chevron">${socialUi.friendsExpanded?'⌃':'⌄'}</span></button>`;
+      c+=`<button class="friends-list-toggle" onclick="gp.toggleFriendsList()" aria-expanded="${socialUi.friendsExpanded}"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span><span class="friends-toggle-chevron ${socialUi.friendsExpanded?'expanded':''}" aria-hidden="true"><svg viewBox="0 0 24 14" focusable="false"><path d="M3 3l9 8 9-8"/></svg></span></button>`;
       if(socialUi.friendsExpanded)c+=`<div class="stack friends-list">${socialUi.friends.map(f=>`<div class="card compact friend-row"><div class="row between"><strong>${esc(f.display_name)}</strong><button class="ghost tiny-btn" onclick="gp.removeSocialFriend('${f.user_id}')">${esc(S('Remove','Noņemt'))}</button></div></div>`).join('')}</div>`;
     }
     c+=renderFriendsTimeline();
