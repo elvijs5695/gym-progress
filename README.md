@@ -1,6 +1,23 @@
-# Gym Progress PWA v1.3.0 – animated live drag preview
+# Gym Progress PWA v1.4.0
 
-## v1.3.0
+Static/no-build PWA behavioural port of Gym Progress Android. Training stays local in IndexedDB. **Friends is optional** and uploads only cards the user explicitly chooses to publish.
+
+### v1.4.0 highlights
+
+- e-mail OTP account/sign-in via Supabase;
+- exact-email mutual friendships, request/acceptance notifications and mutual removal;
+- shared 30-day multi-person timeline;
+- activity feed loaded 20 records at a time;
+- explicit post-workout share cards for workout summaries and new weight/rep records;
+- per-card comments shown only after Share is selected, own-post deletion and Friends attention badge;
+- previous portrait congratulations screen replaced by the share-summary flow;
+- social session isolated from IndexedDB training backups.
+
+See `SUPABASE_SETUP.md` and `supabase/SUPABASE_SOCIAL_SETUP.sql`. This release already contains the supplied project URL and Publishable key. Every training feature still works normally/offline if Supabase is unavailable.
+
+## Historical release notes
+
+## v1.3.1
 
 - Programme reordering now previews the final order continuously while dragging.
 - Nearby workout/exercise cards slide out of the way as the drag grip crosses them.
@@ -51,7 +68,7 @@
 # Gym Progress PWA v1.2.7 – validation, starter estimates & load-coaching consistency
 ## v1.2.7
 
-- stable two-decimal working-weight display (`100.00 kg`, `100.25 kg`)
+- fixed two-decimal weight text in interactive +/- controls; static weight data omits unnecessary trailing zeroes while preserving meaningful fractions
 - RIR or Failure is required before set data can be saved, with red validation feedback
 - Starter programme sits directly below Programme in Settings
 - missing starter weights trigger a warning and can be estimated from entered lifts; loaded starter exercises never become 0 kg
@@ -116,7 +133,7 @@ A local-first Progressive Web App port of the Gym Progress Android project, desi
 - Logs with rounded volume, session detail, difficulty-coloured frequency dots, Aborted partial sessions and full-session deletion
 - Interactive workout-frequency timeline: 1-month initial view, drag to pan and pinch/wheel to zoom
 - Weight / Volume / e1RM progress charts with fixed-width Current / First / Progress summaries; Aborted sessions are excluded
-- Visual English/Latvian Manual under Settings
+- concise text-only English/Latvian Manual under Settings, with scheduling, language and data explained separately
 - Optional Motivation & reminders: exact 72-hour default inactivity threshold, post-workout next-session scheduling, Home due-date/overdue status, and best-effort browser notifications
 - IndexedDB local storage and offline shell through a Service Worker
 - Android-compatible `gym-progress-backup-v3` full backup import/export

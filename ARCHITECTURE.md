@@ -1,20 +1,19 @@
-# Gym Progress PWA architecture — v1.3
+# Gym Progress PWA architecture — v1.4
 
-The PWA is a behavioural port of Android and remains a static, no-build GitHub Pages app.
-Domain rules live in small pure JavaScript modules; `app.js` coordinates UI and events;
-IndexedDB is the local source of truth. Historical sessions are snapshots.
+The PWA is a static, no-build behavioural port of Android. IndexedDB remains the local source of truth for programme, active workout, logs, settings and history.
 
-## Performance rules
+## Local application
 
-- Visible clocks update at whole-second cadence; user actions update immediately.
-- Timer ticks never rebuild the complete screen.
-- Persistence calls from one UI event are coalesced and IndexedDB writes stay ordered.
-- Service-worker navigation is network-first with an offline shell fallback.
-- Versioned same-origin assets render cache-first and refresh in the background.
-- Static PWA notifications remain best-effort; the UI must not imply native reliability.
+- Pure JavaScript domain modules contain training rules.
+- `app.js` coordinates UI and events.
+- IndexedDB stores local training state.
+- Visible clocks update at whole-second cadence and timer ticks do not rebuild the whole screen.
+- The Service Worker provides the offline application shell.
 
-## Compatibility
+## Optional social layer
 
-Existing IndexedDB state and backup formats remain readable. v1.3 intentionally avoids a
-destructive storage rewrite; future normalised stores should be introduced behind the same
-persistence adapter and dual-read during migration.
+`social-api.js` is an isolated Supabase adapter and `social-config.js` contains only the public project URL/publishable key. Account creation is optional. Supabase stores only identity, friendships, friend notifications, seen-state and activity cards the user explicitly publishes.
+
+Private programme/log data is never sent to Supabase. Workout/record cards are calculated locally after Finish & Save; all share toggles default off. The social auth session is stored separately from IndexedDB training state and is not included in Gym Progress backups.
+
+Social/API failures must degrade only the Friends feature. The rest of the PWA remains usable offline.

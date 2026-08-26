@@ -13,13 +13,13 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.3.0')) errors.push('v1.3.0 marker missing');
+if (!joined.includes('1.4.0')) errors.push('v1.4.0 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
 const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
 const sw = fs.readFileSync(swPath, 'utf8');
-if (sw.includes('gym-progress-pwa-v1.2.13')) errors.push('old service-worker cache marker remains');
+if (sw.includes('gym-progress-pwa-v1.3.1')) errors.push('old service-worker cache marker remains');
 const shellMatch = sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);
 if (!shellMatch) errors.push('APP_SHELL not found');
 else {

@@ -3,7 +3,13 @@ export const COLORS={blue:'#92b8e8',green:'#70b995',lightgreen:'#a6d9b8',yellow:
 export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 export function formatKg(v){
   if(v==null||Number.isNaN(Number(v))) return '—';
-  const n=Number(v); return `${n.toFixed(2)} kg`;
+  const n=Math.round(Number(v)*100)/100;
+  const text=Number.isInteger(n)?String(n):(Number.isInteger(n*10)?n.toFixed(1):n.toFixed(2));
+  return `${text} kg`;
+}
+export function formatKgFixed(v){
+  if(v==null||Number.isNaN(Number(v))) return '—';
+  return `${Number(v).toFixed(2)} kg`;
 }
 export function formatKgRounded(v){const n=Math.round(Number(v)||0);return `${n.toLocaleString('en-US').replaceAll(',', ' ')} kg`;}
 export function formatDuration(ms){

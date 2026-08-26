@@ -1,9 +1,8 @@
-const CACHE_NAME = 'gym-progress-pwa-v1.3.0';
+const CACHE_NAME = 'gym-progress-pwa-v1.4.0';
 const APP_SHELL = [
   "./.nojekyll",
   "./VERSION.txt",
   "./app.js",
-  "./assets/workout-complete.png",
   "./autoregulation.js",
   "./db.js",
   "./exercise-library.js",
@@ -19,6 +18,8 @@ const APP_SHELL = [
   "./manual.js",
   "./metrics.js",
   "./starter-programme.js",
+  "./social-api.js",
+  "./social-config.js",
   "./styles.css"
 ];
 
@@ -66,6 +67,17 @@ self.addEventListener('fetch', event => {
         return response;
       }).catch(() => cached);
       return cached || refresh;
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients => {
+      const existing = clients.find(client => 'focus' in client);
+      if (existing) return existing.focus();
+      return self.clients.openWindow ? self.clients.openWindow('./') : undefined;
     })
   );
 });
