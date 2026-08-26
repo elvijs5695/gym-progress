@@ -1,3 +1,14 @@
+# Gym Progress PWA v1.4.5
+
+- Brought PWA social deletion up to Android v1.3.6 behaviour: deleting your own shared card is optimistic, so it disappears from the feed immediately while Supabase deletion continues asynchronously.
+- Shared rhythm updates immediately with an optimistic delete and performs a lightweight timeline-only reconciliation after server success; failed deletes restore the card/timeline state and show the existing compact error notice.
+- Repeated deletion of the same pending row is guarded, and a pending delete is filtered out if Friends is refreshed before the server request completes.
+- Progress chart transitions now match the Android v1.3.6 treatment more closely: 18% bounded colour blends, neutral midpoint colours at trend changes, rounded strokes, and softened breakpoint joins.
+- Replaced the PWA bottom-navigation text/Unicode glyphs with a coherent inline vector icon set corresponding to Android's Home, History, Bar chart, Group and Settings navigation language. Icons remain fully offline; no icon font or network dependency was added.
+- No IndexedDB schema or Supabase SQL change.
+
+---
+
 # Gym Progress PWA v1.4.4
 
 - Expanded Friends now stay inside one compact card instead of becoming separate friend cards.

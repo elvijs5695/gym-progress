@@ -1,3 +1,10 @@
+# v1.4.5 validation additions
+
+- Static validation checks the v1.4.5 marker.
+- Checks optimistic deletion structure: pending-delete guard, immediate local feed removal, asynchronous Supabase delete, and no full `enterFriends()` reload in the delete path.
+- Checks the new inline vector main-navigation icon helper.
+- Checks the Android-parity chart blend fraction and breakpoint join output.
+
 # v1.4.4 validation additions
 
 - Friends are de-duplicated by user_id before rendering/counting.

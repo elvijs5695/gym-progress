@@ -13,7 +13,7 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.4')) errors.push('v1.4.4 marker missing');
+if (!joined.includes('1.4.5')) errors.push('v1.4.5 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
@@ -27,7 +27,12 @@ if (!appJs.includes("filter(c=>c.selected).map(c=>({...c.event,comment:c.comment
 if (appJs.includes('onclick="gp.showTimelineEvent')) errors.push('social timeline dots should be visual-only');
 if (!css.includes('min-width:0;min-height:0')) errors.push('timeline dots are not protected from global button sizing');
 if (/where\s+e\.event_type='workout_summary'/i.test(socialSql)) errors.push('timeline still excludes exercise-record-only shares');
-if (!appJs.includes('0.06') || !appJs.includes('0.14')) errors.push('trend-correct chart transition markers missing');
+if (!appJs.includes('fade=.18') || !appJs.includes('joins+=`<circle')) errors.push('Android-parity chart transition/join markers missing');
+if (!appJs.includes('const socialDeletePending=new Set()')) errors.push('optimistic social delete pending guard missing');
+if (!appJs.includes('socialUi.feed=socialUi.feed.filter(e=>e.id!==id)')) errors.push('optimistic social delete does not remove feed row immediately');
+if (!appJs.includes('void performOptimisticSocialDelete(event)')) errors.push('optimistic social delete is not launched asynchronously');
+if (/function deleteSocialEvent[\s\S]{0,900}enterFriends\(\)/.test(appJs)) errors.push('social delete still performs a full Friends reload');
+if (!appJs.includes('function mainNavIcon(name)')) errors.push('vector main navigation icon helper missing');
 if (!fs.readFileSync(path.join(root, 'social-api.js'), 'utf8').includes('SOCIAL_EVENT_KEYS')) errors.push('social event bulk-insert normalization missing');
 if (!socialSql.includes('activity_shared')) errors.push('shared-activity notification schema missing');
 if (appJs.includes('Signed in as')) errors.push('signed-in profile card copy still present');
