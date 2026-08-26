@@ -1,39 +1,71 @@
-const CACHE = 'gym-progress-pwa-shell-v18';
-const ASSETS = [
-  './','./index.html','./styles.css?v=1.2.13','./app.js?v=1.2.13','./db.js','./exercise-library.js','./metrics.js',
-  './manifest.webmanifest','./assets/workout-complete.png','./autoregulation.js','./manual.js','./i18n.js','./starter-programme.js','./future-adjustment.js','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png'
+const CACHE_NAME = 'gym-progress-pwa-v1.3.0';
+const APP_SHELL = [
+  "./.nojekyll",
+  "./VERSION.txt",
+  "./app.js",
+  "./assets/workout-complete.png",
+  "./autoregulation.js",
+  "./db.js",
+  "./exercise-library.js",
+  "./future-adjustment.js",
+  "./i18n.js",
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon-64.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-master.png",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./manual.js",
+  "./metrics.js",
+  "./starter-programme.js",
+  "./styles.css"
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-// Network-first while online so GitHub Pages updates appear without forcing users
-// to clear the PWA cache. Cached files are the offline fallback.
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('./index.html', copy));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Static assets render immediately from cache; a successful network response refreshes
+  // the next launch without delaying the current one.
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
+    caches.match(request).then(cached => {
+      const refresh = fetch(request).then(response => {
         if (response && response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(event.request, clone));
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         }
         return response;
-      })
-      .catch(async () => {
-        const cached = await caches.match(event.request);
-        if (cached) return cached;
-        if (event.request.mode === 'navigate') return caches.match('./index.html');
-        throw new Error('Offline and resource is not cached');
-      })
+      }).catch(() => cached);
+      return cached || refresh;
+    })
   );
 });

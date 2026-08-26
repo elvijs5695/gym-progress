@@ -87,7 +87,7 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .log-erase-btn{margin-top:2px}
 
 
-/* v1.2.13 live-preview touch drag reordering */
+/* v1.3.0 live-preview touch drag reordering */
 .reorder-row{position:relative;transition:transform .16s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
 .reorder-row.dragging{background:var(--surface2);border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 18px 40px rgba(0,0,0,.42);transition:none;opacity:.98}
 .reorder-placeholder{box-sizing:border-box;border:1px dashed color-mix(in srgb,var(--accent) 48%,transparent);border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 7%,transparent);pointer-events:none;min-height:28px}

@@ -10,7 +10,7 @@ import {evaluateFutureAdjustment} from './future-adjustment.js';
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.2.13';
+const APP_VERSION='1.3.0';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 let state=null;
@@ -47,7 +47,19 @@ function ensureRotation(s=state){
   if(!active.length){s.app_state.nextWorkoutId=null;return;}
   if(!active.some(w=>w.id===s.app_state.nextWorkoutId))s.app_state.nextWorkoutId=active[0].id;
 }
-async function persist(){await saveState(state);}
+async function persistImmediately(){await saveState(state);}
+
+// Coalesce persistence requests raised by one UI event. Callers may still await
+// persist(); the actual IndexedDB write remains ordered and failure-propagating.
+let persistInFlight = null;
+function persist() {
+  if (persistInFlight) return persistInFlight;
+  persistInFlight = Promise.resolve()
+    .then(() => persistImmediately())
+    .finally(() => { persistInFlight = null; });
+  return persistInFlight;
+}
+
 function toast(msg){ui.toast=msg;render();setTimeout(()=>{if(ui.toast===msg){ui.toast=null;const el=document.querySelector('.toast');if(el)el.remove();else render();}},1800);}
 function nav(name,id=null){if(name==='logs'&&route.name!=='logs'){ui.timelineDays=30;ui.timelineEndMs=null;}route={name,id};window.scrollTo({top:0,behavior:'instant'});render();}
 function activeSession(){return state.workout_sessions.find(s=>s.status==='ACTIVE')||null;}
@@ -76,7 +88,7 @@ async function init(){
   await persist();
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   if(navigator.storage?.persist) navigator.storage.persist().catch(()=>{});
-  tickHandle=setInterval(tick,250);
+  tickHandle=setInterval(tick, 1000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
   render();
   checkMotivationReminders().catch(()=>{});

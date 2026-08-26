@@ -1,6 +1,6 @@
-# Gym Progress PWA v1.2.13 – animated live drag preview
+# Gym Progress PWA v1.3.0 – animated live drag preview
 
-## v1.2.13
+## v1.3.0
 
 - Programme reordering now previews the final order continuously while dragging.
 - Nearby workout/exercise cards slide out of the way as the drag grip crosses them.
