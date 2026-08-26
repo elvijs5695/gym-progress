@@ -1,7 +1,7 @@
-# Gym Progress PWA v1.4.0 — validation record
+# Gym Progress PWA v1.4.1 — validation record
 
 
-## v1.4.0 optional Friends/social layer
+## v1.4.1 optional Friends/social layer
 
 - JavaScript syntax validation passed for all `.js`/`.mjs` files.
 - PWA shell validation passed with `social-api.js` and `social-config.js` included in the service-worker application shell.

@@ -1,8 +1,8 @@
-# Gym Progress PWA v1.4.0
+# Gym Progress PWA v1.4.1
 
 Static/no-build PWA behavioural port of Gym Progress Android. Training stays local in IndexedDB. **Friends is optional** and uploads only cards the user explicitly chooses to publish.
 
-### v1.4.0 highlights
+### v1.4.1 highlights
 
 - e-mail OTP account/sign-in via Supabase;
 - exact-email mutual friendships, request/acceptance notifications and mutual removal;

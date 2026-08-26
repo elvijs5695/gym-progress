@@ -13,13 +13,25 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.0')) errors.push('v1.4.0 marker missing');
+if (!joined.includes('1.4.1')) errors.push('v1.4.1 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
+
+const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const socialSql = fs.readFileSync(path.join(root, 'supabase', 'SUPABASE_SOCIAL_SETUP.sql'), 'utf8');
+if (!appJs.includes('await persist();ui.setStatusMessage=null;render();')) errors.push('last-set skip does not force the next phase to render');
+if (!appJs.includes('if(window.__gpShareDraft)renderShareSummary();')) errors.push('share draft is not restored after app re-render');
+if (!appJs.includes("filter(c=>c.selected).map(c=>({...c.event,comment:c.comment?.trim()||null}))")) errors.push('selected shares must publish even without a comment');
+if (appJs.includes('onclick="gp.showTimelineEvent')) errors.push('social timeline dots should be visual-only');
+if (!css.includes('min-width:0;min-height:0')) errors.push('timeline dots are not protected from global button sizing');
+if (/where\s+e\.event_type='workout_summary'/i.test(socialSql)) errors.push('timeline still excludes exercise-record-only shares');
+if (!appJs.includes('0.45') || !appJs.includes('0.55')) errors.push('sharper chart transition markers missing');
+
 const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
 const sw = fs.readFileSync(swPath, 'utf8');
-if (sw.includes('gym-progress-pwa-v1.3.1')) errors.push('old service-worker cache marker remains');
+if (sw.includes('gym-progress-pwa-v1.4.0')) errors.push('old service-worker cache marker remains');
 const shellMatch = sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);
 if (!shellMatch) errors.push('APP_SHELL not found');
 else {

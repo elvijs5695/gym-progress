@@ -1,6 +1,6 @@
 # Release notes
 
-## PWA v1.4.0 — optional Friends / social layer
+## PWA v1.4.1 — optional Friends / social layer
 
 - Added an optional **Friends** tab while keeping IndexedDB training data local and independent from the account.
 - Passwordless e-mail OTP sign-in through Supabase.
@@ -23,3 +23,12 @@
 ## PWA v1.3.0
 
 Architecture-hardening release: reduced duplicated live work, documented cross-platform behaviour contract and executable source validation.
+
+### v1.4.1 social/workout UX refinement
+- Compact Friends header/profile controls, highlighted friend-request cards, and a collapsible Friends list.
+- Timeline starts at the first shared workout when social history is younger than 30 days; dots are visual-only and no longer inherit button sizing.
+- Exercise-record-only shares still create a workout timeline dot; comments remain optional.
+- Share selection uses a minimal tick control and share drafts survive background badge refreshes.
+- Fixed the deterministic last-set Skip set transition so the next exercise/rest/stretch screen renders immediately.
+- PWA buttons are slightly lighter and better spaced; delete actions use a simple × icon.
+- Progress chart colour transitions are sharper and concentrated around the midpoint of each segment.
