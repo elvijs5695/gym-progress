@@ -11,13 +11,13 @@ import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,s
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.4.3';
+const APP_VERSION='1.4.4';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 let state=null;
 let route={name:'home',id:null};
 let ui={selectedWorkoutId:null,expandedWorkoutId:null,progressExercise:'',progressRange:'3m',progressMetric:'WEIGHT',customStart:'',customEnd:'',toast:null,movedWorkoutId:null,transitionMessage:null,setStatusMessage:null,restExpand:false,timelineDays:30,timelineEndMs:null};
-let socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timeline:[],loading:false,loaded:false,hasMore:true,beforeAt:null,beforeId:null,unseen:false,friendsExpanded:false};
+let socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timeline:[],loading:false,loaded:false,hasMore:true,beforeAt:null,beforeId:null,unseen:false,friendsExpanded:false,timelineDays:null,timelineEndMs:null};
 const S=(en,lv)=>languageCode(state)==='lv'?lv:en;
 const SOCIAL_NOTIFIED_KEY='gym-progress-social-notified-v1';
 function socialNotifiedIds(){try{return new Set(JSON.parse(localStorage.getItem(SOCIAL_NOTIFIED_KEY)||'[]'));}catch{return new Set();}}
@@ -67,7 +67,7 @@ function persist() {
 }
 
 function toast(msg){ui.toast=msg;render();setTimeout(()=>{if(ui.toast===msg){ui.toast=null;const el=document.querySelector('.toast');if(el)el.remove();else render();}},1800);}
-function nav(name,id=null){if(name==='logs'&&route.name!=='logs'){ui.timelineDays=30;ui.timelineEndMs=null;}route={name,id};window.scrollTo({top:0,behavior:'instant'});render();if(name==='friends')void enterFriends();}
+function nav(name,id=null){if(name==='logs'&&route.name!=='logs'){ui.timelineDays=30;ui.timelineEndMs=null;}if(name==='friends'&&route.name!=='friends'){socialUi.timelineDays=null;socialUi.timelineEndMs=null;}route={name,id};window.scrollTo({top:0,behavior:'instant'});render();if(name==='friends')void enterFriends();}
 function activeSession(){return state.workout_sessions.find(s=>s.status==='ACTIVE')||null;}
 function getWorkout(id){return state.workout_templates.find(w=>w.id===Number(id));}
 function getTemplateExercises(workoutId){return state.template_exercises.filter(e=>e.workoutId===Number(workoutId)).sort((a,b)=>a.position-b.position);}
@@ -125,6 +125,7 @@ function render(){
   updateLiveClocks();
   if(route.name==='active')afterActiveRender();
   if(route.name==='logs')requestAnimationFrame(bindWorkoutTimeline);
+  if(route.name==='friends')requestAnimationFrame(bindFriendsTimeline);
   if(route.name==='programme'||route.name==='workout')requestAnimationFrame(bindProgrammeReorder);
   if(window.__gpShareDraft)renderShareSummary();
   if(route.name==='home'&&!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed){setTimeout(()=>{if(!document.querySelector('.dialog-backdrop'))showEmptyStarterPrompt();},0);}
@@ -661,9 +662,10 @@ async function enterFriends(){
   socialUi.loading=true;render();
   try{
     const [profile,friends,requests,notifications,timeline]=await Promise.all([
-      getMyProfile(),listFriends(),listIncomingRequests(),listNotifications(20),getTimeline(new Date(Date.now()-30*86400000).toISOString())
+      getMyProfile(),listFriends(),listIncomingRequests(),listNotifications(20),getTimeline('1970-01-01T00:00:00.000Z')
     ]);
     socialUi.profile=profile;socialUi.friends=normalizeFriends(friends);socialUi.requests=requests||[];socialUi.notifications=notifications||[];socialUi.timeline=timeline||[];
+    if(socialUi.timelineDays==null||socialUi.timelineEndMs==null){const DAY=86400000,end=Date.now(),monthStart=end-30*DAY,times=socialUi.timeline.map(e=>new Date(e.occurred_at).getTime()).filter(Number.isFinite),earliest=times.length?Math.min(...times):monthStart;socialUi.timelineDays=earliest>monthStart?Math.max(1,(end-earliest)/DAY):30;socialUi.timelineEndMs=end;}
     socialUi.feed=[];socialUi.beforeAt=null;socialUi.beforeId=null;socialUi.hasMore=true;socialUi.loaded=true;
     await loadMoreFriendsFeed();await markSeen();socialUi.unseen=false;
   }catch(e){toast(socialErrorMessage(e));}
@@ -686,8 +688,7 @@ function renderFriends(){
     if(acceptedUpdates.length){c+=`<div class="stack social-updates">${acceptedUpdates.map(n=>`<div class="card compact"><strong>${esc(S('Friend request accepted','Draudzības uzaicinājums apstiprināts'))}</strong><div class="small">${esc(`${n.display_name} ${S('accepted your friend request.','apstiprināja tavu draudzības uzaicinājumu.')}`)}</div></div>`).join('')}</div>`;}
     if(socialUi.requests.length){c+=`<h3>${esc(S('Friend requests','Draudzības uzaicinājumi'))}</h3><div class="stack">${socialUi.requests.map(r=>`<div class="card compact friend-request-card"><div class="row between"><strong>${esc(r.display_name)}</strong><div class="row"><button class="tiny-btn" onclick="gp.acceptSocialRequest('${r.request_id}')">${esc(S('Accept','Apstiprināt'))}</button><button class="ghost tiny-btn" onclick="gp.rejectSocialRequest('${r.request_id}')">${esc(S('Decline','Noraidīt'))}</button></div></div></div>`).join('')}</div>`;}
     if(socialUi.friends.length){
-      c+=`<button class="friends-list-toggle" onclick="gp.toggleFriendsList()" aria-expanded="${socialUi.friendsExpanded}"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span><span class="friends-toggle-chevron ${socialUi.friendsExpanded?'expanded':''}" aria-hidden="true"><svg viewBox="0 0 24 14" focusable="false"><path d="M3 3l9 8 9-8"/></svg></span></button>`;
-      if(socialUi.friendsExpanded)c+=`<div class="stack friends-list">${socialUi.friends.map(f=>`<div class="card compact friend-row"><div class="row between"><strong>${esc(f.display_name)}</strong><button class="ghost tiny-btn" onclick="gp.removeSocialFriend('${f.user_id}')">${esc(S('Remove','Noņemt'))}</button></div></div>`).join('')}</div>`;
+      c+=`<div class="friends-panel ${socialUi.friendsExpanded?'expanded':''}"><button class="friends-list-toggle" onclick="gp.toggleFriendsList()" aria-expanded="${socialUi.friendsExpanded}"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span><span class="friends-toggle-chevron ${socialUi.friendsExpanded?'expanded':''}" aria-hidden="true"><svg viewBox="0 0 24 14" focusable="false"><path d="M3 3l9 8 9-8"/></svg></span></button>${socialUi.friendsExpanded?`<div class="friends-list">${socialUi.friends.map(f=>`<div class="friend-row"><span>${esc(f.display_name)}</span><button class="ghost tiny-btn friend-remove" onclick="gp.removeSocialFriend('${f.user_id}')">${esc(S('Remove','Noņemt'))}</button></div>`).join('')}</div>`:''}</div>`;
     }
     c+=renderFriendsTimeline();
     c+=`<div class="row between friends-feed-title"><h2>${esc(S('Activity','Aktivitātes'))}</h2><span class="small">${socialUi.friends.length} ${esc(S('friends','draugi'))}</span></div>`;
@@ -696,22 +697,45 @@ function renderFriends(){
   }
   return shell(c);
 }
+function socialTimelineWindow(){
+  const DAY=86400000,nowMs=Date.now(),times=socialUi.timeline.map(e=>new Date(e.occurred_at).getTime()).filter(Number.isFinite),earliest=times.length?Math.min(...times):nowMs-30*DAY;
+  if(socialUi.timelineDays==null||!Number.isFinite(socialUi.timelineDays)){const monthStart=nowMs-30*DAY;socialUi.timelineDays=earliest>monthStart?Math.max(1,(nowMs-earliest)/DAY):30;}
+  if(socialUi.timelineEndMs==null||!Number.isFinite(socialUi.timelineEndMs))socialUi.timelineEndMs=nowMs;
+  socialUi.timelineDays=Math.max(1,Math.min(36500,socialUi.timelineDays));
+  const span=socialUi.timelineDays*DAY,maxEnd=nowMs,minEnd=earliest+span<=maxEnd?earliest+span:maxEnd;
+  socialUi.timelineEndMs=Math.max(minEnd,Math.min(maxEnd,socialUi.timelineEndMs));
+  return{DAY,earliest,start:socialUi.timelineEndMs-span,end:socialUi.timelineEndMs,span};
+}
+function compactSocialTimelineSpan(days){if(days<45)return`${Math.max(1,Math.round(days))}d`;if(days<730)return`${Math.max(1,Math.round(days/30))}mo`;const y=days/365;return`${y<10?y.toFixed(1):Math.round(y)}y`;}
+function socialTimelineDate(ms){return new Intl.DateTimeFormat(localeFor(languageCode(state)),{day:'numeric',month:'short',year:socialUi.timelineDays>330?'2-digit':undefined}).format(new Date(ms));}
 function renderFriendsTimeline(){
-  const me={user_id:socialUser()?.id,display_name:socialUi.profile?.display_name||S('You','Tu')};const people=[me,...socialUi.friends.filter(f=>f.user_id!==me.user_id)];
-  const end=Date.now(),monthStart=end-30*86400000;
-  const eventTimes=socialUi.timeline.map(e=>new Date(e.occurred_at).getTime()).filter(Number.isFinite);
-  const earliest=eventTimes.length?Math.min(...eventTimes):monthStart;
-  const start=earliest>monthStart?earliest:monthStart,span=Math.max(1,end-start);
-  const rows=people.map(p=>{const dots=socialUi.timeline.filter(e=>e.user_id===p.user_id).map(e=>{const x=Math.max(0,Math.min(100,(new Date(e.occurred_at).getTime()-start)/span*100));return `<span class="friend-timeline-dot difficulty ${esc(socialEffortKey(e.effort))}" style="left:${x}%" aria-hidden="true"></span>`;}).join('');return `<div class="friend-timeline-row"><div class="friend-timeline-name">${esc(p.user_id===me.user_id?S('You','Tu'):p.display_name)}</div><div class="friend-timeline-track">${dots}</div></div>`;}).join('');
-  const title=start>monthStart?S('Shared rhythm','Kopīgais ritms'):S('30-day rhythm','30 dienu ritms');
-  return `<div class="card friends-timeline-card"><div class="row between"><div class="title">${esc(title)}</div><div class="small">${esc(S('Shared workouts','Kopīgotie treniņi'))}</div></div><div class="friends-timeline">${rows}</div><div class="row between small timeline-labels"><span>${esc(new Intl.DateTimeFormat(localeFor(languageCode(state)),{day:'numeric',month:'short'}).format(new Date(start)))}</span><span>${esc(S('Today','Šodien'))}</span></div></div>`;
+  const me={user_id:socialUser()?.id,display_name:socialUi.profile?.display_name||S('You','Tu')};const people=[me,...socialUi.friends.filter(f=>f.user_id!==me.user_id)],win=socialTimelineWindow();
+  const rows=people.map(p=>{const dots=socialUi.timeline.filter(e=>e.user_id===p.user_id).map(e=>{const at=new Date(e.occurred_at).getTime(),visible=Number.isFinite(at)&&at>=win.start&&at<=win.end,x=visible?Math.max(0,Math.min(100,(at-win.start)/win.span*100)):0;return `<span class="friend-timeline-dot difficulty ${esc(socialEffortKey(e.effort))}" data-at="${Number.isFinite(at)?at:''}" style="left:${x}%;${visible?'':'display:none'}" aria-hidden="true"></span>`;}).join('');return `<div class="friend-timeline-row"><div class="friend-timeline-name">${esc(p.user_id===me.user_id?S('You','Tu'):p.display_name)}</div><div class="friend-timeline-track">${dots}</div></div>`;}).join('');
+  const endLabel=Math.abs(Date.now()-win.end)<6*3600000?S('Today','Šodien'):socialTimelineDate(win.end);
+  return `<div class="card friends-timeline-card"><div class="row between"><div class="title">${esc(S('Shared rhythm','Kopīgais ritms'))}</div><div class="small" id="friends-timeline-span">${esc(compactSocialTimelineSpan(socialUi.timelineDays))}</div></div><div class="friends-timeline-gesture" aria-label="${esc(S('Shared workout timeline. Drag to pan and pinch to zoom.','Kopīgoto treniņu laika līnija. Velc, lai pārvietotu, un savelc/izplet, lai mainītu mērogu.'))}"><div class="friends-timeline">${rows}</div><div class="row between small timeline-labels"><span id="friends-timeline-start">${esc(socialTimelineDate(win.start))}</span><span id="friends-timeline-end">${esc(endLabel)}</span></div></div></div>`;
+}
+function updateFriendsTimelineDom(){
+  const root=document.querySelector('.friends-timeline-gesture');if(!root)return;const win=socialTimelineWindow();
+  root.querySelectorAll('.friend-timeline-dot[data-at]').forEach(dot=>{const at=Number(dot.dataset.at),visible=Number.isFinite(at)&&at>=win.start&&at<=win.end;dot.style.display=visible?'':'none';if(visible)dot.style.left=`${Math.max(0,Math.min(100,(at-win.start)/win.span*100))}%`;});
+  const a=$('#friends-timeline-start'),b=$('#friends-timeline-end'),sp=$('#friends-timeline-span');if(a)a.textContent=socialTimelineDate(win.start);if(b)b.textContent=Math.abs(Date.now()-win.end)<6*3600000?S('Today','Šodien'):socialTimelineDate(win.end);if(sp)sp.textContent=compactSocialTimelineSpan(socialUi.timelineDays);
+}
+function bindFriendsTimeline(){
+  const root=document.querySelector('.friends-timeline-gesture');if(!root||root.dataset.bound==='1')return;root.dataset.bound='1';const pointers=new Map();let lastSingleX=null,lastDistance=null,lastCenterX=null;
+  const width=()=>Math.max(1,root.getBoundingClientRect().width);
+  const pan=dx=>{const win=socialTimelineWindow();socialUi.timelineEndMs-=dx/width()*win.span;updateFriendsTimelineDom();};
+  const zoom=(factor,focusX)=>{if(!Number.isFinite(factor)||factor<=0)return;const old=socialTimelineWindow(),frac=Math.max(0,Math.min(1,focusX/width())),focus=old.start+old.span*frac,newDays=Math.max(1,Math.min(36500,socialUi.timelineDays/factor)),newSpan=newDays*old.DAY;socialUi.timelineDays=newDays;socialUi.timelineEndMs=focus+newSpan*(1-frac);updateFriendsTimelineDom();};
+  root.addEventListener('pointerdown',e=>{pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});root.setPointerCapture?.(e.pointerId);if(pointers.size===1){lastSingleX=e.clientX;lastDistance=null;lastCenterX=null;}else if(pointers.size===2){const pts=[...pointers.values()],dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y;lastDistance=Math.hypot(dx,dy);lastCenterX=(pts[0].x+pts[1].x)/2;lastSingleX=null;}});
+  root.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1&&lastSingleX!=null){const dx=e.clientX-lastSingleX;lastSingleX=e.clientX;pan(dx);}else if(pointers.size>=2){const pts=[...pointers.values()].slice(0,2),dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y,dist=Math.max(1,Math.hypot(dx,dy)),center=(pts[0].x+pts[1].x)/2,rect=root.getBoundingClientRect();if(lastCenterX!=null)pan(center-lastCenterX);if(lastDistance!=null)zoom(dist/lastDistance,center-rect.left);lastDistance=dist;lastCenterX=center;}});
+  const up=e=>{pointers.delete(e.pointerId);if(pointers.size===1){const p=[...pointers.values()][0];lastSingleX=p.x;lastDistance=null;lastCenterX=null;}else if(!pointers.size){lastSingleX=null;lastDistance=null;lastCenterX=null;}};root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);
+  root.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const rect=root.getBoundingClientRect(),factor=Math.exp(-e.deltaY*.006);zoom(factor,e.clientX-rect.left);},{passive:false});
+  updateFriendsTimelineDom();
 }
 function renderSocialEvent(e){const own=e.user_id===socialUser()?.id;let body='';if(e.event_type==='workout_summary'){const ex=Array.isArray(e.exercise_names)?e.exercise_names.join(', '):'';body=`<div class="social-event-main"><strong>${esc(e.workout_name||'')}</strong><span>${esc(formatDuration(Number(e.duration_seconds||0)*1000))} · ${esc(socialEffortLabel(e.effort))}</span></div>${ex?`<div class="small">${esc(ex)}</div>`:''}${e.progress_percent!=null?`<div class="social-progress">${esc(S('Progress','Progress'))}: ${esc(fmtPct(Number(e.progress_percent)))}</div>`:''}`;}else{const value=e.record_kind==='weight'?formatKg(Number(e.record_value)): `${Number(e.record_value)} ${S('reps','atk.')}`;body=`<div class="social-record"><strong>${esc(e.exercise_name||'')}</strong><span>${esc(e.record_kind==='weight'?S('New weight record','Jauns svara rekords'):S('New rep record','Jauns atkārtojumu rekords'))}: <b>${esc(value)}</b>${e.increase_percent!=null?` · ${esc(fmtPct(Number(e.increase_percent)))}`:''}</span></div>`;}
   return `<div class="card social-event"><div class="row between"><div><div class="social-author">${esc(own?S('You','Tu'):e.display_name)}</div><div class="small">${esc(dateTime(new Date(e.occurred_at).getTime()))}</div></div>${own?`<button class="icon-btn" title="${esc(S('Delete shared record','Dzēst kopīgoto ierakstu'))}" onclick="gp.deleteSocialEvent('${e.id}')">×</button>`:''}</div>${body}${e.comment?`<div class="social-comment">${esc(e.comment)}</div>`:''}</div>`;
 }
 async function socialSendCode(){const email=$('#social-email')?.value.trim();if(!email)return;try{await sendEmailOtp(email);window.__gpSocialEmail=email;openDialog(`<h2>${esc(S('Check your e-mail','Pārbaudi e-pastu'))}</h2><div class="dialog-copy">${esc(S('Enter the one-time code sent to','Ievadi vienreizējo kodu, kas nosūtīts uz'))} <strong>${esc(email)}</strong>.</div><input id="social-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button><button onclick="gp.socialVerifyCode()">${esc(S('Verify','Apstiprināt'))}</button></div>`);}catch(e){toast(socialErrorMessage(e));}}
 async function socialVerifyCode(){const token=$('#social-otp')?.value.trim(),email=window.__gpSocialEmail;if(!token||!email)return;try{await verifyEmailOtp(email,token);closeDialog();await enterFriends();toast(S('Signed in.','Pieslēgšanās veiksmīga.'));void refreshSocialBadge();}catch(e){toast(socialErrorMessage(e));}}
-async function socialSignOut(){await signOutSocial();socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timeline:[],loading:false,loaded:false,hasMore:true,beforeAt:null,beforeId:null,unseen:false,friendsExpanded:false};render();}
+async function socialSignOut(){await signOutSocial();socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timeline:[],loading:false,loaded:false,hasMore:true,beforeAt:null,beforeId:null,unseen:false,friendsExpanded:false,timelineDays:null,timelineEndMs:null};render();}
 function toggleFriendsList(){socialUi.friendsExpanded=!socialUi.friendsExpanded;render();}
 function openAddFriend(){openDialog(`<h2>${esc(S('Add friend','Pievienot draugu'))}</h2><div class="dialog-copy">${esc(S('Enter the exact e-mail used for their Gym Progress account. E-mail addresses are never shown in the feed.','Ievadi precīzu e-pastu, kas izmantots Gym Progress kontam. E-pasta adreses aktivitāšu plūsmā netiek rādītas.'))}</div><input id="friend-email" type="email" autocomplete="off" placeholder="friend@example.com"><div id="friend-lookup-result"></div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button><button onclick="gp.lookupSocialFriend()">${esc(S('Look up','Meklēt'))}</button></div>`);}
 async function lookupSocialFriend(){const email=$('#friend-email')?.value.trim();if(!email)return;try{const r=await findFriend(email),root=$('#friend-lookup-result');if(!r){root.innerHTML=`<div class="note">${esc(S('No account found.','Konts nav atrasts.'))}</div>`;return;}window.__gpFriendEmail=email;root.innerHTML=`<div class="card compact"><strong>${esc(r.display_name)}</strong><div class="small">${esc(r.relationship==='friends'?S('Already friends','Jau draugi'):r.relationship==='outgoing_pending'?S('Request already sent','Uzaicinājums jau nosūtīts'):r.relationship==='incoming_pending'?S('They already invited you','Šis lietotājs jau tevi uzaicināja'):S('Gym Progress account','Gym Progress konts'))}</div>${r.relationship==='none'?`<button class="full" onclick="gp.sendSocialFriendRequest()">${esc(S('Send friend request','Nosūtīt uzaicinājumu'))}</button>`:''}</div>`;}catch(e){toast(socialErrorMessage(e));}}

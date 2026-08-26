@@ -13,7 +13,7 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.3')) errors.push('v1.4.3 marker missing');
+if (!joined.includes('1.4.4')) errors.push('v1.4.4 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
@@ -31,6 +31,12 @@ if (!appJs.includes('0.06') || !appJs.includes('0.14')) errors.push('trend-corre
 if (!fs.readFileSync(path.join(root, 'social-api.js'), 'utf8').includes('SOCIAL_EVENT_KEYS')) errors.push('social event bulk-insert normalization missing');
 if (!socialSql.includes('activity_shared')) errors.push('shared-activity notification schema missing');
 if (appJs.includes('Signed in as')) errors.push('signed-in profile card copy still present');
+
+if (!appJs.includes("getTimeline('1970-01-01T00:00:00.000Z')")) errors.push('shared timeline does not load full available history');
+if (!appJs.includes('function bindFriendsTimeline()')) errors.push('shared timeline pinch/pan binding missing');
+if (!appJs.includes('timelineDays:null,timelineEndMs:null')) errors.push('shared timeline viewport state missing');
+if (!css.includes('.friends-panel.expanded')) errors.push('expanded Friends panel state is not visually distinct');
+if (!css.includes('gap:2px')) errors.push('expanded friend rows are not compact');
 
 const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
 const sw = fs.readFileSync(swPath, 'utf8');

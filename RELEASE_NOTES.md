@@ -1,4 +1,11 @@
-# Gym Progress PWA v1.4.3
+# Gym Progress PWA v1.4.4
+
+- Expanded Friends now stay inside one compact card instead of becoming separate friend cards.
+- Expanded state gets a subtle background shift so opening/closing the Friends card is visually obvious.
+- Friend rows use only a few pixels of vertical spacing, with a small inline Remove action.
+- Shared rhythm now supports one-finger horizontal panning and pinch-to-zoom from 1 day out to a practical 100-year window.
+- The social timeline loads the complete available shared-history set, so zooming out is no longer capped at 30 days.
+- Initial timeline framing remains first shared record to today when history is under 30 days, otherwise 30 days.
 
 - Friends header aligned to card edges: name upper-right, Add friend left, Edit name/Sign out right.
 - Friend list count and rendering now use the same de-duplicated accepted-friend set.

@@ -1,4 +1,4 @@
-# v1.4.3 validation additions
+# v1.4.4 validation additions
 
 - Friends are de-duplicated by user_id before rendering/counting.
 - Header uses a two-row aligned layout.
@@ -23,3 +23,8 @@
 ### Remaining browser/backend validation
 
 Real OTP/SMTP delivery, two-account friendship, notification-permission behaviour and deployed GitHub Pages service-worker update behaviour require the user's live Supabase/browser environment.
+
+## v1.4.4 timeline/friends checks
+- Full shared history is requested from the social timeline RPC.
+- Shared rhythm binds pointer pan + pinch zoom and keeps a 1-day to 100-year practical viewport.
+- Friend names expand inside one Friends panel with 2 px row spacing and a distinct expanded surface.

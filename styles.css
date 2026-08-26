@@ -143,3 +143,15 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .friends-timeline-card{margin-top:8px}
 .friends-list + .friends-timeline-card{margin-top:8px}
 @media(max-width:430px){.friends-head-name{max-width:52%}.friends-head-action-row{gap:7px}.friends-head-action-row .social-head-actions{gap:4px}.friends-head-action-row .tiny-btn{padding-left:7px;padding-right:7px;font-size:11px}}
+/* v1.4.4 compact expandable Friends panel + zoomable shared timeline */
+.friends-panel{margin:4px 0 8px;border:1px solid var(--line);border-radius:11px;background:color-mix(in srgb,var(--surface) 72%,transparent);overflow:hidden;transition:background .15s ease,border-color .15s ease}
+.friends-panel.expanded{background:color-mix(in srgb,var(--surface) 88%,var(--accent2) 4%);border-color:color-mix(in srgb,var(--line) 78%,var(--accent2) 22%)}
+.friends-panel .friends-list-toggle{margin:0;border:0;border-radius:0;background:transparent}
+.friends-panel .friends-list{margin:0;padding:1px 9px 7px;display:grid;gap:2px}
+.friends-panel .friend-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:27px;padding:1px 0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.friends-panel .friend-row:first-child{border-top:0}
+.friends-panel .friend-row>span{font-size:13px;font-weight:620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.friends-panel .friend-remove{min-height:24px;padding:1px 5px;font-size:10px;color:var(--muted)}
+.friends-panel + .friends-timeline-card{margin-top:8px}
+.friends-timeline-gesture{touch-action:none;user-select:none;cursor:grab}
+.friends-timeline-gesture:active{cursor:grabbing}
