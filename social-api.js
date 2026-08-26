@@ -49,10 +49,15 @@ export async function getFeed(beforeAt=null,beforeId=null,limit=20){return rpc('
 export async function getTimeline(sinceIso){return rpc('social_timeline',{p_since:sinceIso});}
 export async function hasUnseen(){return !!(await rpc('social_has_unseen'));}
 export async function markSeen(){return rpc('social_mark_seen');}
+const SOCIAL_EVENT_KEYS=['client_event_id','user_id','event_type','occurred_at','comment','workout_name','duration_seconds','effort','progress_percent','exercise_names','exercise_name','record_kind','record_value','previous_value','record_unit','increase_percent'];
+function normalizedSocialEvent(e,uid){
+  const source={...e,user_id:uid};
+  return Object.fromEntries(SOCIAL_EVENT_KEYS.map(key=>[key,source[key]??null]));
+}
 export async function publishEvents(events){
   if(!events?.length)return [];
   const uid=socialUser()?.id;if(!uid)throw new Error('Sign in to share.');
-  const body=events.map(e=>({...e,user_id:uid}));
+  const body=events.map(e=>normalizedSocialEvent(e,uid));
   return authedFetch('/rest/v1/activity_events?on_conflict=user_id,client_event_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
 }
 export async function deleteEvent(id){return authedFetch(`/rest/v1/activity_events?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});}

@@ -1,3 +1,14 @@
+# Gym Progress PWA v1.4.2
+
+- Fixed social bulk publishing error `All object keys must match` by normalising every activity row to one complete schema before the Supabase insert.
+- Friends header is reduced to the page title plus name, subtle Edit name / Sign out controls, and a compact + Add friend action.
+- Friends list expander has a larger touch target and sits tightly against the timeline.
+- Share selection uses a clean stroked check icon; comments remain optional and appear only for selected cards.
+- Progress chart segment colours now follow geometric trend: rising segments are green and falling segments are red, with a short endpoint transition.
+- Shared workout batches create durable `activity_shared` notifications for current friends; multiple cards from one workout produce one notification per friend.
+
+---
+
 # Release notes
 
 ## PWA v1.4.1 — optional Friends / social layer

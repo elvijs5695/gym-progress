@@ -208,3 +208,8 @@ For a private friends beta, the current schema/RLS model is enough. Before makin
 
 ## Updating an existing v1.4.0 / v1.3.0 social backend
 If the original social SQL is already installed, run `supabase/SUPABASE_SOCIAL_TIMELINE_UPDATE.sql` once in the SQL Editor. It updates only the timeline RPC so an exercise-record-only share also creates a workout dot. No tables or existing activity rows are deleted.
+
+
+## Update for the current release
+
+If the social schema was installed before this release, run `supabase/SUPABASE_SOCIAL_UPDATE_1_4_2.sql` once in the Supabase SQL Editor. It is idempotent. It keeps existing data, ensures record-only shares appear on the timeline, and adds one durable friend notification per newly published workout batch.

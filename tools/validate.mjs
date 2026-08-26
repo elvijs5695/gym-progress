@@ -13,7 +13,7 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.1')) errors.push('v1.4.1 marker missing');
+if (!joined.includes('1.4.2')) errors.push('v1.4.2 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
@@ -27,7 +27,10 @@ if (!appJs.includes("filter(c=>c.selected).map(c=>({...c.event,comment:c.comment
 if (appJs.includes('onclick="gp.showTimelineEvent')) errors.push('social timeline dots should be visual-only');
 if (!css.includes('min-width:0;min-height:0')) errors.push('timeline dots are not protected from global button sizing');
 if (/where\s+e\.event_type='workout_summary'/i.test(socialSql)) errors.push('timeline still excludes exercise-record-only shares');
-if (!appJs.includes('0.45') || !appJs.includes('0.55')) errors.push('sharper chart transition markers missing');
+if (!appJs.includes('0.06') || !appJs.includes('0.14')) errors.push('trend-correct chart transition markers missing');
+if (!fs.readFileSync(path.join(root, 'social-api.js'), 'utf8').includes('SOCIAL_EVENT_KEYS')) errors.push('social event bulk-insert normalization missing');
+if (!socialSql.includes('activity_shared')) errors.push('shared-activity notification schema missing');
+if (appJs.includes('Signed in as')) errors.push('signed-in profile card copy still present');
 
 const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
 const sw = fs.readFileSync(swPath, 'utf8');
