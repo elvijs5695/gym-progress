@@ -1,16 +1,16 @@
-# Gym Progress PWA v1.4.7
+# Gym Progress PWA v1.4.8
 
 Static/no-build behavioural port of Gym Progress Android. Training stays local in IndexedDB. **Friends is optional** and uploads only cards the user explicitly chooses to publish.
 
-### v1.4.7 highlights
+### v1.4.8 highlights
 
 - PWA and Android use matching `performance-rules.json` and `performance-rule-cases.json` specifications.
 - Failure contributes 0 RIR to effort calculation while remaining separately flagged; capacity, progression, bodyweight and Progress-chart rules match Android v1.3.7.
 - Optional **0 RIR acceptable on the last set** setting for multi-set exercises.
 - Fully completed, unskipped exercises from aborted workouts can appear in Progress.
 - OTP and transient notices use persistent/in-flow UI roots; Home scheduling is available even before a date exists.
-- Supplied trophy/dumbbell social artwork, smoother non-scaling charts and consistent control sizing are included.
-- Service-worker cache is updated for all v1.4.7 assets. No IndexedDB schema or Supabase SQL change.
+- Supplied trophy/dumbbell social artwork, smoother non-scaling charts, responsive full-height chart geometry, explicit Volume kg axis units and consistent control sizing are included.
+- Service-worker cache is updated for all v1.4.8 assets. No IndexedDB schema or Supabase SQL change.
 
 See `RELEASE_NOTES.md`, `VALIDATION.md`, `BEHAVIOUR_CONTRACT.md`, and `SUPABASE_SETUP.md` for details.
 

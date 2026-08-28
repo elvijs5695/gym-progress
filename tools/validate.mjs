@@ -14,7 +14,7 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.7')) errors.push('v1.4.7 marker missing');
+if (!joined.includes('1.4.8')) errors.push('v1.4.8 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
@@ -52,7 +52,7 @@ if (!appJs.includes("const statusRoot=$('#status-root')") || !appJs.includes("le
 if (!appJs.includes('lastSetZeroRirAcceptable')) errors.push('last-set 0 RIR setting wiring missing');
 if (!appJs.includes('if(!names.includes(ui.progressExercise))ui.progressExercise=names[0]||\'\';') || !appJs.includes('<option value=\"${esc(n)}\" ${n===ui.progressExercise')) errors.push('Progress exercise selector does not preserve canonical exercise values across localisation/rerenders');
 if (!css.includes('.setting-toggle-row') || !css.includes('.setting-toggle-input:checked + .setting-toggle-track')) errors.push('last-set 0 RIR right-side toggle layout missing');
-if (!appJs.includes('W=640,H=250,L=58,R=4,T=12,B=10') || !css.includes('font-size:14px;font-weight:600') || !css.includes('height:auto;min-height:0')) errors.push('v1.4.7 Progress geometry/summary spacing markers missing');
+if (!appJs.includes('viewportWidth=window.visualViewport?.width||window.innerWidth||760') || !appJs.includes('W=Math.max(276,Math.min(716,viewportWidth-44)),H=250,L=58,R=4,T=12,B=10') || !appJs.includes('k kg') || !css.includes('font-size:14px;font-weight:600') || !css.includes('height:auto;min-height:0')) errors.push('v1.4.8 responsive-height Progress geometry/unit markers missing');
 if (!appJs.includes("x.sessionStatus==='COMPLETE'||(x.sessionStatus==='ABORTED'&&x.fullyCompleted)")) errors.push('completed exercises from aborted sessions are not included in Progress');
 if (!appJs.includes("metric===primaryProgressMetric(cur)") || !appJs.includes('actionableFailureCount')) errors.push('primary-metric actionable-failure Progress logic missing');
 for (const file of files.filter(f => /\.(?:js|mjs)$/.test(f))) {

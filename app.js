@@ -12,7 +12,7 @@ import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,s
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.4.7';
+const APP_VERSION='1.4.8';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 const statusRoot=$('#status-root');
@@ -506,9 +506,9 @@ function progressColor(cls){return {FIRST:COLORS.blue,UP:COLORS.green,BETTER:COL
 function mixHexColor(a,b,t=.5){const n=x=>parseInt(x,16),aa=String(a).replace('#',''),bb=String(b).replace('#','');if(aa.length!==6||bb.length!==6)return b;const c=[0,2,4].map(i=>Math.round(n(aa.slice(i,i+2))+(n(bb.slice(i,i+2))-n(aa.slice(i,i+2)))*t).toString(16).padStart(2,'0'));return`#${c.join('')}`;}
 function renderChart(points,metric){
   if(!points.length)return`<div class="empty">No data in this period.</div>`;
-  const W=640,H=250,L=58,R=4,T=12,B=10,vals=points.map(p=>p.value),min=Math.min(...vals),max=Math.max(...vals),raw=max-min,pad=raw>.001?raw*.15:Math.max(Math.abs(max)*.05,metric==='REPS'?1:1),low=Math.max(0,min-pad),high=max+pad,range=Math.max(.001,high-low),minT=Math.min(...points.map(p=>p.time)),maxT=Math.max(...points.map(p=>p.time));
+  const viewportWidth=window.visualViewport?.width||window.innerWidth||760,W=Math.max(276,Math.min(716,viewportWidth-44)),H=250,L=58,R=4,T=12,B=10,vals=points.map(p=>p.value),min=Math.min(...vals),max=Math.max(...vals),raw=max-min,pad=raw>.001?raw*.15:Math.max(Math.abs(max)*.05,metric==='REPS'?1:1),low=Math.max(0,min-pad),high=max+pad,range=Math.max(.001,high-low),minT=Math.min(...points.map(p=>p.time)),maxT=Math.max(...points.map(p=>p.time));
   const x=t=>maxT===minT?L+(W-L-R)/2:L+(W-L-R)*(t-minT)/(maxT-minT),y=v=>T+(H-T-B)*(1-(v-low)/range);
-  const axisLabel=tick=>metric==='REPS'?`${Math.round(tick)}`:metric==='VOLUME'?(Math.abs(tick)>=1000?`${(tick/1000).toFixed(1)}k`:tick.toFixed(0)):`${tick>=100?tick.toFixed(0):tick.toFixed(1)} kg`;
+  const axisLabel=tick=>metric==='REPS'?`${Math.round(tick)}`:metric==='VOLUME'?(Math.abs(tick)>=1000?`${(tick/1000).toFixed(1)}k kg`:`${tick.toFixed(0)} kg`):`${tick>=100?tick.toFixed(0):tick.toFixed(1)} kg`;
   let defs='',paths='',dots='',grid='';
   for(let i=0;i<4;i++){const f=i/3,yy=T+(H-T-B)*f,tick=high-range*f;grid+=`<line class="chart-grid" vector-effect="non-scaling-stroke" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/><text class="chart-axis" x="${L-6}" y="${yy+4}" text-anchor="end">${axisLabel(tick)}</text>`;}
   if(points.length===1){const p=points[0],px=x(p.time),py=y(p.value),color=progressColor(p.cls);paths=`<line x1="${px-10}" y1="${py}" x2="${px+10}" y2="${py}" stroke="${color}" class="chart-line" vector-effect="non-scaling-stroke"/>`;dots=`<circle class="chart-point" vector-effect="non-scaling-stroke" cx="${px}" cy="${py}" r="4" fill="${color}"/>`;}
