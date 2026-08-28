@@ -12,7 +12,7 @@ import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,s
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.4.8';
+const APP_VERSION='1.4.9';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 const statusRoot=$('#status-root');

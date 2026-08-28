@@ -1,6 +1,6 @@
-# v1.4.8 validation additions
+# v1.4.9 validation additions
 
-- Static validation checks version 1.4.8, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the current chart implementation.
+- Static validation checks version 1.4.9, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the current chart implementation.
 - `tools/validate-rules.mjs` executes the canonical performance-rule cases against the PWA rule implementation.
 - Browser/device, service-worker upgrade, OTP return flow, and live Supabase behaviour remain user/browser validation steps.
 
@@ -46,4 +46,4 @@ Real OTP/SMTP delivery, two-account friendship, notification-permission behaviou
 
 - Progress selector options carry explicit exercise-name values and invalid/stale UI selections fall back to a valid exercise.
 - Training-effort last-set 0 RIR control uses the dedicated right-side toggle layout.
-- Progress chart/summary geometry includes the v1.4.8 responsive viewBox sizing, full-height mobile plot and explicit Volume kg axis units.
+- Progress chart/summary geometry includes the v1.4.9 responsive viewBox sizing, full-height mobile plot and explicit Volume kg axis units.

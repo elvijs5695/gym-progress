@@ -1,6 +1,6 @@
-# Gym Progress PWA v1.4.8
+# Gym Progress PWA v1.4.9
 
-## v1.4.8 chart correction
+## v1.4.9 chart correction
 
 - Fixed the Progress SVG sizing model so its logical viewBox follows the actual responsive card width while keeping the intended 250 px height; this removes the vertical letterboxing that made the plotted chart appear much shorter than its card on phones.
 - Volume Y-axis labels now include `kg`, including compact thousands such as `13.9k kg`.
