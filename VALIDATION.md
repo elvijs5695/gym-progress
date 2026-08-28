@@ -1,6 +1,6 @@
-# v1.4.6 validation additions
+# v1.4.7 validation additions
 
-- Static validation checks version 1.4.6, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the v1.4.6 chart implementation.
+- Static validation checks version 1.4.7, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the current chart implementation.
 - `tools/validate-rules.mjs` executes the canonical performance-rule cases against the PWA rule implementation.
 - Browser/device, service-worker upgrade, OTP return flow, and live Supabase behaviour remain user/browser validation steps.
 
@@ -43,3 +43,7 @@ Real OTP/SMTP delivery, two-account friendship, notification-permission behaviou
 - Full shared history is requested from the social timeline RPC.
 - Shared rhythm binds pointer pan + pinch zoom and keeps a 1-day to 100-year practical viewport.
 - Friend names expand inside one Friends panel with 2 px row spacing and a distinct expanded surface.
+
+- Progress selector options carry explicit exercise-name values and invalid/stale UI selections fall back to a valid exercise.
+- Training-effort last-set 0 RIR control uses the dedicated right-side toggle layout.
+- Progress chart/summary geometry includes the v1.4.7 wider plot and tighter summary spacing.

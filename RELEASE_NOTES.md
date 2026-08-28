@@ -1,4 +1,12 @@
-# Gym Progress PWA v1.4.6
+# Gym Progress PWA v1.4.7
+
+## v1.4.7 focused fixes
+
+- Fixed the Progress exercise selector losing its backing exercise identity after localisation/rerenders: option values are now explicit and stale selections are revalidated.
+- Reworked the last-set 0 RIR setting into a compact right-side toggle with the explanatory copy kept on the left.
+- Progress summary labels are larger and sit closer to their values; the chart uses more of the card width with a smaller axis gutter and larger axis text.
+- No IndexedDB schema or Supabase SQL change.
+
 
 - Unified PWA performance evaluation with Android v1.3.7 through matching `performance-rules.json` and `performance-rule-cases.json` files.
 - Failure now contributes 0 RIR, remains separately flagged, and affects reductions/failure labels only when the programmed rep/load/RIR capacity was actually missed.
@@ -7,7 +15,7 @@
 - Kept the OTP dialog outside normal app rerenders, added persistent in-flow notices, exposed Home scheduling even when no date exists, and removed redundant Progress selector labels.
 - Added supplied trophy/dumbbell social icons, moved own-post delete to the lower-right, and suppresses blank/`null` comments.
 - Smoothed Progress paths, protected SVG stroke thickness, improved chart labels, and tightened equal-height/equal-width control behaviour.
-- Service-worker cache updated for v1.4.6 and now includes the shared rules files and social artwork.
+- Service-worker cache updated for v1.4.7 and includes the shared rules files and social artwork.
 - No IndexedDB schema or Supabase SQL change. Existing state is normalised with the new setting defaulting to off.
 
 ---
