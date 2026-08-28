@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -13,7 +14,7 @@ const files = walk(root);
 const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
 const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
 
-if (!joined.includes('1.4.5')) errors.push('v1.4.5 marker missing');
+if (!joined.includes('1.4.6')) errors.push('v1.4.6 marker missing');
 if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
 if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
 
@@ -27,7 +28,7 @@ if (!appJs.includes("filter(c=>c.selected).map(c=>({...c.event,comment:c.comment
 if (appJs.includes('onclick="gp.showTimelineEvent')) errors.push('social timeline dots should be visual-only');
 if (!css.includes('min-width:0;min-height:0')) errors.push('timeline dots are not protected from global button sizing');
 if (/where\s+e\.event_type='workout_summary'/i.test(socialSql)) errors.push('timeline still excludes exercise-record-only shares');
-if (!appJs.includes('fade=.18') || !appJs.includes('joins+=`<circle')) errors.push('Android-parity chart transition/join markers missing');
+if (!appJs.includes('fade=.18') || !appJs.includes(' C ${c1x} ${ay}, ${c2x} ${by}, ${bx} ${by}') || !css.includes('vector-effect:non-scaling-stroke')) errors.push('v1.4.6 smoothed/non-scaling chart markers missing');
 if (!appJs.includes('const socialDeletePending=new Set()')) errors.push('optimistic social delete pending guard missing');
 if (!appJs.includes('socialUi.feed=socialUi.feed.filter(e=>e.id!==id)')) errors.push('optimistic social delete does not remove feed row immediately');
 if (!appJs.includes('void performOptimisticSocialDelete(event)')) errors.push('optimistic social delete is not launched asynchronously');
@@ -42,6 +43,22 @@ if (!appJs.includes('function bindFriendsTimeline()')) errors.push('shared timel
 if (!appJs.includes('timelineDays:null,timelineEndMs:null')) errors.push('shared timeline viewport state missing');
 if (!css.includes('.friends-panel.expanded')) errors.push('expanded Friends panel state is not visually distinct');
 if (!css.includes('gap:2px')) errors.push('expanded friend rows are not compact');
+
+
+for (const rel of ['performance-rules.js','performance-rules.json','performance-rule-cases.json','icons/social-completed-workout.png','icons/social-record-trophy.png']) {
+  if (!fs.existsSync(path.join(root, rel))) errors.push(`v1.4.6 asset missing: ${rel}`);
+}
+if (!appJs.includes("const statusRoot=$('#status-root')") || !appJs.includes("let root=$('#dialog-root')")) errors.push('persistent status/dialog roots missing');
+if (!appJs.includes('lastSetZeroRirAcceptable')) errors.push('last-set 0 RIR setting wiring missing');
+if (!appJs.includes("x.sessionStatus==='COMPLETE'||(x.sessionStatus==='ABORTED'&&x.fullyCompleted)")) errors.push('completed exercises from aborted sessions are not included in Progress');
+if (!appJs.includes("metric===primaryProgressMetric(cur)") || !appJs.includes('actionableFailureCount')) errors.push('primary-metric actionable-failure Progress logic missing');
+for (const file of files.filter(f => /\.(?:js|mjs)$/.test(f))) {
+  const result = spawnSync(process.execPath, ['--check', file], {encoding:'utf8'});
+  if (result.status !== 0) errors.push(`JavaScript syntax error in ${path.relative(root,file)}: ${result.stderr.trim()}`);
+}
+const ruleResult=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});
+if(ruleResult.status!==0) errors.push(`performance-rule cases failed:
+${(ruleResult.stderr||ruleResult.stdout).trim()}`);
 
 const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
 const sw = fs.readFileSync(swPath, 'utf8');

@@ -1,3 +1,17 @@
+# Gym Progress PWA v1.4.6
+
+- Unified PWA performance evaluation with Android v1.3.7 through matching `performance-rules.json` and `performance-rule-cases.json` files.
+- Failure now contributes 0 RIR, remains separately flagged, and affects reductions/failure labels only when the programmed rep/load/RIR capacity was actually missed.
+- Added the optional “0 RIR acceptable on the last set” setting, conservative progression parity, bodyweight rep-first Progress, and primary-metric-only failure colouring.
+- Fully completed, unskipped exercises from aborted workouts can appear in Progress.
+- Kept the OTP dialog outside normal app rerenders, added persistent in-flow notices, exposed Home scheduling even when no date exists, and removed redundant Progress selector labels.
+- Added supplied trophy/dumbbell social icons, moved own-post delete to the lower-right, and suppresses blank/`null` comments.
+- Smoothed Progress paths, protected SVG stroke thickness, improved chart labels, and tightened equal-height/equal-width control behaviour.
+- Service-worker cache updated for v1.4.6 and now includes the shared rules files and social artwork.
+- No IndexedDB schema or Supabase SQL change. Existing state is normalised with the new setting defaulting to off.
+
+---
+
 # Gym Progress PWA v1.4.5
 
 - Brought PWA social deletion up to Android v1.3.6 behaviour: deleting your own shared card is optimistic, so it disappears from the feed immediately while Supabase deletion continues asynchronously.

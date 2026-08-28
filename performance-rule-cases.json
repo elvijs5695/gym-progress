@@ -1,0 +1,159 @@
+{
+  "schema": "gym-progress-performance-rule-cases-v1",
+  "rulesVersion": 1,
+  "cases": [
+    {
+      "id": "failure-is-zero-rir",
+      "description": "Failure is a tested 0 RIR, not minus one RIR.",
+      "input": {
+        "failure": true,
+        "rir": null
+      },
+      "expected": {
+        "effectiveRir": 0.0
+      }
+    },
+    {
+      "id": "extra-reps-offset-low-rir",
+      "description": "80 kg x 10 at 0 RIR matches 80 kg x 8 at target 2 RIR.",
+      "input": {
+        "equipment": "BARBELL",
+        "targetWeightKg": 80,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualWeightKg": 80,
+        "actualReps": 10,
+        "actualRir": 0,
+        "failure": false
+      },
+      "expected": {
+        "targetCapacityMet": true,
+        "progressionMayQualify": true
+      }
+    },
+    {
+      "id": "failed-extra-rep-can-still-meet-target",
+      "description": "Ten clean reps followed by a failed eleventh rep can meet the prescribed capacity, but an actual failed attempt blocks positive progression.",
+      "input": {
+        "equipment": "BARBELL",
+        "targetWeightKg": 80,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualWeightKg": 80,
+        "actualReps": 10,
+        "actualRir": null,
+        "failure": true
+      },
+      "expected": {
+        "targetCapacityMet": true,
+        "actionableFailure": false,
+        "progressionMayQualify": false
+      }
+    },
+    {
+      "id": "one-extra-rep-does-not-equal-two-rir",
+      "description": "80 kg x 9 at 0 RIR remains below an 80 kg x 8 at 2 RIR target.",
+      "input": {
+        "equipment": "BARBELL",
+        "targetWeightKg": 80,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualWeightKg": 80,
+        "actualReps": 9,
+        "actualRir": 0,
+        "failure": false
+      },
+      "expected": {
+        "targetCapacityMet": false
+      }
+    },
+    {
+      "id": "higher-load-offsets-low-rir",
+      "description": "85 kg x 8 at 0 RIR is not below an 80 kg x 8 at 2 RIR target.",
+      "input": {
+        "equipment": "BARBELL",
+        "targetWeightKg": 80,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualWeightKg": 85,
+        "actualReps": 8,
+        "actualRir": 0,
+        "failure": false
+      },
+      "expected": {
+        "targetCapacityMet": true,
+        "progressionMayQualify": true
+      }
+    },
+    {
+      "id": "weight-does-not-replace-missing-target-reps",
+      "description": "A high load does not compensate for completing fewer than the programmed repetitions.",
+      "input": {
+        "equipment": "BARBELL",
+        "targetWeightKg": 80,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualWeightKg": 90,
+        "actualReps": 6,
+        "actualRir": null,
+        "failure": true
+      },
+      "expected": {
+        "targetCapacityMet": false,
+        "actionableFailure": true,
+        "progressionMayQualify": false
+      }
+    },
+    {
+      "id": "last-set-zero-rir-exception",
+      "description": "With the setting enabled, a final set reaching the original rep target at 0 RIR or on a failed next rep does not trigger a downgrade, but it never manufactures positive progression.",
+      "input": {
+        "targetSets": 3,
+        "setNumber": 3,
+        "targetReps": 8,
+        "targetRir": 2,
+        "actualReps": 8,
+        "failure": true,
+        "lastSetZeroRirAcceptable": true
+      },
+      "expected": {
+        "downgradeSuppressed": true,
+        "progressionMayQualify": false
+      }
+    },
+    {
+      "id": "single-failure-does-not-fail-workout",
+      "description": "One actionable failed set does not label a multi-set workout Failure.",
+      "input": {
+        "completedSets": 12,
+        "actionableFailures": 1,
+        "failedExercises": 1
+      },
+      "expected": {
+        "sessionFailure": false
+      }
+    },
+    {
+      "id": "systemic-failure",
+      "description": "Repeated actionable failures across the workout can label the workout Failure.",
+      "input": {
+        "completedSets": 8,
+        "actionableFailures": 2,
+        "failedExercises": 2
+      },
+      "expected": {
+        "sessionFailure": true
+      }
+    },
+    {
+      "id": "bodyweight-primary-progress-metric",
+      "description": "For bodyweight exercises the primary Progress metric is repetitions, not zero kilograms.",
+      "input": {
+        "equipment": "BODYWEIGHT"
+      },
+      "expected": {
+        "primaryMetric": "REPS"
+      }
+    }
+  ]
+}

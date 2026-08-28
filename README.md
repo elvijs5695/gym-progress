@@ -1,19 +1,18 @@
-# Gym Progress PWA v1.4.1
+# Gym Progress PWA v1.4.6
 
-Static/no-build PWA behavioural port of Gym Progress Android. Training stays local in IndexedDB. **Friends is optional** and uploads only cards the user explicitly chooses to publish.
+Static/no-build behavioural port of Gym Progress Android. Training stays local in IndexedDB. **Friends is optional** and uploads only cards the user explicitly chooses to publish.
 
-### v1.4.1 highlights
+### v1.4.6 highlights
 
-- e-mail OTP account/sign-in via Supabase;
-- exact-email mutual friendships, request/acceptance notifications and mutual removal;
-- shared 30-day multi-person timeline;
-- activity feed loaded 20 records at a time;
-- explicit post-workout share cards for workout summaries and new weight/rep records;
-- per-card comments shown only after Share is selected, own-post deletion and Friends attention badge;
-- previous portrait congratulations screen replaced by the share-summary flow;
-- social session isolated from IndexedDB training backups.
+- PWA and Android use matching `performance-rules.json` and `performance-rule-cases.json` specifications.
+- Failure contributes 0 RIR to effort calculation while remaining separately flagged; capacity, progression, bodyweight and Progress-chart rules match Android v1.3.7.
+- Optional **0 RIR acceptable on the last set** setting for multi-set exercises.
+- Fully completed, unskipped exercises from aborted workouts can appear in Progress.
+- OTP and transient notices use persistent/in-flow UI roots; Home scheduling is available even before a date exists.
+- Supplied trophy/dumbbell social artwork, smoother non-scaling charts and consistent control sizing are included.
+- Service-worker cache is updated for all v1.4.6 assets. No IndexedDB schema or Supabase SQL change.
 
-See `SUPABASE_SETUP.md` and `supabase/SUPABASE_SOCIAL_SETUP.sql`. This release already contains the supplied project URL and Publishable key. Every training feature still works normally/offline if Supabase is unavailable.
+See `RELEASE_NOTES.md`, `VALIDATION.md`, `BEHAVIOUR_CONTRACT.md`, and `SUPABASE_SETUP.md` for details.
 
 ## Historical release notes
 

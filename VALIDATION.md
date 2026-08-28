@@ -1,3 +1,11 @@
+# v1.4.6 validation additions
+
+- Static validation checks version 1.4.6, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the v1.4.6 chart implementation.
+- `tools/validate-rules.mjs` executes the canonical performance-rule cases against the PWA rule implementation.
+- Browser/device, service-worker upgrade, OTP return flow, and live Supabase behaviour remain user/browser validation steps.
+
+---
+
 # v1.4.5 validation additions
 
 - Static validation checks the v1.4.5 marker.

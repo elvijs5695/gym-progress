@@ -1,0 +1,66 @@
+{
+  "schema": "gym-progress-performance-rules-v1",
+  "version": 1,
+  "effort": {
+    "failureEffectiveRir": 0.0,
+    "exerciseFailure": {
+      "singleSetActionableFailure": true,
+      "minimumFailures": 2,
+      "minimumFailureRate": 0.5
+    },
+    "sessionFailure": {
+      "minimumFailures": 2,
+      "minimumFailureRate": 0.25,
+      "multiExerciseMinimum": 2,
+      "multiExerciseFailureRate": 0.15
+    }
+  },
+  "capacity": {
+    "loadedFormula": "epley_with_rir",
+    "targetToleranceRatio": 0.98,
+    "progressionToleranceRatio": 0.995,
+    "minimumActualRepsRatio": 1.0,
+    "progressionRequiresOriginalLoad": true,
+    "progressionRequiresOriginalRepTarget": true,
+    "failureBlocksProgression": true
+  },
+  "lastSetZeroRir": {
+    "requiresMultipleSets": true,
+    "requiresOriginalTargetReps": true,
+    "acceptsFailedNextRep": true,
+    "suppressesDowngradeOnly": true
+  },
+  "autoregulation": {
+    "strongDeficitRatio": 0.05,
+    "severeDeficitRatio": 0.1,
+    "loadedReductionPercent": {
+      "mild": 2.5,
+      "strong": 5.0,
+      "severe": 7.5
+    },
+    "bodyweightReductionReps": {
+      "mild": 1,
+      "strong": 1,
+      "severe": 2
+    }
+  },
+  "futureAdjustment": {
+    "actionableFailureOnly": true,
+    "strongDeficitRatio": 0.05,
+    "severeDeficitRatio": 0.1,
+    "loadedReductionPercent": {
+      "mild": 2.5,
+      "strong": 5.0
+    },
+    "bodyweightReductionReps": {
+      "mild": 1,
+      "strong": 2
+    }
+  },
+  "chart": {
+    "failureOverridePrimaryMetricOnly": true,
+    "loadedPrimaryMetric": "WEIGHT",
+    "bodyweightPrimaryMetric": "REPS",
+    "failureOverrideUsesActionableFailures": true
+  }
+}
