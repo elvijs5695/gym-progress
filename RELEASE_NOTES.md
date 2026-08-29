@@ -1,4 +1,12 @@
-# Gym Progress PWA v1.5.3
+# Gym Progress PWA v1.5.4
+
+## Focused testing fixes
+- Fixed PWA Add exercise failure caused by a missing superset helper.
+- Catalogue suggestions now rank direct typed-name matches above family-only matches.
+- Tracking choices are constrained by equipment; impossible combinations are no longer offered.
+- Friend comparison opt-in is reliably enabled only for eligible linked e1RM exercises.
+- Friend comparison card is collapsed initially.
+- Tracker amount is followed by - and + at the right edge; productive-day times share one row.
 
 - Preserves the v1.5.2 local-data recovery safeguards and service-worker cache hardening.
 - Reworked exercise creation around direct catalogue-as-you-type matching; removed the confusing existing-exercise picker.

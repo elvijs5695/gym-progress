@@ -48,7 +48,7 @@
       setStatus('Restored successfully: '+count(st.workout_templates)+' programme days, '+count(st.workout_sessions)+' workout sessions, '+count(st.performed_sets)+' performed sets. You can now open Gym Progress.',true);
     }catch(err){console.error(err);setStatus('Restore failed: '+String(err&&err.message||err),false);}
   });
-  document.getElementById('openApp').addEventListener('click',()=>{location.href='./?recovered=1&v=1.5.3';});
+  document.getElementById('openApp').addEventListener('click',()=>{location.href='./?recovered=1&v=1.5.4';});
 })();
 </script>
 </body>
