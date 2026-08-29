@@ -15,25 +15,31 @@ function openDb(){
   });
 }
 
-export async function loadState(){
+async function getValue(key){
   const db=await openDb();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction(STORE,'readonly');
-    const req=tx.objectStore(STORE).get(STATE_KEY);
-    req.onsuccess=()=>resolve(req.result||null);
+    const req=tx.objectStore(STORE).get(key);
+    req.onsuccess=()=>resolve(req.result??null);
     req.onerror=()=>reject(req.error);
   });
 }
 
-export async function saveState(state){
+async function putValue(key,value){
   const db=await openDb();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction(STORE,'readwrite');
-    tx.objectStore(STORE).put(structuredClone(state),STATE_KEY);
+    tx.objectStore(STORE).put(structuredClone(value),key);
     tx.oncomplete=()=>resolve();
     tx.onerror=()=>reject(tx.error);
   });
 }
+
+export async function loadState(){return getValue(STATE_KEY);}
+export async function saveRecoveryState(state,key='pre-upgrade'){if(state!=null)await putValue(`recovery:${key}`,state);}
+export async function loadRecoveryState(key='pre-upgrade'){return getValue(`recovery:${key}`);}
+
+export async function saveState(state){return putValue(STATE_KEY,state);}
 
 export async function wipeState(){
   const db=await openDb();

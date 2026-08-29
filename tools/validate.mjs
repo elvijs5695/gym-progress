@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.0'||!app.includes("APP_VERSION='1.5.0'")||!sw.includes('gym-progress-pwa-v1.5.0'))errors.push('v1.5.0 version markers are inconsistent');
+if(pkg.version!=='1.5.1'||!app.includes("APP_VERSION='1.5.1'")||!sw.includes('gym-progress-pwa-v1.5.1'))errors.push('v1.5.1 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -22,6 +22,7 @@ if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))erro
 if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.includes('checkTrackerReminders'))errors.push('Tracker functionality incomplete');
 if(!css.includes('.chart-axis{font-size:12px')||!app.includes('T=16,B=14')||!app.includes('k kg'))errors.push('current chart geometry/unit formatting missing');
 if(!css.includes('.setting-toggle-row')||!app.includes('lastSetZeroRirAcceptable'))errors.push('last-set RIR setting/toggle missing');
+if(!app.includes("saveRecoveryState(loaded,'pre-identity-migration-v1')")||!app.includes('refusing to overwrite IndexedDB')||!app.includes('do not immediately write an empty'))errors.push('local-data migration safeguards missing');
 
 const identity=read('exercise-identity.js');
 if(!identity.includes('a display-name similarity alone must never do so')||!identity.includes('const canonical=template.exerciseKey?'))errors.push('generic legacy migration can still auto-link by display name');

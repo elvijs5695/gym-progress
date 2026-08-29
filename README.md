@@ -1,4 +1,4 @@
-# Gym Progress PWA v1.5.0
+# Gym Progress PWA v1.5.1
 
 Major exercise-identity and workout-usability release. Exercise names are presentation only; persistent user/programme exercise UUIDs now drive Progress and social comparison. A 191-exercise canonical catalogue is bundled for offline use, with cloud catalogue SQL included.
 

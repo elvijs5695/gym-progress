@@ -1,17 +1,3 @@
-# Current release update — Android 1.4.0 / PWA 1.5.0
-
-For an **existing working Gym Progress social backend**, do **not** begin by rerunning the historical social setup/update scripts below. Follow the release procedure in `DEPLOYMENT_1.4.0.md` / `DEPLOYMENT_1.5.0.md` instead:
-
-1. back up local user JSON data and Supabase;
-2. run `supabase/SUPABASE_PRE_MIGRATION_CHECK.sql`;
-3. run `supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql`;
-4. run `supabase/SUPABASE_POST_MIGRATION_VERIFY.sql`;
-5. then deploy/update the clients.
-
-The catalogue migration is additive and intentionally preserves the existing social tables because they remain used. It adds the canonical catalogue and e1RM comparison infrastructure, including an atomic derived-history replacement RPC so programme comparison opt-ins and canonical link/unlink changes apply retroactively.
-
----
-
 # Gym Progress — Supabase social setup
 
 Project ref used by this release: `wnnmhdodaxzeeqlexibo`

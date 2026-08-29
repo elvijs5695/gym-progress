@@ -1,4 +1,4 @@
-# Gym Progress PWA v1.5.0 validation
+# Gym Progress PWA v1.5.1 validation
 
 `npm run check` passes and currently checks **52 PWA files**. The release validator covers:
 
