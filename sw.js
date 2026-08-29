@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-progress-pwa-v1.5.5';
+const CACHE_NAME = 'gym-progress-pwa-v1.5.6';
 const APP_SHELL = [
   "./.nojekyll",
   "./VERSION.txt",

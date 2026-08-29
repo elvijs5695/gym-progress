@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.5'||!app.includes("APP_VERSION='1.5.5'")||!sw.includes('gym-progress-pwa-v1.5.5'))errors.push('v1.5.5 version markers are inconsistent');
+if(pkg.version!=='1.5.6'||!app.includes("APP_VERSION='1.5.6'")||!sw.includes('gym-progress-pwa-v1.5.6'))errors.push('v1.5.6 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -53,6 +53,19 @@ if(migration.users.some(x=>!['LINK','KEEP_LOCAL'].includes(x.mappingStatus)))err
 const sql=read('supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql');
 if(!sql.includes('begin;')||!sql.includes('commit;')||!sql.includes('grant select, insert, update, delete on public.exercise_comparison_points to authenticated')||!sql.includes('social_replace_exercise_comparison_points'))errors.push('Supabase migration transaction/API grants/retroactive sync RPC missing');
 const shellMatch=sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);if(!shellMatch)errors.push('APP_SHELL not found');else{const shell=JSON.parse(shellMatch[1]);for(const rel of ['./exercise-identity.js','./exercise-catalogue.js','./exercise-catalogue.json','./exercise-migration-map.js','./exercise-migration-map.json'])if(!shell.includes(rel))errors.push(`service worker missing ${rel}`);for(const item of shell){const rel=item.replace(/^\.\//,'');if(!fs.existsSync(path.join(root,rel)))errors.push(`missing service-worker asset: ${item}`);}}
+
+const gpExport=app.match(/window\.gp=\{([^}]*)\};/s);
+if(!gpExport)errors.push('window.gp export object not found');
+else{
+  const gpNames=gpExport[1].split(',').map(x=>x.trim()).filter(Boolean);
+  for(const name of gpNames){
+    const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const declared=new RegExp(`(?:async\\s+)?function\\s+${escaped}\\b|(?:const|let|var)\\s+${escaped}\\b`).test(app);
+    const imported=new RegExp(`import\\s*\\{[^}]*\\b${escaped}\\b[^}]*\\}`).test(app);
+    if(!declared&&!imported)errors.push(`window.gp exports undefined identifier: ${name}`);
+  }
+}
+
 for(const f of files.filter(f=>/\.(?:js|mjs)$/.test(f))){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)errors.push(`JavaScript syntax error in ${path.relative(root,f)}: ${r.stderr.trim()}`);}
 const rr=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});if(rr.status!==0)errors.push(`performance-rule cases failed: ${(rr.stderr||rr.stdout).trim()}`);
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);

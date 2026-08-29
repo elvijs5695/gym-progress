@@ -1,4 +1,11 @@
-# Gym Progress PWA v1.5.5
+# Gym Progress PWA v1.5.6
+
+## Startup hotfix
+
+- Fixed a release-blocking startup error where `window.gp` exported `moveExercise` and `deleteExercise` after those functions had been removed during the superset programme-list refactor.
+- Restored `deleteExercise` with superset-aware cleanup and retained `moveExercise` as a compatibility wrapper that moves an entire exercise/superset block.
+- Validation now fails if any shorthand function exported through `window.gp` is not actually declared/imported, preventing this exact black-screen class from shipping again.
+
 
 ## Exercise editor
 - Compare with friends now uses the same right-side switch treatment as other toggles.
@@ -25,4 +32,4 @@
 
 ## Safety
 - Keeps the v1.5.2+ IndexedDB startup/recovery protections.
-- No Supabase migration is required for v1.5.5.
+- No Supabase migration is required for v1.5.6.

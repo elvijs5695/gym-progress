@@ -1,20 +1,20 @@
-import {loadState,saveState,wipeState} from './db.js?v=1.5.5';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.5.5';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.5.5';
-import {evaluateAutoregulation} from './autoregulation.js?v=1.5.5';
-import {manualHtml} from './manual.js?v=1.5.5';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.5.5';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.5.5';
-import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.5.5';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.5.5';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js?v=1.5.5';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.5.5';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.5.5';
+import {loadState,saveState,wipeState} from './db.js?v=1.5.6';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.5.6';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.5.6';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.5.6';
+import {manualHtml} from './manual.js?v=1.5.6';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.5.6';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.5.6';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.5.6';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.5.6';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js?v=1.5.6';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.5.6';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.5.6';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.5.5';
+const APP_VERSION='1.5.6';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 const statusRoot=$('#status-root');
@@ -563,6 +563,9 @@ function renderWorkoutEditor(id){
 async function joinSuperset(firstId,secondId){const a=state.template_exercises.find(x=>x.id===Number(firstId)),b=state.template_exercises.find(x=>x.id===Number(secondId));if(!canJoinSuperset(a,b))return;const ordered=getTemplateExercises(a.workoutId);if(Math.abs(ordered.findIndex(x=>x.id===a.id)-ordered.findIndex(x=>x.id===b.id))!==1)return;const gid=uuid();a.supersetGroupId=gid;b.supersetGroupId=gid;await persist();render();toast('Superset created');}
 async function splitSuperset(groupId){if(!groupId)return;state.template_exercises.filter(x=>x.supersetGroupId===groupId).forEach(x=>x.supersetGroupId=null);await persist();render();toast('Superset separated');}
 async function moveExerciseBlock(id,d){const e=state.template_exercises.find(x=>x.id===Number(id));if(!e)return;const blocks=programmeExerciseBlocks(getTemplateExercises(e.workoutId)),from=blocks.findIndex(b=>b.items.some(x=>x.id===e.id)),to=Math.max(0,Math.min(blocks.length-1,from+Number(d)));if(from<0||from===to)return;const [block]=blocks.splice(from,1);blocks.splice(to,0,block);blocks.flatMap(b=>b.items).forEach((x,i)=>x.position=i);await persist();render();}
+// Compatibility wrapper retained for legacy reorder bindings. Supersets must move as one block.
+async function moveExercise(id,d){return moveExerciseBlock(id,d);}
+function deleteExercise(id){const e=state.template_exercises.find(x=>x.id===Number(id));if(!e)return;const label=templateDisplayName(e),groupId=e.supersetGroupId;confirmDialog(`${S('Delete','Dzēst')} ${label}?`,S('Historical workout data is not affected.','Vēsturiskie treniņu dati netiks mainīti.'),S('Delete','Dzēst'),async()=>{state.template_exercises=state.template_exercises.filter(x=>x.id!==e.id);if(groupId){const remaining=state.template_exercises.filter(x=>x.supersetGroupId===groupId);if(remaining.length<2)remaining.forEach(x=>x.supersetGroupId=null);}getTemplateExercises(e.workoutId).forEach((x,i)=>x.position=i);if(e.userExerciseId&&!state.template_exercises.some(x=>x.userExerciseId===e.userExerciseId)){const u=getUserExercise(state,e.userExerciseId);if(u)u.archived=true;}await persist();if(socialSignedIn())void syncComparisonHistory().catch(console.warn);closeDialog();render();},true);}
 function validTrackingModes(equipment,exerciseType){
   // Tracking is constrained by the physical loading method. Exercise type is accepted here
   // deliberately so future exercise types can narrow the list without changing form wiring.

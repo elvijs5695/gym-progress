@@ -1,8 +1,8 @@
-# Gym Progress PWA v1.5.5
+# Gym Progress PWA v1.5.6
 
 Local-first Gym Progress PWA. This release builds on the v1.5.2+ IndexedDB recovery safeguards and does not change the IndexedDB database/store/key.
 
-## v1.5.5 highlights
+## v1.5.6 highlights
 
 - Exercise creation uses equipment-constrained tracking modes and a right-side friend-comparison toggle.
 - Catalogue links can be changed or removed; the supplied chain-link icon shows green when linked and grey when local.
