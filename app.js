@@ -1,20 +1,20 @@
-import {loadState,saveState,saveRecoveryState,wipeState} from './db.js';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js';
-import {evaluateAutoregulation} from './autoregulation.js';
-import {manualHtml} from './manual.js';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js';
-import {evaluateFutureAdjustment} from './future-adjustment.js';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js';
+import {loadState,saveState,wipeState} from './db.js?v=1.5.2';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.5.2';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.5.2';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.5.2';
+import {manualHtml} from './manual.js?v=1.5.2';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.5.2';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.5.2';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.5.2';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.5.2';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js?v=1.5.2';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.5.2';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.5.2';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.5.1';
+const APP_VERSION='1.5.2';
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 const statusRoot=$('#status-root');
@@ -25,6 +25,12 @@ let socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timel
 const socialDeletePending=new Set();
 const S=(en,lv)=>languageCode(state)==='lv'?lv:en;
 const SOCIAL_NOTIFIED_KEY='gym-progress-social-notified-v1';
+async function saveRecoveryState(value,key='pre-upgrade'){
+  // Best-effort secondary snapshot that does not depend on a new IndexedDB module API.
+  // Keeping the app compatible with the previous db.js prevents mixed service-worker
+  // caches from blanking the whole PWA during an update.
+  try{if(value!=null)localStorage.setItem(`gym-progress-recovery:${key}`,JSON.stringify(value));}catch(e){console.warn('Recovery snapshot not stored',e);}
+}
 function socialNotifiedIds(){try{return new Set(JSON.parse(localStorage.getItem(SOCIAL_NOTIFIED_KEY)||'[]'));}catch{return new Set();}}
 function markSocialNotificationDelivered(id){const seen=socialNotifiedIds();seen.add(id);localStorage.setItem(SOCIAL_NOTIFIED_KEY,JSON.stringify([...seen].slice(-300)));}
 let tickHandle=null,wakeLock=null,audioCtx=null,lastReminderKey='';

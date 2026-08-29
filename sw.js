@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-progress-pwa-v1.5.1';
+const CACHE_NAME = 'gym-progress-pwa-v1.5.2';
 const APP_SHELL = [
   "./.nojekyll",
   "./VERSION.txt",
@@ -27,6 +27,7 @@ const APP_SHELL = [
   "./performance-rules.js",
   "./performance-rules.json",
   "./performance-rule-cases.json",
+  "./recovery.html",
   "./starter-programme.js",
   "./social-api.js",
   "./social-config.js",
@@ -65,19 +66,31 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static assets render immediately from cache; a successful network response refreshes
-  // the next launch without delaying the current one.
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const refresh = fetch(request).then(response => {
+  const codeLike = /\.(?:js|css|json|html|webmanifest)$/.test(url.pathname) || url.pathname.endsWith('/VERSION.txt');
+  if (codeLike) {
+    // Network-first prevents a newly deployed entry module from being paired with stale
+    // dependency modules from the previous service-worker cache. Ignore the query only
+    // for the offline fallback so versioned imports can still start offline.
+    event.respondWith(
+      fetch(request).then(response => {
         if (response && response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         }
         return response;
-      }).catch(() => cached);
-      return cached || refresh;
-    })
+      }).catch(() => caches.match(request, {ignoreSearch:true}))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request, {ignoreSearch:true}).then(cached => cached || fetch(request).then(response => {
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+      }
+      return response;
+    }))
   );
 });
 

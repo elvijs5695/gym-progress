@@ -1,24 +1,17 @@
-# Gym Progress PWA 1.5.1 - recovery after empty local state in 1.5.0
+# Gym Progress PWA v1.5.2 recovery
 
-The Friends feed/timeline is stored in Supabase. Programme and workout history are local IndexedDB data. Seeing Friends data while Programme/Logs are empty therefore means the local PWA state was not loaded; it does not mean the Supabase migration deleted programme/history.
+v1.5.2 fixes the first-load blank-screen failure caused by a mixed service-worker module cache during the 1.5.1 hotfix deployment.
 
-## Recovery procedure
+## Do not
+- do not clear site data;
+- do not uninstall the PWA;
+- do not overwrite the good pre-update JSON backup with an empty export.
 
-1. Do not clear browser/site data and do not uninstall the PWA.
-2. Keep the pre-update Gym Progress JSON backup safe. Do not overwrite it with an export from the empty state.
-3. Deploy PWA 1.5.1 to exactly the same hosting origin/path used for 1.5.0.
-4. Open the PWA and confirm Settings shows version 1.5.1.
-5. Go to Settings -> Restore backup.
-6. Select the user's pre-update `gym_progress_backup_*.json` file (backup schema v3 is supported).
-7. Confirm Restore.
-8. Verify Home/Programme, Logs, Progress and the next-workout rotation before making any edits or starting a workout.
-9. Export a new Full backup. It should use `gym-progress-backup-v4` and contain `user_exercises`, `userExerciseId` and `programmeExerciseId` fields.
-10. Only after this user is confirmed should the second production user be upgraded.
-
-## 1.5.1 protection
-
-- The IndexedDB name/store/key are unchanged from 1.4.9/1.5.0.
-- Before migrating legacy local data, 1.5.1 stores an exact `recovery:pre-identity-migration-v1` snapshot in the same IndexedDB.
-- It verifies that programme/history row counts survive normalization before writing the migrated state.
-- If no app-state record is returned, it does not immediately write empty defaults over storage.
-- Before a manual Restore, it stores `recovery:pre-restore-latest` when current training data exists.
+## Recovery
+1. Deploy all files from v1.5.2 to the same site path.
+2. Open the normal site once. v1.5.2 version-busts its entry dependencies so the previous service worker cannot pair the new app with an old db.js module.
+3. If the normal app still does not render, open `recovery.html?v=1.5.2` on the same site.
+4. Select the user's pre-update Gym Progress JSON backup and press **Restore local training data**.
+5. After the success message, press **Open Gym Progress**.
+6. Verify Programme, Logs, Progress and Friends.
+7. Export a new full backup only after the restored data is visible.
