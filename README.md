@@ -1,14 +1,15 @@
-# Gym Progress PWA v1.5.4
+# Gym Progress PWA v1.5.5
 
-Emergency recovery build after the v1.5.0 local-state migration issue and the v1.5.1 mixed service-worker module-cache blank screen.
+Local-first Gym Progress PWA. This release builds on the v1.5.2+ IndexedDB recovery safeguards and does not change the IndexedDB database/store/key.
 
-Key recovery protections:
-- version-busted top-level module imports;
-- network-first service-worker handling for application code/config;
-- visible startup/module-load fallback;
-- no automatic empty-state overwrite on a missing IndexedDB read;
-- migration record-count validation;
-- standalone `recovery.html` that can restore a good pre-update JSON backup even if the main app does not load.
+## v1.5.5 highlights
 
+- Exercise creation uses equipment-constrained tracking modes and a right-side friend-comparison toggle.
+- Catalogue links can be changed or removed; the supplied chain-link icon shows green when linked and grey when local.
+- New-exercise unload controls are shown only where they are initially useful.
+- Programme supersets are created/removed with the + / - controls between exercise cards and move as one block.
+- Active supersets show both exercises together, collect both results together and rest only after the pair has been performed.
+- Empty-bar 20 kg barbell work no longer receives a ramp-up recommendation; heavier barbell ramps can begin with the empty bar.
+- Transient information messages remain visible roughly twice as long and fade gradually.
 
-v1.5.4 keeps all v1.5.2 recovery protections. Do not clear site data during updates.
+Do not clear browser/site data during an update. Existing programme and history remain local to the current site origin.

@@ -100,25 +100,29 @@ export function progressionIncrement(base,equipment,exerciseKey=null,exerciseTyp
 }
 export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,minCompletedRir,targetRirMax),equipment);}
 function barbellPlateFriendlyRamp(workingWeightKg, raw, maxSets){
-  // Ramp plates intentionally use only 5/10/15/20 kg plates per side. 2.5 kg plates may still be added for the final working load.
-  const bar=20, work=Math.max(bar,Number(workingWeightKg)||0), sideBase=Math.floor(Math.max(0,(work-bar)/2)/5)*5;
-  if(sideBase<5)return [];
-  const plates=[5,10,15,20], targetCount=Math.max(0,Math.min(Number(maxSets??3),raw.length));
-  if(targetCount===0)return [];
-  const desired=raw.slice(0,targetCount).map(x=>x[0]*work);
+  // The 20 kg empty bar may itself be a ramp set, but a 20 kg working set needs no ramp-up.
+  // Ramp-only plates intentionally use 5/10/15/20 kg plates per side. 2.5 kg may still be used for the final work load.
+  const bar=20, work=Math.max(bar,Number(workingWeightKg)||0), targetCount=Math.max(0,Math.min(Number(maxSets??3),raw.length));
+  if(targetCount===0||work<=bar+1e-6)return [];
+  const firstSpec=raw[0],emptyBar={weightKg:bar,reps:firstSpec[1],restSeconds:firstSpec[2],percentOfWorkingWeight:Math.round(bar/work*100),plateFriendly:true};
+  if(targetCount===1)return [emptyBar];
+  const sideBase=Math.floor(Math.max(0,(work-bar)/2)/5)*5;
+  if(sideBase<5)return [emptyBar];
+  const plates=[5,10,15,20], remainingCount=targetCount-1;
+  const desired=raw.slice(1,targetCount).map(x=>x[0]*work);
   let best=null;
   // Search a small plate stack that can stay on the bar: each ramp step adds one plate per side; the final work may add the remaining plate/2.5 kg.
-  const maxLen=Math.min(5,targetCount+2);
+  const maxLen=Math.min(5,remainingCount+2);
   const walk=(seq,sum)=>{
     if(sum>sideBase)return;
     if(seq.length>=2){
       const cumulative=[];let x=0;for(const p of seq){x+=p;cumulative.push(bar+2*x);}
       const ramps=cumulative.filter(v=>v<work-1e-6);
       if(ramps.length){
-        const chosen=ramps.slice(0,targetCount);
+        const chosen=ramps.slice(0,remainingCount);
         let score=Math.abs(sideBase-sum)*1.2;
         for(let i=0;i<chosen.length;i++)score+=Math.abs(chosen[i]-(desired[i]??desired.at(-1)));
-        score+=Math.abs(chosen.length-targetCount)*25;
+        score+=Math.abs(chosen.length-remainingCount)*25;
         if(!best||score<best.score)best={score,weights:chosen};
       }
     }
@@ -127,7 +131,7 @@ function barbellPlateFriendlyRamp(workingWeightKg, raw, maxSets){
   };
   walk([],0);
   const weights=best?.weights||[];
-  return weights.map((weightKg,i)=>{const spec=raw[Math.min(i,raw.length-1)];return{weightKg,reps:spec[1],restSeconds:spec[2],percentOfWorkingWeight:Math.round(weightKg/work*100),plateFriendly:true};});
+  return [emptyBar,...weights.slice(0,remainingCount).map((weightKg,i)=>{const spec=raw[Math.min(i+1,raw.length-1)];return{weightKg,reps:spec[1],restSeconds:spec[2],percentOfWorkingWeight:Math.round(weightKg/work*100),plateFriendly:true};})].slice(0,targetCount);
 }
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName),maxSets=3){
   if(!(workingWeightKg>0)) return [];

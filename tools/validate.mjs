@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.4'||!app.includes("APP_VERSION='1.5.4'")||!sw.includes('gym-progress-pwa-v1.5.4'))errors.push('v1.5.4 version markers are inconsistent');
+if(pkg.version!=='1.5.5'||!app.includes("APP_VERSION='1.5.5'")||!sw.includes('gym-progress-pwa-v1.5.5'))errors.push('v1.5.5 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -15,7 +15,7 @@ if(!app.includes('qualifyingE1rm')||!read('exercise-identity.js').includes('effe
 if(!app.includes('compareWithFriends')||!app.includes('comparisonPointsForSession'))errors.push('programme-selected friend comparison missing');
 if(!app.includes('comparisonPointsForSelectedHistory')||!app.includes('syncComparisonHistory')||!read('social-api.js').includes('social_replace_exercise_comparison_points'))errors.push('retroactive comparison-history sync missing');
 if(!app.includes('TrackingMode.TIME_ONLY')||!app.includes("rt.phase='TIMED_SET'"))errors.push('timed/mat exercise flow missing');
-if(!app.includes('supersetGroupId')||!app.includes('SUPERSET_IMMEDIATE'))errors.push('superset flow missing');
+if(!app.includes('supersetGroupId')||!app.includes('joinSuperset')||!app.includes('splitSuperset')||!app.includes('superset-pulse-grid')||!app.includes('SUPERSET_ENTRY')||!app.includes('saveSupersetSet')||!app.includes('supersetPairSetInfo'))errors.push('paired superset programme/workout flow missing');
 if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('barbellPlateFriendlyRamp'))errors.push('max/plate-friendly ramp logic missing');
 if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))errors.push('ramp permanent-disable or Next panel missing');
 if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))errors.push('updated audio cue patterns missing');
@@ -23,9 +23,9 @@ if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.i
 if(!app.includes('sentTrackerReminderKeys')||!app.includes('(4*60)')||!css.includes('.tracker-card-accent')||!css.includes('.tracker-row.behind')||!css.includes('.tracker-row.done'))errors.push('Tracker visual/4-hour reminder follow-up missing');
 if(!app.includes('closeDialog();startWorkout(id)'))errors.push('Start Anyway does not close its warning');
 if(!app.includes('await afterRest()')||!app.includes('async function skipExercise()'))errors.push('Skip exercise direct transition missing');
-if(!app.includes('Remove permanently')||!app.includes('Skip today'))errors.push('new ramp-up wording missing');
+if(!app.includes('>Remove</button>')||!app.includes('>Skip</button>')||!app.includes('Remove ramp-up?'))errors.push('simplified ramp-up wording missing');
 if(!app.includes('pulse-reps-badge"><span>${set.targetReps}</span> REPS'))errors.push('active pulse rep target is not prominent');
-if(!app.includes('catalogueGlobeSvg')||!css.includes('.catalogue-status.linked{color:#39b86a')||!css.includes('.catalogue-status.local{color:#858891'))errors.push('requested catalogue globe linked/local styling missing');
+if(!app.includes('catalogue-link-glyph')||!css.includes("mask:url('./icons/catalogue-link.png')")||!css.includes('.catalogue-status.linked{color:#39b86a')||!css.includes('.catalogue-status.local{color:#858891'))errors.push('requested catalogue link icon linked/local styling missing');
 if(app.includes('Use existing ·')||app.includes('Existing exercise'))errors.push('obsolete own-exercise picker remains in exercise creation');
 if(!app.includes('If no catalogue match is selected')||!app.includes('Exercise type')||!app.includes('Compare with friends'))errors.push('direct catalogue-as-you-type exercise creation metadata missing');
 if(app.includes('class="card advanced-settings"'))errors.push('settings are still hidden in generic Advanced section');
@@ -33,6 +33,15 @@ if(!app.includes('class="app-version">Gym Progress PWA v${APP_VERSION}</div>`'))
 if(!css.includes('.chart-axis{font-size:12px')||!app.includes('T=16,B=14')||!app.includes('k kg'))errors.push('current chart geometry/unit formatting missing');
 if(!css.includes('.setting-toggle-row')||!app.includes('lastSetZeroRirAcceptable'))errors.push('last-set RIR setting/toggle missing');
 if(!app.includes("saveRecoveryState(loaded,'pre-identity-migration-v1')")||!app.includes('refusing to overwrite IndexedDB')||!app.includes('do not immediately write an empty'))errors.push('local-data migration safeguards missing');
+
+
+if(!app.includes('setting-toggle-control')||!app.includes('compare-toggle-row is-disabled')&&!app.includes("compare-toggle-row ${comparable?'':'is-disabled'}"))errors.push('friend comparison is not a right-side hard-disabled toggle');
+if(!app.includes('Available only for comparable barbell and dumbbell catalogue exercises.'))errors.push('friend comparison eligibility explanation missing');
+if(!app.includes("[Equipment.BARBELL,Equipment.OTHER].includes(eq)"))errors.push('add-form unload control is not restricted to relevant equipment');
+if(!app.includes('exercise-primary-grid')||!app.includes('Exercise type')||!app.includes('Tracking'))errors.push('exercise form metadata layout missing');
+if(!app.includes('exerciseFormChangeLink')||!app.includes('exerciseFormUnlink')||!app.includes('saveCatalogueLink'))errors.push('catalogue relink/unlink/save flow missing');
+if(!app.includes("if(rt.phase==='SUPERSET_ENTRY'&&Array.isArray(rt.supersetEntry))")||!app.includes('NEXT · SUPERSET'))errors.push('superset paired Next information missing');
+if(!sw.includes('./icons/catalogue-link.png'))errors.push('service worker missing catalogue link icon');
 
 const identity=read('exercise-identity.js');
 if(!identity.includes('a display-name similarity alone must never do so')||!identity.includes('const canonical=template.exerciseKey?'))errors.push('generic legacy migration can still auto-link by display name');
