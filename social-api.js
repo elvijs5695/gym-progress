@@ -61,3 +61,27 @@ export async function publishEvents(events){
   return authedFetch('/rest/v1/activity_events?on_conflict=user_id,client_event_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
 }
 export async function deleteEvent(id){return authedFetch(`/rest/v1/activity_events?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});}
+
+function comparisonPointBody(points){
+  return (points||[]).map(p=>({
+    client_point_id:p.clientPointId,
+    canonical_exercise_id:p.canonicalExerciseId,
+    occurred_at:p.occurredAt,
+    e1rm_kg:p.e1rmKg,
+    formula_version:p.formulaVersion||'EPLEY_RIR_V1',
+    source_programme_exercise_ids:p.sourceProgrammeExerciseIds||[],
+    source_labels:p.sourceLabels||[]
+  }));
+}
+export async function publishComparisonPoints(points){
+  if(!points?.length)return [];
+  const uid=socialUser()?.id;if(!uid)throw new Error('Sign in to compare exercises.');
+  const body=comparisonPointBody(points).map(p=>({...p,user_id:uid}));
+  return authedFetch('/rest/v1/exercise_comparison_points?on_conflict=user_id,client_point_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
+}
+export async function replaceComparisonPoints(points){
+  if(!socialUser()?.id)throw new Error('Sign in to compare exercises.');
+  return rpc('social_replace_exercise_comparison_points',{p_points:comparisonPointBody(points)});
+}
+export async function listCommonComparableExercises(friendId){return rpc('social_common_comparable_exercises',{p_friend_id:friendId});}
+export async function getExerciseComparison(friendId,canonicalExerciseId,sinceIso=null){return rpc('social_exercise_comparison',{p_friend_id:friendId,p_canonical_exercise_id:canonicalExerciseId,p_since:sinceIso});}

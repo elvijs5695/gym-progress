@@ -99,16 +99,48 @@ export function progressionIncrement(base,equipment,exerciseKey=null,exerciseTyp
   return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&comfortable?5:2.5;
 }
 export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,minCompletedRir,targetRirMax),equipment);}
-export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName)){
+function barbellPlateFriendlyRamp(workingWeightKg, raw, maxSets){
+  // Ramp plates intentionally use only 5/10/15/20 kg plates per side. 2.5 kg plates may still be added for the final working load.
+  const bar=20, work=Math.max(bar,Number(workingWeightKg)||0), sideBase=Math.floor(Math.max(0,(work-bar)/2)/5)*5;
+  if(sideBase<5)return [];
+  const plates=[5,10,15,20], targetCount=Math.max(0,Math.min(Number(maxSets??3),raw.length));
+  if(targetCount===0)return [];
+  const desired=raw.slice(0,targetCount).map(x=>x[0]*work);
+  let best=null;
+  // Search a small plate stack that can stay on the bar: each ramp step adds one plate per side; the final work may add the remaining plate/2.5 kg.
+  const maxLen=Math.min(5,targetCount+2);
+  const walk=(seq,sum)=>{
+    if(sum>sideBase)return;
+    if(seq.length>=2){
+      const cumulative=[];let x=0;for(const p of seq){x+=p;cumulative.push(bar+2*x);}
+      const ramps=cumulative.filter(v=>v<work-1e-6);
+      if(ramps.length){
+        const chosen=ramps.slice(0,targetCount);
+        let score=Math.abs(sideBase-sum)*1.2;
+        for(let i=0;i<chosen.length;i++)score+=Math.abs(chosen[i]-(desired[i]??desired.at(-1)));
+        score+=Math.abs(chosen.length-targetCount)*25;
+        if(!best||score<best.score)best={score,weights:chosen};
+      }
+    }
+    if(seq.length>=maxLen||sum>=sideBase)return;
+    for(const p of plates)walk([...seq,p],sum+p);
+  };
+  walk([],0);
+  const weights=best?.weights||[];
+  return weights.map((weightKg,i)=>{const spec=raw[Math.min(i,raw.length-1)];return{weightKg,reps:spec[1],restSeconds:spec[2],percentOfWorkingWeight:Math.round(weightKg/work*100),plateFriendly:true};});
+}
+export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName),maxSets=3){
   if(!(workingWeightKg>0)) return [];
   let raw;
-  if(exerciseType===ExerciseType.HEAVY_COMPOUND){raw=targetReps<=5?[[.40,6,60],[.60,4,75],[.75,2,90],[.88,1,120]]:targetReps<=10?[[.40,8,60],[.60,5,75],[.75,3,90],[.85,1,120]]:[[.40,8,60],[.60,5,75],[.75,2,90]];}
-  else if(exerciseType===ExerciseType.MODERATE_COMPOUND){raw=targetReps<=6?[[.45,6,60],[.65,3,75],[.82,1,90]]:[[.45,6,60],[.65,4,75],[.80,2,90]];}
+  if(exerciseType===ExerciseType.HEAVY_COMPOUND){raw=targetReps<=5?[[.42,6,60],[.62,4,75],[.80,2,90],[.90,1,120]]:targetReps<=10?[[.42,8,60],[.62,5,75],[.80,3,90],[.90,1,120]]:[[.45,8,60],[.65,5,75],[.82,2,90]];}
+  else if(exerciseType===ExerciseType.MODERATE_COMPOUND){raw=targetReps<=6?[[.48,6,60],[.68,3,75],[.84,1,90]]:[[.48,6,60],[.68,4,75],[.82,2,90]];}
   else if(exerciseType===ExerciseType.MACHINE_COMPOUND)raw=[[.50,6,60],[.75,3,75]];
   else if(exerciseType===ExerciseType.ISOLATION)raw=[[.50,8,45]];
   else raw=[[.50,6,60],[.75,3,75]];
-  const rampSnap=n=>equipment===Equipment.BARBELL?snap(n,5):equipment===Equipment.DUMBBELL?snap(n,.5):(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)?snap(n,2.5):snapSelectable(n,equipment);
+  const limit=Math.max(0,Math.min(6,Number(maxSets??3)));
+  if(equipment===Equipment.BARBELL)return barbellPlateFriendlyRamp(workingWeightKg,raw,limit);
+  const rampSnap=n=>equipment===Equipment.DUMBBELL?snap(n,.5):(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)?snap(n,2.5):snapSelectable(n,equipment);
   const seen=new Set();
-  return raw.map(([p,reps,rest])=>({weightKg:rampSnap(workingWeightKg*p),reps,restSeconds:rest,percentOfWorkingWeight:Math.trunc(p*100)}))
+  return raw.slice(0,limit).map(([p,reps,rest])=>({weightKg:rampSnap(workingWeightKg*p),reps,restSeconds:rest,percentOfWorkingWeight:Math.trunc(p*100)}))
     .filter(s=>s.weightKg>0&&s.weightKg<workingWeightKg).filter(s=>{const k=`${s.weightKg}/${s.reps}`;if(seen.has(k))return false;seen.add(k);return true;});
 }

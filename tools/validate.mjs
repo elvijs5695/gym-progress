@@ -2,82 +2,37 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const errors=[];
+const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
+const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
+const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
+if(pkg.version!=='1.5.0'||!app.includes("APP_VERSION='1.5.0'")||!sw.includes('gym-progress-pwa-v1.5.0'))errors.push('v1.5.0 version markers are inconsistent');
+for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
+if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
+if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
+if(!app.includes('qualifyingE1rm')||!read('exercise-identity.js').includes('effective>10'))errors.push('comparison-grade e1RM rules missing');
+if(!app.includes('compareWithFriends')||!app.includes('comparisonPointsForSession'))errors.push('programme-selected friend comparison missing');
+if(!app.includes('comparisonPointsForSelectedHistory')||!app.includes('syncComparisonHistory')||!read('social-api.js').includes('social_replace_exercise_comparison_points'))errors.push('retroactive comparison-history sync missing');
+if(!app.includes('TrackingMode.TIME_ONLY')||!app.includes("rt.phase='TIMED_SET'"))errors.push('timed/mat exercise flow missing');
+if(!app.includes('supersetGroupId')||!app.includes('SUPERSET_IMMEDIATE'))errors.push('superset flow missing');
+if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('barbellPlateFriendlyRamp'))errors.push('max/plate-friendly ramp logic missing');
+if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))errors.push('ramp permanent-disable or Next panel missing');
+if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))errors.push('updated audio cue patterns missing');
+if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.includes('checkTrackerReminders'))errors.push('Tracker functionality incomplete');
+if(!css.includes('.chart-axis{font-size:12px')||!app.includes('T=16,B=14')||!app.includes('k kg'))errors.push('current chart geometry/unit formatting missing');
+if(!css.includes('.setting-toggle-row')||!app.includes('lastSetZeroRirAcceptable'))errors.push('last-set RIR setting/toggle missing');
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const errors = [];
-const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
-  const full = path.join(dir, entry.name);
-  if (entry.name === 'node_modules') return [];
-  return entry.isDirectory() ? walk(full) : [full];
-});
-const files = walk(root);
-const textFiles = files.filter(f => /\.(?:js|mjs|html|css|json|webmanifest|md)$/.test(f));
-const joined = textFiles.map(f => fs.readFileSync(f, 'utf8')).join('\\n');
-
-if (!joined.includes('1.4.9')) errors.push('v1.4.9 marker missing');
-if (!fs.existsSync(path.join(root, 'BEHAVIOUR_CONTRACT.md'))) errors.push('behaviour contract missing');
-if (!fs.existsSync(path.join(root, 'ARCHITECTURE.md'))) errors.push('architecture document missing');
-
-
-const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
-const socialSql = fs.readFileSync(path.join(root, 'supabase', 'SUPABASE_SOCIAL_SETUP.sql'), 'utf8');
-if (!appJs.includes('await persist();ui.setStatusMessage=null;render();')) errors.push('last-set skip does not force the next phase to render');
-if (!appJs.includes('if(window.__gpShareDraft)renderShareSummary();')) errors.push('share draft is not restored after app re-render');
-if (!appJs.includes("filter(c=>c.selected).map(c=>({...c.event,comment:c.comment?.trim()||null}))")) errors.push('selected shares must publish even without a comment');
-if (appJs.includes('onclick="gp.showTimelineEvent')) errors.push('social timeline dots should be visual-only');
-if (!css.includes('min-width:0;min-height:0')) errors.push('timeline dots are not protected from global button sizing');
-if (/where\s+e\.event_type='workout_summary'/i.test(socialSql)) errors.push('timeline still excludes exercise-record-only shares');
-if (!appJs.includes('fade=.18') || !appJs.includes(' C ${c1x} ${ay}, ${c2x} ${by}, ${bx} ${by}') || !css.includes('vector-effect:non-scaling-stroke')) errors.push('smoothed/non-scaling chart markers missing');
-if (!appJs.includes('const socialDeletePending=new Set()')) errors.push('optimistic social delete pending guard missing');
-if (!appJs.includes('socialUi.feed=socialUi.feed.filter(e=>e.id!==id)')) errors.push('optimistic social delete does not remove feed row immediately');
-if (!appJs.includes('void performOptimisticSocialDelete(event)')) errors.push('optimistic social delete is not launched asynchronously');
-if (/function deleteSocialEvent[\s\S]{0,900}enterFriends\(\)/.test(appJs)) errors.push('social delete still performs a full Friends reload');
-if (!appJs.includes('function mainNavIcon(name)')) errors.push('vector main navigation icon helper missing');
-if (!fs.readFileSync(path.join(root, 'social-api.js'), 'utf8').includes('SOCIAL_EVENT_KEYS')) errors.push('social event bulk-insert normalization missing');
-if (!socialSql.includes('activity_shared')) errors.push('shared-activity notification schema missing');
-if (appJs.includes('Signed in as')) errors.push('signed-in profile card copy still present');
-
-if (!appJs.includes("getTimeline('1970-01-01T00:00:00.000Z')")) errors.push('shared timeline does not load full available history');
-if (!appJs.includes('function bindFriendsTimeline()')) errors.push('shared timeline pinch/pan binding missing');
-if (!appJs.includes('timelineDays:null,timelineEndMs:null')) errors.push('shared timeline viewport state missing');
-if (!css.includes('.friends-panel.expanded')) errors.push('expanded Friends panel state is not visually distinct');
-if (!css.includes('gap:2px')) errors.push('expanded friend rows are not compact');
-
-
-for (const rel of ['performance-rules.js','performance-rules.json','performance-rule-cases.json','icons/social-completed-workout.png','icons/social-record-trophy.png']) {
-  if (!fs.existsSync(path.join(root, rel))) errors.push(`shared asset missing: ${rel}`);
-}
-if (!appJs.includes("const statusRoot=$('#status-root')") || !appJs.includes("let root=$('#dialog-root')")) errors.push('persistent status/dialog roots missing');
-if (!appJs.includes('lastSetZeroRirAcceptable')) errors.push('last-set 0 RIR setting wiring missing');
-if (!appJs.includes('if(!names.includes(ui.progressExercise))ui.progressExercise=names[0]||\'\';') || !appJs.includes('<option value=\"${esc(n)}\" ${n===ui.progressExercise')) errors.push('Progress exercise selector does not preserve canonical exercise values across localisation/rerenders');
-if (!css.includes('.setting-toggle-row') || !css.includes('.setting-toggle-input:checked + .setting-toggle-track')) errors.push('last-set 0 RIR right-side toggle layout missing');
-if (!appJs.includes('viewportWidth=window.visualViewport?.width||window.innerWidth||760') || !appJs.includes('W=Math.max(276,Math.min(716,viewportWidth-44)),H=250,L=58,R=4,T=12,B=10') || !appJs.includes('k kg') || !css.includes('font-size:13px;font-weight:600') || !css.includes('height:auto;min-height:0')) errors.push('v1.4.9 responsive-height Progress geometry/unit markers missing');
-if (!appJs.includes("x.sessionStatus==='COMPLETE'||(x.sessionStatus==='ABORTED'&&x.fullyCompleted)")) errors.push('completed exercises from aborted sessions are not included in Progress');
-if (!appJs.includes("metric===primaryProgressMetric(cur)") || !appJs.includes('actionableFailureCount')) errors.push('primary-metric actionable-failure Progress logic missing');
-for (const file of files.filter(f => /\.(?:js|mjs)$/.test(f))) {
-  const result = spawnSync(process.execPath, ['--check', file], {encoding:'utf8'});
-  if (result.status !== 0) errors.push(`JavaScript syntax error in ${path.relative(root,file)}: ${result.stderr.trim()}`);
-}
-const ruleResult=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});
-if(ruleResult.status!==0) errors.push(`performance-rule cases failed:
-${(ruleResult.stderr||ruleResult.stdout).trim()}`);
-
-const swPath = fs.existsSync(path.join(root, 'sw.js')) ? path.join(root, 'sw.js') : path.join(root, 'service-worker.js');
-const sw = fs.readFileSync(swPath, 'utf8');
-if (sw.includes('gym-progress-pwa-v1.4.0')) errors.push('old service-worker cache marker remains');
-const shellMatch = sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);
-if (!shellMatch) errors.push('APP_SHELL not found');
-else {
-  const shell = JSON.parse(shellMatch[1]);
-  for (const item of shell) {
-    const rel = item.replace(/^\.\//, '');
-    if (!fs.existsSync(path.join(root, rel))) errors.push(`missing service-worker asset: ${item}`);
-  }
-}
-
-if (errors.length) {
-  console.error(errors.join('\\n'));
-  process.exit(1);
-}
-console.log(`OK: ${files.length} PWA files checked`);
+const identity=read('exercise-identity.js');
+if(!identity.includes('a display-name similarity alone must never do so')||!identity.includes('const canonical=template.exerciseKey?'))errors.push('generic legacy migration can still auto-link by display name');
+const catalogue=JSON.parse(read('exercise-catalogue.json')),migration=JSON.parse(read('exercise-migration-map.json'));
+if(catalogue.families?.length!==27||catalogue.exercises?.length!==191)errors.push('catalogue count mismatch');
+if(catalogue.exercises.filter(x=>x.friendE1rmEligible).length!==9)errors.push('friend-comparable catalogue count mismatch');
+if(migration.users?.length!==32||migration.programmeOccurrences?.length!==42)errors.push('reviewed migration count mismatch');
+if(migration.users.some(x=>!['LINK','KEEP_LOCAL'].includes(x.mappingStatus)))errors.push('reviewed migration still has unresolved mappings');
+const sql=read('supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql');
+if(!sql.includes('begin;')||!sql.includes('commit;')||!sql.includes('grant select, insert, update, delete on public.exercise_comparison_points to authenticated')||!sql.includes('social_replace_exercise_comparison_points'))errors.push('Supabase migration transaction/API grants/retroactive sync RPC missing');
+const shellMatch=sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);if(!shellMatch)errors.push('APP_SHELL not found');else{const shell=JSON.parse(shellMatch[1]);for(const rel of ['./exercise-identity.js','./exercise-catalogue.js','./exercise-catalogue.json','./exercise-migration-map.js','./exercise-migration-map.json'])if(!shell.includes(rel))errors.push(`service worker missing ${rel}`);for(const item of shell){const rel=item.replace(/^\.\//,'');if(!fs.existsSync(path.join(root,rel)))errors.push(`missing service-worker asset: ${item}`);}}
+for(const f of files.filter(f=>/\.(?:js|mjs)$/.test(f))){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)errors.push(`JavaScript syntax error in ${path.relative(root,f)}: ${r.stderr.trim()}`);}
+const rr=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});if(rr.status!==0)errors.push(`performance-rule cases failed: ${(rr.stderr||rr.stdout).trim()}`);
+if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);

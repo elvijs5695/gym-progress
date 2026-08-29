@@ -1,49 +1,18 @@
-# v1.4.9 validation additions
+# Gym Progress PWA v1.5.0 validation
 
-- Static validation checks version 1.4.9, JavaScript syntax, service-worker coverage, persistent dialog/status roots, shared performance-rule files, achievement artwork, and the current chart implementation.
-- `tools/validate-rules.mjs` executes the canonical performance-rule cases against the PWA rule implementation.
-- Browser/device, service-worker upgrade, OTP return flow, and live Supabase behaviour remain user/browser validation steps.
+`npm run check` passes and currently checks **52 PWA files**. The release validator covers:
 
----
+- JavaScript syntax for all JS/MJS files;
+- canonical performance-rule cases;
+- service-worker asset coverage;
+- stable UserExercise/ProgrammeExercise ID Progress selectors;
+- 191-exercise / 27-family catalogue and 32-user / 42-occurrence reviewed migration assets;
+- conservative legacy migration that never canonical-links from display-name similarity alone;
+- comparison-grade e1RM rules and programme-selected friend comparison;
+- retroactive comparison-history reconciliation through `social_replace_exercise_comparison_points`;
+- timed/mat exercises, supersets, ramp controls, Tracker, current chart geometry/units;
+- required Supabase migration, backup, pre-check and post-check assets.
 
-# v1.4.5 validation additions
+The two supplied production JSON backups were also run through the new identity migration independently: no template/session exercise was left without UserExercise/ProgrammeExercise IDs and no duplicate ProgrammeExercise IDs were generated.
 
-- Static validation checks the v1.4.5 marker.
-- Checks optimistic deletion structure: pending-delete guard, immediate local feed removal, asynchronous Supabase delete, and no full `enterFriends()` reload in the delete path.
-- Checks the new inline vector main-navigation icon helper.
-- Checks the Android-parity chart blend fraction and breakpoint join output.
-
-# v1.4.4 validation additions
-
-- Friends are de-duplicated by user_id before rendering/counting.
-- Header uses a two-row aligned layout.
-- Disclosure chevron uses a fixed-size SVG and only rotates.
-- Shared rhythm keeps an 8px visual gap after the Friends control/list.
-
-# Gym Progress PWA v1.4.1 — validation record
-
-
-## v1.4.1 optional Friends/social layer
-
-- JavaScript syntax validation passed for all `.js`/`.mjs` files.
-- PWA shell validation passed with `social-api.js` and `social-config.js` included in the service-worker application shell.
-- Social authentication/session state is kept separate from IndexedDB workout backups.
-- Only the Supabase project URL + publishable client key are bundled; no secret/service-role credential is present.
-- Exact-email lookup, mutual friendship, incoming requests, remove-for-both, 20-record cursor feed, common timeline, own-post deletion and unseen badge paths were source-checked.
-- Durable request/acceptance notifications are polled about once per minute while the PWA is open/visible; browser notifications are shown when permission is available.
-- A fully closed static GitHub Pages PWA cannot receive true background Web Push in this release. Durable unread state is shown on next open.
-- Share comments are rendered only for cards whose Share toggle is selected.
-- `SUPABASE_SOCIAL_SETUP.sql` in the PWA package was byte-compared with the root release SQL.
-
-### Remaining browser/backend validation
-
-Real OTP/SMTP delivery, two-account friendship, notification-permission behaviour and deployed GitHub Pages service-worker update behaviour require the user's live Supabase/browser environment.
-
-## v1.4.4 timeline/friends checks
-- Full shared history is requested from the social timeline RPC.
-- Shared rhythm binds pointer pan + pinch zoom and keeps a 1-day to 100-year practical viewport.
-- Friend names expand inside one Friends panel with 2 px row spacing and a distinct expanded surface.
-
-- Progress selector options carry explicit exercise-name values and invalid/stale UI selections fall back to a valid exercise.
-- Training-effort last-set 0 RIR control uses the dedicated right-side toggle layout.
-- Progress chart/summary geometry includes the v1.4.9 responsive viewBox sizing, full-height mobile plot and explicit Volume kg axis units.
+Live browser/device and production-Supabase execution remain user validation steps.

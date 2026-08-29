@@ -1,5 +1,6 @@
 import {volumeMultiplier} from './exercise-library.js';
 import {PERFORMANCE_RULES,effectiveRir,actionableFailure} from './performance-rules.js';
+import {qualifyingE1rm,TrackingMode} from './exercise-identity.js';
 export const COLORS={blue:'#92b8e8',green:'#70b995',lightgreen:'#a6d9b8',yellow:'#e8cf80',red:'#e99b9b',deepred:'#d97777',orange:'#e9ad83',gray:'#b8bcc4'};
 export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 export function formatKg(v){
@@ -28,13 +29,14 @@ export function exerciseMetrics(state,e){
   const multiplier=volumeMultiplier(e.equipment,e.dumbbellLoad);
   const volume=complete.reduce((a,s)=>a+(Number(s.actualWeightKg)||0)*(Number(s.actualReps)||0)*multiplier,0);
   const rirs=complete.map(effectiveRir).filter(v=>v!=null).map(Number);
-  const bestE1rm=complete.reduce((best,s)=>Math.max(best,(Number(s.actualWeightKg)||0)*(1+(Number(s.actualReps)||0)/30)),0);
+  const bestE1rm=complete.reduce((best,s)=>Math.max(best,qualifyingE1rm(s)||0),0);
+  const totalDurationSeconds=complete.reduce((sum,s)=>sum+Number(s.actualDurationSeconds||0),0);
   const maxWeight=complete.reduce((best,s)=>Math.max(best,Number(s.actualWeightKg)||0),0);
   const maxReps=complete.reduce((best,s)=>Math.max(best,Number(s.actualReps)||0),0);
   const failureCount=complete.filter(s=>s.failure).length;
   const actionableFailureCount=complete.filter(s=>actionableFailure(e,s,state.app_state)).length;
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
-  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,bestE1rm,maxWeight,maxReps,failureCount,actionableFailureCount};
+  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,bestE1rm,maxWeight,maxReps,totalDurationSeconds,failureCount,actionableFailureCount};
 }
 export function sessionMetrics(state,session){
   const es=sessionExercises(state,session.id); const em=es.map(e=>exerciseMetrics(state,e));
@@ -44,9 +46,9 @@ export function sessionMetrics(state,session){
   const prev=previousIdenticalSession(state,session);
   let progressPercent=null;
   if(prev){
-    const oldByName=new Map(sessionExercises(state,prev.id).map(e=>[e.name,exerciseMetrics(state,e)]));
+    const oldByIdentity=new Map(sessionExercises(state,prev.id).map(e=>[e.userExerciseId||`legacy:${e.name}`,exerciseMetrics(state,e)]));
     const changes=[];
-    for(const e of es){const m=exerciseMetrics(state,e),old=oldByName.get(e.name);if(m.completedSets&&old?.volume>0)changes.push((m.volume/old.volume-1)*100);}
+    for(const e of es){const m=exerciseMetrics(state,e),old=oldByIdentity.get(e.userExerciseId||`legacy:${e.name}`);if(m.completedSets&&old?.volume>0)changes.push((m.volume/old.volume-1)*100);}
     if(changes.length)progressPercent=changes.reduce((a,b)=>a+b,0)/changes.length;
   }
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
@@ -84,7 +86,7 @@ function effortFromScore(score,appState){
 }
 export function exerciseProgressPercent(state,e,previous){
   const m=exerciseMetrics(state,e); if(!m.completedSets||!previous)return null;
-  const old=sessionExercises(state,previous.id).find(x=>x.name===e.name); if(!old)return null;
+  const old=sessionExercises(state,previous.id).find(x=>(e.userExerciseId&&x.userExerciseId===e.userExerciseId)||(!e.userExerciseId&&x.name===e.name)); if(!old)return null;
   const oldVol=exerciseMetrics(state,old).volume; return oldVol>0?(m.volume/oldVol-1)*100:null;
 }
 export function phaseDuration(start,end,skipped){return skipped?'Skipped':start!=null&&end!=null?formatDuration(end-start):'—';}
