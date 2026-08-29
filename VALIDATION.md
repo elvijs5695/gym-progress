@@ -1,11 +1,8 @@
-# PWA v1.5.2 validation
+# PWA v1.5.3 validation
 
-- JavaScript syntax checked for all JS/MJS files.
-- All non-DOM application modules imported successfully in Node.
-- Release validator passed, including the shared performance-rule cases, catalogue counts, reviewed migration counts, friend-comparison rules, timed/mat exercises, supersets, Tracker and migration safeguards.
-- v1.5.2 avoids a hard dependency on the new db.js recovery export, so an old service-worker-cached db.js cannot cause a named-export module-link failure.
-- Top-level imports are version-busted for the first load after deployment.
-- Service worker uses network-first code/config loading with offline cache fallback.
-- Standalone recovery.html is included for restoring a pre-update JSON backup directly into the original IndexedDB if the normal app cannot render.
+Static validation must pass before packaging. v1.5.3 retains the v1.5.2 IndexedDB safeguards: unchanged DB/store/key, recovery snapshot before identity migration, record-count migration invariant, and no empty-default overwrite after a missing state read.
 
-Runtime/device/browser validation remains required on the user's deployed PWA.
+Manual/device/browser checks remain required for IndexedDB upgrade, installed-PWA cache replacement, notifications and Supabase friend comparison.
+
+
+Additional v1.5.3 checks cover visible training settings, direct catalogue typing/linking, Tracker 4-hour slots, distinct tracker states, globe status rendering, Start Anyway closure, Skip exercise progression and version-busted cache assets.

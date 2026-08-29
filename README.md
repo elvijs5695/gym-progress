@@ -1,4 +1,4 @@
-# Gym Progress PWA v1.5.2
+# Gym Progress PWA v1.5.3
 
 Emergency recovery build after the v1.5.0 local-state migration issue and the v1.5.1 mixed service-worker module-cache blank screen.
 
@@ -9,3 +9,6 @@ Key recovery protections:
 - no automatic empty-state overwrite on a missing IndexedDB read;
 - migration record-count validation;
 - standalone `recovery.html` that can restore a good pre-update JSON backup even if the main app does not load.
+
+
+v1.5.3 keeps all v1.5.2 recovery protections. Do not clear site data during updates.

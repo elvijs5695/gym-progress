@@ -1,9 +1,12 @@
-# Gym Progress PWA v1.5.2
+# Gym Progress PWA v1.5.3
 
-## Recovery hotfix
-- Fixes a blank screen possible on the first load after v1.5.1 when the previous service worker supplied an old cached `db.js` to the new `app.js`.
-- Top-level ES-module dependencies are now version-busted.
-- New service worker uses network-first handling for code/config files with cache fallback for offline use.
-- Adds a visible module-load error fallback instead of an empty black page.
-- Adds standalone `recovery.html` for restoring a pre-update JSON backup directly into the original IndexedDB.
-- Retains the v1.5.1 protections against writing empty defaults after a missing initial state read.
+- Preserves the v1.5.2 local-data recovery safeguards and service-worker cache hardening.
+- Reworked exercise creation around direct catalogue-as-you-type matching; removed the confusing existing-exercise picker.
+- Catalogue linkage uses a globe icon, supports immediate unlink, and is fully translated in the new dialogue.
+- Friend comparison can be enabled while creating/editing a qualifying catalogue exercise.
+- Exercise type/equipment/tracking/ramp settings are visible rather than hidden under Advanced.
+- Fixed Start Anyway warning persistence, Skip exercise transition, and prominent reps in the active pulse.
+- Tracker card is visually distinct, overdue items turn red, completed items green, controls are larger, and unit selection is preset.
+- Single-occurrence daily Tracker items remind from the productive-day start and repeat every four hours until complete while the PWA is able to run.
+- Settings are no longer collapsed behind a generic Advanced section: training effort/progression remain directly visible; Data, Motivation & reminders and Display are separate; Starter programme expands before its setup button is shown; version sits at the very bottom.
+- Tracker reminder de-duplication now tracks each item/slot independently, preventing repeated notifications when several items are due.
