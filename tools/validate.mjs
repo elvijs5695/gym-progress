@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.8'||!app.includes("APP_VERSION='1.5.8'")||!sw.includes('gym-progress-pwa-v1.5.8'))errors.push('v1.5.8 version markers are inconsistent');
+if(pkg.version!=='1.5.9'||!app.includes("APP_VERSION='1.5.9'")||!sw.includes('gym-progress-pwa-v1.5.9'))errors.push('v1.5.9 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -58,7 +58,12 @@ if(!app.includes('function exerciseFormChangeLink()')||app.includes("exerciseFor
 
 
 if(!app.includes('trackerRenderedDate=trackerTodayKey()')||!app.includes('trackerDateNow!==trackerRenderedDate'))errors.push('local-midnight Tracker rollover missing');
-if(!app.includes('renderFriendComparisonChart')||!app.includes('const ids=[...new Set(parsed.map(p=>p.userId))]')||!app.includes('if(pts.length>=2)')||!app.includes('<circle class="chart-point"'))errors.push('one-chart combined-domain/single-point friend comparison missing');
+if(!app.includes('renderFriendComparisonChart')||!app.includes('orderedIds=[me,friendId')||!app.includes('pts.length>=2')||!app.includes('pts.length===1?5.5:4')||!app.includes('niceChartAxis'))errors.push('one-chart combined-domain/single-point friend comparison missing');
+
+if(!app.includes('TRACKER_NOTIFICATIONS_KEY')||!app.includes('setTrackerNotifications')||!app.includes('deleteTrackerItem')||!app.includes('Tracker notifications'))errors.push('Tracker notification controls/delete settings missing');
+if(!app.includes("rt.phase==='ENTRY'||rt.phase==='SUPERSET_ENTRY'")||!app.includes("if(!rt?.rest)return''"))errors.push('result-entry rest Skip fix missing');
+if(!app.includes('niceChartStep')||!app.includes('compactTick')||!css.includes('.friend-comparison-help{font-size:11px'))errors.push('readable chart scale/e1RM help sizing missing');
+if(!css.includes('.tracker-row{min-height:34px}')||!css.includes('opacity:.52')||!css.includes('.tracker-name{font-weight:400'))errors.push('compact low-emphasis Tracker rows/step controls missing');
 if(!app.includes('new Map()')&&!read('exercise-catalogue.js').includes('new Map()'))errors.push('canonical suggestion deduplication missing');
 if(!read('exercise-catalogue.json').includes('Machine Hip Thrust'))errors.push('Machine Hip Thrust catalogue entry missing');
 const identity=read('exercise-identity.js');

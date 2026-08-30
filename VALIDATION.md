@@ -1,20 +1,18 @@
-# PWA v1.5.8 validation
+# PWA v1.5.9 validation
 
-Validated in this environment:
+Completed checks:
 
-- `node --check` for every JS/MJS source through `tools/validate.mjs`;
-- shared performance-rule cases;
-- version/service-worker markers = 1.5.8;
-- every shorthand handler exported through `window.gp` resolves to a declared/imported identifier;
-- IndexedDB migration/recovery guards retained;
-- Logs renderer present;
-- neutral/overlapped superset programme styling;
-- unequal 3+2 superset progression guard;
-- combined superset ramp-up source flow;
-- permissive tracking-mode override with equipment recommendation;
-- 0/25/50/75/100 Tracker reminder checkpoints;
-- cumulative English/Latvian first-open update brief;
-- catalogue = 191 exercises / 27 families / 9 friend-comparable entries;
-- reviewed production identity mappings = 32 UserExercise / 42 programme occurrences.
+- PWA source validator: PASS;
+- JavaScript syntax checks for release JS/MJS files: PASS;
+- performance-rule validator: PASS;
+- version/service-worker markers = 1.5.9: PASS;
+- IndexedDB identity/data-safety guards retained: PASS;
+- Tracker notification master switch and Delete action present: PASS;
+- compact regular-weight Tracker rows / subdued +/- styling present: PASS;
+- local-midnight Tracker rollover retained: PASS;
+- result-entry rest Skip fix present: PASS;
+- readable nice-axis helper used by normal and friend charts: PASS;
+- isolated friend point / overlap outline / per-user count logic present: PASS;
+- smaller friend-comparison e1RM explanatory text present: PASS.
 
-Browser/device interaction still requires user testing after deployment.
+No Supabase migration is required for this release.

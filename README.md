@@ -1,16 +1,16 @@
-# Gym Progress PWA v1.5.8
+# Gym Progress PWA v1.5.9
 
-Local-first Gym Progress PWA. Update over the existing site origin and **do not clear browser/site data**. The v1.5.2+ IndexedDB recovery protections remain unchanged.
+Local-first Gym Progress PWA. Deploy over the existing site/origin and **do not clear browser/site data**. IndexedDB identity and recovery safeguards are unchanged.
 
-## v1.5.8 highlights
+## v1.5.9 highlights
 
-- Restores the Logs screen and keeps all transient informational notices on one 3.0 s fade timing.
-- Superset + controls overlap the boundary between programme cards; superset cards use the normal card colour.
-- Heavy compound exercises can be supersetted. Timed exercises remain excluded from paired supersets because the paired workout UI is set/rep based.
-- Unequal supersets (for example 3 sets + 2 sets) finish correctly without replaying the shorter exercise.
-- A superset now uses one combined ramp-up flow for both exercises.
-- Tracking mode is suggested from equipment but remains user-overridable; “Timed / mat” is now simply “Timed”.
-- Tracker reminders for multi-increment goals use 0 / 25 / 50 / 75 / 100% day checkpoints.
-- A compact English/Latvian “What’s new” brief appears once per version and cumulatively summarises the major UI/UX changes since PWA v1.5.0.
+- Tracker settings now include Delete beside Edit and a visible master Tracker notifications switch.
+- Tracker rows are denser and use regular-weight text; +/- controls are intentionally quiet so completion state carries the visual emphasis.
+- Tracker remains daily and rolls to a fresh local-date total at midnight while prior dated entries remain stored.
+- Progress and friend-comparison charts use readable rounded grid intervals; weight/e1RM axes favour gym-friendly steps such as 2.5, 5, 10 and 20 kg depending on range.
+- Friend comparison explicitly renders isolated one-point series and shows per-user point counts; exact overlaps remain distinguishable.
+- The e1RM explanation in friend comparison is smaller.
+- Rest Skip now works while a set/superset result-entry screen still owns an active rest; the stuck 0:00 rest panel is removed immediately.
+- PWA 1.5.8 mixed timed supersets, exercise guardrails, comparison eligibility fixes and data-loss protections remain in place.
 
-No new Supabase SQL is required.
+No IndexedDB schema identity change and no Supabase schema migration are required.
