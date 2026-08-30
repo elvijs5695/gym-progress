@@ -5,8 +5,9 @@ export const CANONICAL_BY_ID = new Map(CANONICAL_EXERCISES.map(x=>[x.id,x]));
 export const CANONICAL_BY_KEY = new Map(CANONICAL_EXERCISES.map(x=>[x.key,x]));
 export function canonicalName(exercise,lang='en'){return lang==='lv'?(exercise?.nameLv||exercise?.nameEn||''):(exercise?.nameEn||'');}
 export function canonicalSuggestions(query='',lang='en',limit=12){
-  const raw=String(query||'').trim().toLowerCase(),q=raw.replace(/\s+/g,' ');if(!q)return CANONICAL_EXERCISES.slice().sort((a,b)=>canonicalName(a,lang).localeCompare(canonicalName(b,lang))).slice(0,limit);
+  const unique=[...new Map(CANONICAL_EXERCISES.map(e=>[e.id,e])).values()];
+  const raw=String(query||'').trim().toLowerCase(),q=raw.replace(/\s+/g,' ');if(!q)return unique.slice().sort((a,b)=>canonicalName(a,lang).localeCompare(canonicalName(b,lang))).slice(0,limit);
   const wordStarts=(text)=>String(text||'').toLowerCase().split(/[^\p{L}\p{N}]+/u).some(w=>w.startsWith(q));
   const score=e=>{const preferred=String(canonicalName(e,lang)||'').toLowerCase(),other=String(lang==='lv'?e.nameEn:e.nameLv||'').toLowerCase(),aliases=(e.aliasesEn||[]).map(x=>String(x).toLowerCase()),family=String(e.familyKey||'').toLowerCase().replaceAll('_',' ');if(preferred===q)return 0;if(preferred.startsWith(q))return 1;if(wordStarts(preferred))return 2;if(preferred.includes(q))return 3;if(aliases.some(x=>x===q||x.startsWith(q)||wordStarts(x)))return 4;if(aliases.some(x=>x.includes(q)))return 5;if(other===q||other.startsWith(q)||wordStarts(other))return 6;if(other.includes(q))return 7;if(family.includes(q))return 8;return 99;};
-  return CANONICAL_EXERCISES.map(e=>[e,score(e)]).filter(([,s])=>s<99).sort((a,b)=>a[1]-b[1]||canonicalName(a[0],lang).localeCompare(canonicalName(b[0],lang))).slice(0,limit).map(([e])=>e);
+  return unique.map(e=>[e,score(e)]).filter(([,s])=>s<99).sort((a,b)=>a[1]-b[1]||canonicalName(a[0],lang).localeCompare(canonicalName(b[0],lang))).slice(0,limit).map(([e])=>e);
 }

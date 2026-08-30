@@ -1,10 +1,10 @@
-# PWA v1.5.7 validation
+# PWA v1.5.8 validation
 
 Validated in this environment:
 
 - `node --check` for every JS/MJS source through `tools/validate.mjs`;
 - shared performance-rule cases;
-- version/service-worker markers = 1.5.7;
+- version/service-worker markers = 1.5.8;
 - every shorthand handler exported through `window.gp` resolves to a declared/imported identifier;
 - IndexedDB migration/recovery guards retained;
 - Logs renderer present;
