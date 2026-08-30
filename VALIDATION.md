@@ -1,18 +1,20 @@
-# PWA v1.5.6 validation
+# PWA v1.5.7 validation
 
 Validated in this environment:
 
 - `node --check` for every JS/MJS source through `tools/validate.mjs`;
-- 10/10 shared performance-rule cases;
-- release validator: 55 PWA files;
-- version/service-worker markers = 1.5.6;
+- shared performance-rule cases;
+- version/service-worker markers = 1.5.7;
+- every shorthand handler exported through `window.gp` resolves to a declared/imported identifier;
 - IndexedDB migration/recovery guards retained;
+- Logs renderer present;
+- neutral/overlapped superset programme styling;
+- unequal 3+2 superset progression guard;
+- combined superset ramp-up source flow;
+- permissive tracking-mode override with equipment recommendation;
+- 0/25/50/75/100 Tracker reminder checkpoints;
+- cumulative English/Latvian first-open update brief;
 - catalogue = 191 exercises / 27 families / 9 friend-comparable entries;
-- reviewed production identity mappings = 32 UserExercise / 42 programme occurrences;
-- supplied catalogue-link icon included in the service-worker shell;
-- paired superset programme/workout source checks;
-- ramp smoke checks include 20 kg => no ramp and heavier barbell work beginning with the empty bar where appropriate.
+- reviewed production identity mappings = 32 UserExercise / 42 programme occurrences.
 
 Browser/device interaction still requires user testing after deployment.
-
-- window.gp export integrity: every exported shorthand handler must resolve to a declared/imported identifier.

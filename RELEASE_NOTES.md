@@ -1,35 +1,26 @@
-# Gym Progress PWA v1.5.6
+# Gym Progress PWA v1.5.7
 
-## Startup hotfix
+## Programme / supersets
+- Superset + buttons are circular and overlap the card boundary instead of creating an oversized gap.
+- Superset programme cards use the normal card background.
+- Heavy compound/remove-weight exercises are no longer blocked from supersets; only Timed tracking remains unavailable for paired supersets.
+- Fixed unequal-set pairs: a 3-set + 2-set superset correctly leaves only the third set of the longer exercise and does not offer the completed partner again.
+- One combined ramp-up flow prepares both members of a superset.
 
-- Fixed a release-blocking startup error where `window.gp` exported `moveExercise` and `deleteExercise` after those functions had been removed during the superset programme-list refactor.
-- Restored `deleteExercise` with superset-aware cleanup and retained `moveExercise` as a compatibility wrapper that moves an entire exercise/superset block.
-- Validation now fails if any shorthand function exported through `window.gp` is not actually declared/imported, preventing this exact black-screen class from shipping again.
+## Exercise setup
+- “Timed / mat” is simplified to “Timed”.
+- Equipment selects a sensible default tracking mode, but Weight + reps + RIR, Bodyweight reps + RIR and Timed remain manually selectable.
+- Change-link editing no longer immediately auto-relinks the unchanged name, so the field remains editable and the keyboard can open.
 
+## Logs / tracker / notices
+- Restored the missing Logs renderer.
+- Transient informational notices use the same ~4.4 second lifetime and begin fading immediately.
+- Multi-increment Tracker goals use 0%, 25%, 50%, 75% and 100% productive-day checkpoints. Single-occurrence goals keep the morning/start + four-hour reminder cadence.
 
-## Exercise editor
-- Compare with friends now uses the same right-side switch treatment as other toggles.
-- Non-eligible comparison is strongly disabled and explains that only comparable barbell/dumbbell catalogue exercises qualify.
-- Tracking choices are constrained by equipment and shown after Equipment and Exercise type.
-- Exercise type and Tracking each have their own full-width row; Equipment and Ramp-up share a row.
-- New exercises hide Remove weights for dumbbells, cables, machines and bodyweight; Edit keeps the control available.
-- Catalogue search remains name/alias-first. Catalogue linking can be changed or removed before saving.
-- Uses the supplied chain-link glyph: green linked, grey local.
-
-## Supersets
-- Superset no longer belongs to Add/Edit Exercise.
-- + between adjacent programme cards joins a pair; - inside the combined card separates it.
-- A pair is rendered as one distinctive SUPERSET card and reorders as one block.
-- During training both exercises are active at the same time with red/blue pulse circles, individual load controls and one SUPERSET COMPLETE action.
-- Result entry captures both exercises together. The one rest interval starts after the pair is completed and records the same elapsed rest against both set records.
-- Next information is pair-aware before/after the superset and lists both upcoming prescriptions.
-- Paired skip and paired undo are supported.
-
-## Ramp-up and notices
-- Ramp prompt actions are Remove / Skip / Start.
-- 20 kg barbell working load gets no ramp-up; heavier work may start with the empty 20 kg bar.
-- Information notices use longer gradual fades.
+## Update brief
+- Added a compact English/Latvian first-open “What’s new” dialog.
+- The brief is cumulative from the current major exercise-identity release line (PWA v1.5.0) and will continue accumulating in later versions until explicitly stopped.
 
 ## Safety
-- Keeps the v1.5.2+ IndexedDB startup/recovery protections.
-- No Supabase migration is required for v1.5.6.
+- IndexedDB identity and v1.5.2+ recovery/data-loss protection are retained.
+- No Supabase migration is required for v1.5.7.

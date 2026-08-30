@@ -1,15 +1,16 @@
-# Gym Progress PWA v1.5.6
+# Gym Progress PWA v1.5.7
 
-Local-first Gym Progress PWA. This release builds on the v1.5.2+ IndexedDB recovery safeguards and does not change the IndexedDB database/store/key.
+Local-first Gym Progress PWA. Update over the existing site origin and **do not clear browser/site data**. The v1.5.2+ IndexedDB recovery protections remain unchanged.
 
-## v1.5.6 highlights
+## v1.5.7 highlights
 
-- Exercise creation uses equipment-constrained tracking modes and a right-side friend-comparison toggle.
-- Catalogue links can be changed or removed; the supplied chain-link icon shows green when linked and grey when local.
-- New-exercise unload controls are shown only where they are initially useful.
-- Programme supersets are created/removed with the + / - controls between exercise cards and move as one block.
-- Active supersets show both exercises together, collect both results together and rest only after the pair has been performed.
-- Empty-bar 20 kg barbell work no longer receives a ramp-up recommendation; heavier barbell ramps can begin with the empty bar.
-- Transient information messages remain visible roughly twice as long and fade gradually.
+- Restores the Logs screen and keeps all transient informational notices on one ~4.4 s fade timing.
+- Superset + controls overlap the boundary between programme cards; superset cards use the normal card colour.
+- Heavy compound exercises can be supersetted. Timed exercises remain excluded from paired supersets because the paired workout UI is set/rep based.
+- Unequal supersets (for example 3 sets + 2 sets) finish correctly without replaying the shorter exercise.
+- A superset now uses one combined ramp-up flow for both exercises.
+- Tracking mode is suggested from equipment but remains user-overridable; “Timed / mat” is now simply “Timed”.
+- Tracker reminders for multi-increment goals use 0 / 25 / 50 / 75 / 100% day checkpoints.
+- A compact English/Latvian “What’s new” brief appears once per version and cumulatively summarises the major UI/UX changes since PWA v1.5.0.
 
-Do not clear browser/site data during an update. Existing programme and history remain local to the current site origin.
+No new Supabase SQL is required.

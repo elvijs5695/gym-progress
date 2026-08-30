@@ -102,7 +102,7 @@ The migration creates/seeds:
    - Progress still contains the correct old history;
    - duplicate programme occurrences of one exercise no longer depend on the name for identity;
    - catalogue-linked/local status behaves as expected;
-   - timed/mat exercise creation works;
+   - Timed exercise creation works;
    - supersets work;
    - max ramp-up sets and plate-friendly barbell ramps work;
    - the post-ramp rest and Next information work;

@@ -7,14 +7,14 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.6'||!app.includes("APP_VERSION='1.5.6'")||!sw.includes('gym-progress-pwa-v1.5.6'))errors.push('v1.5.6 version markers are inconsistent');
+if(pkg.version!=='1.5.7'||!app.includes("APP_VERSION='1.5.7'")||!sw.includes('gym-progress-pwa-v1.5.7'))errors.push('v1.5.7 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
 if(!app.includes('qualifyingE1rm')||!read('exercise-identity.js').includes('effective>10'))errors.push('comparison-grade e1RM rules missing');
 if(!app.includes('compareWithFriends')||!app.includes('comparisonPointsForSession'))errors.push('programme-selected friend comparison missing');
 if(!app.includes('comparisonPointsForSelectedHistory')||!app.includes('syncComparisonHistory')||!read('social-api.js').includes('social_replace_exercise_comparison_points'))errors.push('retroactive comparison-history sync missing');
-if(!app.includes('TrackingMode.TIME_ONLY')||!app.includes("rt.phase='TIMED_SET'"))errors.push('timed/mat exercise flow missing');
+if(!app.includes('TrackingMode.TIME_ONLY')||!app.includes("rt.phase='TIMED_SET'"))errors.push('timed exercise flow missing');
 if(!app.includes('supersetGroupId')||!app.includes('joinSuperset')||!app.includes('splitSuperset')||!app.includes('superset-pulse-grid')||!app.includes('SUPERSET_ENTRY')||!app.includes('saveSupersetSet')||!app.includes('supersetPairSetInfo'))errors.push('paired superset programme/workout flow missing');
 if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('barbellPlateFriendlyRamp'))errors.push('max/plate-friendly ramp logic missing');
 if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))errors.push('ramp permanent-disable or Next panel missing');
@@ -23,7 +23,7 @@ if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.i
 if(!app.includes('sentTrackerReminderKeys')||!app.includes('(4*60)')||!css.includes('.tracker-card-accent')||!css.includes('.tracker-row.behind')||!css.includes('.tracker-row.done'))errors.push('Tracker visual/4-hour reminder follow-up missing');
 if(!app.includes('closeDialog();startWorkout(id)'))errors.push('Start Anyway does not close its warning');
 if(!app.includes('await afterRest()')||!app.includes('async function skipExercise()'))errors.push('Skip exercise direct transition missing');
-if(!app.includes('>Remove</button>')||!app.includes('>Skip</button>')||!app.includes('Remove ramp-up?'))errors.push('simplified ramp-up wording missing');
+if(!app.includes("S('Remove','Noņemt')")||!app.includes("S('Skip','Izlaist')")||!app.includes('Remove ramp-up?'))errors.push('simplified ramp-up wording missing');
 if(!app.includes('pulse-reps-badge"><span>${set.targetReps}</span> REPS'))errors.push('active pulse rep target is not prominent');
 if(!app.includes('catalogue-link-glyph')||!css.includes("mask:url('./icons/catalogue-link.png')")||!css.includes('.catalogue-status.linked{color:#39b86a')||!css.includes('.catalogue-status.local{color:#858891'))errors.push('requested catalogue link icon linked/local styling missing');
 if(app.includes('Use existing ·')||app.includes('Existing exercise'))errors.push('obsolete own-exercise picker remains in exercise creation');
@@ -42,6 +42,19 @@ if(!app.includes('exercise-primary-grid')||!app.includes('Exercise type')||!app.
 if(!app.includes('exerciseFormChangeLink')||!app.includes('exerciseFormUnlink')||!app.includes('saveCatalogueLink'))errors.push('catalogue relink/unlink/save flow missing');
 if(!app.includes("if(rt.phase==='SUPERSET_ENTRY'&&Array.isArray(rt.supersetEntry))")||!app.includes('NEXT · SUPERSET'))errors.push('superset paired Next information missing');
 if(!sw.includes('./icons/catalogue-link.png'))errors.push('service worker missing catalogue link icon');
+
+
+if(!app.includes('const INFO_MESSAGE_MS=4400')||!app.includes('setStatusMessage=null;render();}},INFO_MESSAGE_MS)')||app.includes("remove('show'),2800")||app.includes("remove('show'),1400"))errors.push('transient informational message timing is not consistently 4.4 seconds');
+if(!app.includes('function renderLogs()'))errors.push('Logs renderer is missing');
+if(!app.includes("function canJoinSuperset")||app.includes("!a.removeWeights")||!app.includes("a.trackingMode!==TrackingMode.TIME_ONLY"))errors.push('superset eligibility does not allow heavy/remove-weight exercises while excluding timed paired sets');
+if(!css.includes('.superset-programme-card{}')||!css.includes('.superset-between{height:0')||!css.includes('transform:translate(-50%,-50%)'))errors.push('PWA superset programme card/button styling does not match neutral overlapped controls');
+if(!app.includes('function nextPendingExerciseAction')||!app.includes('nextPendingExerciseAction(exs,i+1)'))errors.push('unequal-set superset completion guard missing');
+if(!app.includes('function currentRampMembers')||!app.includes('rampMembersNeedPrompt')||!app.includes("members.length===2?' pair':''"))errors.push('combined superset ramp-up flow missing');
+if(!app.includes("listOf") && (!app.includes("return [TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]") && !app.includes("[TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]")))errors.push('tracking modes are not user-overridable across equipment');
+if(app.includes('Timed / mat')||app.includes('timed/mat'))errors.push('obsolete Timed / mat wording remains in app UI');
+if(!app.includes('UPDATE_ANNOUNCEMENT_KEY')||!app.includes('Key improvements since PWA 1.5.0')||!app.includes('Svarīgākie uzlabojumi kopš PWA 1.5.0')||!app.includes('dismissUpdateAnnouncement'))errors.push('cumulative multilingual update brief missing');
+if(!app.includes('milestones=[0,.25,.5,.75,1]'))errors.push('Tracker 0/25/50/75/100 reminder milestones missing');
+if(!app.includes('function exerciseFormChangeLink()')||app.includes("exerciseFormChangeLink(){") && app.includes("exerciseFormChangeLink(){") && app.split('function exerciseFormChangeLink()')[1].split('}')[0].includes('exerciseNameChanged()'))errors.push('Change catalogue link still immediately relinks/suppresses keyboard');
 
 const identity=read('exercise-identity.js');
 if(!identity.includes('a display-name similarity alone must never do so')||!identity.includes('const canonical=template.exerciseKey?'))errors.push('generic legacy migration can still auto-link by display name');
