@@ -322,3 +322,89 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .details-chevron{font-size:0!important;transform:none!important}
 .friend-comparison-card .friend-comparison-head .details-chevron{transform:none!important;font-size:0!important}
 .friend-comparison-card.stack .friend-comparison-head .details-chevron{transform:none!important}
+
+
+/* v1.5.14 interface simplification */
+:root{--pastel-green:#C1E1C1;--tracker-pale:#EEF7EE;--complete-orange:#FFB480}
+
+/* Notices float above the interface instead of reflowing it. */
+#status-root{position:fixed;z-index:140;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100% - 24px));pointer-events:none}
+#status-root:empty{display:none}
+.status-message{margin:0 auto;background:#fff!important;color:#111!important;border:1px solid rgba(0,0,0,.10)!important;box-shadow:0 10px 34px rgba(0,0,0,.38)!important;font-weight:700}
+.status-slot,.status-visible .status-slot{display:none!important;height:0!important;padding:0!important}
+
+/* Home workout actions: calendar, play, then expansion chevron at far right. */
+.home-action-buttons{gap:6px;min-width:0;height:40px}
+.home-action-buttons .icon-btn{width:38px;height:38px;min-width:38px;min-height:38px;border-radius:11px}
+.play-btn,.calendar-btn{background:#fff!important;color:#111!important;border:1px solid rgba(0,0,0,.08)!important}
+.calendar-btn{font-size:20px!important}
+.workout-expand-chevron{margin-left:4px}
+.card.selected-due{background:color-mix(in srgb,var(--pastel-green) 19%,var(--surface))!important;border-color:color-mix(in srgb,var(--pastel-green) 48%,var(--line))!important}
+.status-next-text,.next-session-date,.next-date-overdue{color:var(--pastel-green)!important}
+.status-next-text{font-weight:850}
+
+/* Tracker keeps its slight gradient, but is calmer and lighter. */
+.tracker-card-accent{background:linear-gradient(180deg,#f6fbf6 0%,var(--tracker-pale) 100%)!important;border-color:#d8ead8!important;color:#172019!important}
+.tracker-card-accent .title,.tracker-card-accent .subtitle,.tracker-card-accent .tracker-name,.tracker-card-accent .tracker-amount-button{color:#172019!important}
+.tracker-card-accent .subtitle{opacity:.66}
+.tracker-card-accent .tracker-row{border-top-color:rgba(23,32,25,.08)}
+.tracker-card-accent .tracker-progress-bg{background:rgba(23,32,25,.06)!important}
+.tracker-card-accent .tracker-progress-fill{background:rgba(86,116,94,.14)!important}
+.tracker-card-accent .tracker-row.done .tracker-progress-fill{background:rgba(105,183,128,.28)!important}
+.tracker-card-accent .tracker-progress-now{background:rgba(23,32,25,.38)!important}
+.tracker-card-accent .tracker-step-btn{color:#526157!important;border-color:rgba(23,32,25,.10)!important}
+.tracker-card-accent .tracker-row.behind .tracker-name,.tracker-card-accent .tracker-row.behind .tracker-amount-button{color:#a74b51!important}
+.tracker-card-accent .tracker-row.done .tracker-name,.tracker-card-accent .tracker-row.done .tracker-amount-button{color:#347a4b!important}
+.support-copy,.dialog .note{font-size:12px;line-height:1.35}
+
+/* Friends: one compact expandable-card language. */
+.friends-panel,.friend-comparison-card{margin:0 0 8px!important;border:1px solid var(--line)!important;border-radius:var(--radius)!important;background:var(--surface)!important;box-shadow:none!important}
+.friends-panel{overflow:hidden}
+.friends-panel .friends-list-toggle,.friend-comparison-card .friend-comparison-head{min-height:46px!important;padding:0 12px!important}
+.friend-comparison-card{padding:0 12px!important}
+.friend-comparison-card.stack{padding-bottom:12px!important;gap:8px!important}
+.friends-panel .friends-list{padding:0 12px 10px!important}
+.friends-panel .friend-row{min-height:30px!important;padding:2px 0!important}
+.friends-panel.expanded{background:var(--surface)!important;border-color:var(--line)!important}
+.social-otp-input{margin-top:18px!important}
+
+/* One chevron family for expansion and page navigation. */
+.nav-chevron{width:30px;min-width:30px;color:var(--muted)}
+.nav-chevron svg{width:17px;height:10px;transform:rotate(-90deg)!important}
+.pencil-button{display:grid!important;place-items:center!important}
+.pencil-outline-icon{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ramp-stepper{grid-template-columns:40px 44px 40px!important;justify-content:end!important;flex:0 0 auto}
+.ramp-setting-card>.row{align-items:center}
+
+/* Active workout: time + focus-stage only, aligned on one baseline. */
+.active-workout-line{display:flex!important;align-items:center!important;gap:12px!important;overflow:visible!important;text-overflow:clip!important;white-space:nowrap!important;line-height:1!important}
+.active-workout-line .live-session-time,.active-workout-line .active-stage-static{display:inline-flex;align-items:center;line-height:1!important;margin:0!important}
+.active-stage-static{font-size:12px!important;font-weight:650!important}
+.active-workout-marquee{display:none!important}
+.undo-last-set img{display:block;width:23px;height:20px;object-fit:contain}
+
+/* Ramp-up removes duplicate headings and makes the working target the visual end point. */
+.ramp-member-card{padding:10px 12px 12px!important}
+.ramp-list{padding:3px 0 8px!important}
+.ramp-primary{font-weight:400!important;color:var(--text)!important}
+.ramp-working-target{border-top:1px solid var(--line);padding-top:11px;margin-top:3px;text-align:left;font-size:16px}
+.ramp-working-target strong{font-weight:800}
+.ramp-support-copy{font-size:12px;margin-bottom:5px}
+.next-info{display:grid!important;place-items:center!important;text-align:center!important;gap:5px!important;margin:14px 0 26px!important;width:100%}
+.next-info span{display:block!important;text-align:center!important;font-size:.76rem!important}
+.next-info strong{display:block!important;text-align:center!important;font-size:1.08rem!important;line-height:1.25!important}
+.superset-next-info{align-items:center!important;justify-items:center!important}
+
+/* Working load stays below the pulse instead of being duplicated inside it. */
+.pulse-inner:not(:has(.pulse-target)) .pulse-reps-badge{margin-top:5px}
+
+.workout-complete-title{font-size:27px!important;line-height:1.1!important;font-weight:900!important;letter-spacing:.055em!important;text-align:center!important;color:var(--complete-orange)!important;margin:4px 0 14px!important}
+.workout-conclusion>.workout-complete-title{margin-top:0!important}
+.share-section-title{color:var(--pastel-green)!important;font-weight:850!important}
+
+@media(max-width:430px){
+  .workout-row-inner{padding-left:12px;padding-right:8px}
+  .home-action-buttons{gap:4px}
+  .home-action-buttons .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px}
+  .workout-expand-chevron{width:26px;min-width:26px}
+}

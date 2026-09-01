@@ -58,3 +58,11 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - Short `Now / Next` content does not animate.
 - The finish celebration image is requested/decoded during startup and remains part of the service-worker app-shell cache.
 - PWA expand/collapse controls use the same chevron SVG geometry as the Friends expansion control.
+
+## v1.5.14 UI behaviour contract
+
+- Every Home workout card keeps a visible play control; the expand chevron remains the rightmost workout-card control.
+- Tracker edit Cancel and Save return to Tracker settings, not Home.
+- Social sign-out is destructive enough to require an explicit confirmation step.
+- Warm-up/stretching have no exercise-stage number; ramp-up, working sets, rest/result entry and deload retain the current focus-stage number. A superset is one focus stage.
+- Notice visibility must not shift the app layout; notices overlay the bottom edge.

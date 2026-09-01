@@ -1,3 +1,20 @@
+# Gym Progress PWA 1.5.14
+
+## Interface simplification
+
+- Home workout cards now keep calendar/play controls beside a far-right expand control, with direct play visible on every workout.
+- The next scheduled workout uses pastel green rather than red emphasis.
+- Tracker uses a lighter #EEF7EE green treatment; tracker editing returns to the tracker list.
+- Friends and comparison expansion cards now share a compact visual system; sign-out asks for confirmation.
+- Settings navigation uses the same chevron system, with a minimalist workout-name pencil icon.
+- Active workout status shows only time and `Exercise X of Y`; warm-up/stretching remain unnumbered.
+- Ramp-up and working-set screens remove duplicated exercise/load information.
+- Undo uses the supplied curved-arrow icon.
+- Workout-complete/share hierarchy and summary abbreviations are simplified.
+- Notices now float at the bottom over content with white background and black text instead of moving the page.
+
+No IndexedDB identity, local data schema, or Supabase migration is required.
+
 # Gym Progress PWA v1.5.13 — 2026-09-01
 
 - Kept elapsed time and stage (`x/y`) fixed in the active-workout status line.

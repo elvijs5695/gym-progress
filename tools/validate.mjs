@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.13'||!app.includes("APP_VERSION='1.5.13'")||!sw.includes('gym-progress-pwa-v1.5.13'))errors.push('v1.5.13 version markers are inconsistent');
+if(pkg.version!=='1.5.14'||!app.includes("APP_VERSION='1.5.14'")||!sw.includes('gym-progress-pwa-v1.5.14'))errors.push('v1.5.14 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -88,8 +88,12 @@ if(!css.includes('grid-template-columns:minmax(0,1fr) auto')||!app.includes('tra
 if(!app.includes('historyDays<30?Math.max(today,rawMaxT):rawMaxT'))errors.push('friend comparison short-history zoom-to-today rule missing');
 if(!app.includes('showWorkoutFinishCelebration')||!app.includes('finish-celebration.png')||!app.includes('workoutConclusionHtml')||!fs.existsSync(path.join(root,'finish-celebration.png')))errors.push('PWA finish celebration/conclusion flow missing');
 if(!app.includes('preloadFinishCelebration')||!read('index.html').includes('rel="preload" as="image" href="./finish-celebration.png"')||!sw.includes('./finish-celebration.png'))errors.push('finish celebration image preload/cache path missing');
-if(!app.includes('active-workout-marquee')||!app.includes('bindActiveHeaderMarquee')||!css.includes('@keyframes activeWorkoutMarquee'))errors.push('overflow-only active Now/Next marquee missing');
+if(!app.includes("S('Exercise','Vingrinājums')")||!app.includes("S('of','no')")||!app.includes('active-stage-static')||app.includes('movingParts=['))errors.push('simplified time + Exercise X of Y active header missing');
 if(!app.includes('function expandChevron')||!app.includes("expandChevron('details-chevron')")||!app.includes('friends-toggle-chevron')||!css.includes('.app-expand-chevron'))errors.push('uniform PWA expand/condense chevron missing');
+if(!app.includes('navChevron()')||!css.includes('.nav-chevron svg')||!app.includes('pencil-outline-icon'))errors.push('settings navigation chevron/pencil UI missing');
+if(!app.includes('undo-arrow.png')||!sw.includes('./icons/undo-arrow.png')||!fs.existsSync(path.join(root,'icons','undo-arrow.png')))errors.push('supplied workout undo icon missing from app/cache');
+if(!css.includes('--pastel-green:#C1E1C1')||!css.includes('--tracker-pale:#EEF7EE')||!css.includes('--complete-orange:#FFB480'))errors.push('requested PWA polish palette missing');
+if(!css.includes('#status-root{position:fixed')||!app.includes('const root=statusRoot'))errors.push('bottom overlay notice strategy missing');
 
 const gpExport=app.match(/window\.gp=\{([^}]*)\};/s);
 if(!gpExport)errors.push('window.gp export object not found');

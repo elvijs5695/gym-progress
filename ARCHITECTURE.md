@@ -31,3 +31,11 @@ The active header derives logical focus stages from ordered session exercises an
 ## v1.5.13 active header + finish image preload
 
 The active header separates immutable-width status cells (elapsed time and focus-stage index) from an overflow viewport containing `Now / Next`. After render, the viewport is measured; marquee animation is enabled only when content overflows. The finish image is listed in the service-worker shell, preloaded from HTML and decoded eagerly at application startup to avoid first-use animation delay.
+
+## v1.5.14 PWA interface simplification
+
+- Home workout cards expose direct play without expansion; due-card scheduling controls and expansion remain independent.
+- Active-workout top status is intentionally reduced to elapsed time plus focus-stage index. Warm-up/stretch are outside the focus-stage count; supersets remain one focus stage.
+- Ramp-up cards separate ramp prescriptions from the final working target rather than repeating the exercise header.
+- Transient status UI renders into the fixed `#status-root` overlay and never participates in normal page flow.
+- The supplied curved-arrow asset is cached in the service worker and used for active-workout undo.
