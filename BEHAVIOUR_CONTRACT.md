@@ -59,7 +59,7 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - The finish celebration image is requested/decoded during startup and remains part of the service-worker app-shell cache.
 - PWA expand/collapse controls use the same chevron SVG geometry as the Friends expansion control.
 
-## v1.5.14 UI behaviour contract
+## v1.5.15 UI behaviour contract
 
 - Every Home workout card keeps a visible play control; the expand chevron remains the rightmost workout-card control.
 - Tracker edit Cancel and Save return to Tracker settings, not Home.

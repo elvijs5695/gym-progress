@@ -1,4 +1,4 @@
-# Gym Progress PWA 1.5.14
+# Gym Progress PWA 1.5.15
 
 ## Interface simplification
 
@@ -24,3 +24,13 @@ No IndexedDB identity, local data schema, or Supabase migration is required.
 - Preserved the 4.4 s finish celebration introduced in v1.5.12.
 
 No IndexedDB or Supabase schema migration.
+
+## 1.5.15 — visual correction pass
+
+- Home Play and Calendar controls are circular outlined buttons with white icons and no fill.
+- Tracker uses a fresher soft-green gradient with explicit dark-green control/icon contrast.
+- Friends and Compare exercise progress headings are left-aligned with chevrons pinned right.
+- Ramp-up working target aligns with the ramp weight/reps column.
+- Single-exercise pulse labels are slightly larger.
+- Progression dialogs add clearer spacing between “Next working weight” and the input.
+- Notices remain bottom-overlays normally and move to the top while a bottom dialogue is open.

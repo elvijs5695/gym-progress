@@ -408,3 +408,112 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
   .home-action-buttons .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px}
   .workout-expand-chevron{width:26px;min-width:26px}
 }
+
+/* v1.5.15 visual correction pass */
+:root{
+  --pastel-green:#B9E6C3;
+  --tracker-pale:#E8F7EC;
+  --tracker-pale-top:#F1FAF3;
+  --tracker-border:#B9DEC2;
+  --tracker-ink:#153D25;
+  --tracker-muted:#4C6B56;
+  --tracker-control:#2F7047;
+}
+
+/* Home: both direct actions are circular, outlined and visually quiet. */
+.home-action-buttons .play-btn,
+.home-action-buttons .calendar-btn{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.34)!important;
+  box-shadow:none!important;
+}
+.home-action-buttons .play-btn:hover,
+.home-action-buttons .calendar-btn:hover{border-color:rgba(255,255,255,.62)!important;background:rgba(255,255,255,.035)!important}
+.home-action-buttons .play-btn:active,
+.home-action-buttons .calendar-btn:active{background:rgba(255,255,255,.08)!important}
+
+/* Tracker: fresher soft green with explicit dark-green icon/control contrast. */
+.tracker-card-accent{
+  background:linear-gradient(180deg,var(--tracker-pale-top) 0%,var(--tracker-pale) 100%)!important;
+  border-color:var(--tracker-border)!important;
+  color:var(--tracker-ink)!important;
+}
+.tracker-card-accent .title,
+.tracker-card-accent .tracker-name,
+.tracker-card-accent .tracker-amount-button{color:var(--tracker-ink)!important}
+.tracker-card-accent .subtitle{color:var(--tracker-muted)!important;opacity:1!important}
+.tracker-card-accent .tracker-settings-btn{
+  color:var(--tracker-control)!important;
+  border-color:rgba(47,112,71,.30)!important;
+  background:rgba(255,255,255,.28)!important;
+}
+.tracker-card-accent .tracker-settings-btn .main-nav-icon{width:21px;height:21px;stroke-width:1.9}
+.tracker-card-accent .tracker-step-btn{
+  color:var(--tracker-control)!important;
+  border-color:rgba(47,112,71,.22)!important;
+  opacity:.72!important;
+}
+.tracker-card-accent .tracker-step-btn:active{opacity:1!important;background:rgba(47,112,71,.08)!important}
+.tracker-card-accent .tracker-row{border-top-color:rgba(21,61,37,.09)!important}
+.tracker-card-accent .tracker-progress-bg{background:rgba(21,61,37,.055)!important}
+.tracker-card-accent .tracker-progress-fill{background:rgba(72,157,95,.18)!important}
+.tracker-card-accent .tracker-row.done .tracker-progress-fill{background:rgba(102,193,124,.34)!important}
+.tracker-card-accent .tracker-progress-now{background:rgba(21,61,37,.46)!important}
+.tracker-card-accent .tracker-row.done .tracker-name,
+.tracker-card-accent .tracker-row.done .tracker-amount-button{color:#267344!important}
+.tracker-card-accent .tracker-row.behind .tracker-name,
+.tracker-card-accent .tracker-row.behind .tracker-amount-button{color:#A24750!important}
+
+/* Friends: labels anchor left, chevrons anchor right. */
+.friends-panel .friends-list-toggle,
+.friend-comparison-card .friend-comparison-head{justify-content:flex-start!important;text-align:left!important}
+.friends-panel .friends-list-toggle>span:first-child,
+.friend-comparison-card .friend-comparison-head>.title{margin-right:auto!important;text-align:left!important;min-width:0}
+.friends-panel .friends-list-toggle>.app-expand-chevron,
+.friends-panel .friends-list-toggle>.friends-toggle-chevron,
+.friend-comparison-card .friend-comparison-head>.app-expand-chevron,
+.friend-comparison-card .friend-comparison-head>.details-chevron{margin-left:auto!important;flex:0 0 auto}
+
+/* Ramp-up target aligns with the ramp weight/reps column, not the card edge. */
+.ramp-working-target{
+  padding-left:36px!important;
+  padding-right:2px!important;
+  text-align:left!important;
+}
+
+/* Single-exercise pulse can carry stronger labels without reintroducing load duplication. */
+.pulse-circle:not(.superset-pulse-circle) .pulse-exercise{font-size:25px!important;line-height:1.06!important}
+.pulse-circle:not(.superset-pulse-circle) .pulse-reps-badge{font-size:1.12rem!important;padding:6px 13px!important}
+.pulse-circle:not(.superset-pulse-circle) .pulse-reps-badge span{font-size:1.72rem!important}
+.pulse-circle:not(.superset-pulse-circle) .pulse-set{font-size:24px!important}
+
+/* Give progression labels breathing room before the editable value. */
+.progression-edit .field{
+  display:block;
+  margin:0 0 12px!important;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.25;
+  font-weight:700;
+}
+
+/* Notices normally sit at the bottom. When a bottom-sheet/dialog is present,
+   move them to the top instead of covering the dialogue controls. */
+#status-root{top:auto}
+body:has(#dialog-root .dialog-backdrop) #status-root{
+  top:calc(12px + env(safe-area-inset-top));
+  bottom:auto;
+}
+
+@media(max-width:430px){
+  .home-action-buttons .play-btn,
+  .home-action-buttons .calendar-btn{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+}
+.home-action-buttons{display:flex!important;width:auto!important;flex:0 0 auto!important;align-items:center!important}
+.tracker-card-accent .note{color:var(--tracker-muted)!important}
