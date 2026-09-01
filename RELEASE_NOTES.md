@@ -1,29 +1,27 @@
-# Gym Progress PWA v1.5.10 — 2026-09-01
-
-## Timeline and logs
-- When workout history spans less than one month, the default timeline frames the first recorded event through today.
-- Timeline state resets to that event-driven default when returning to Logs.
-- Latvian log rows use language-specific grid widths and compact labels.
-
-## Friend comparison
-- Your comparison series/occurrences are blue and the friend series/occurrences are red.
-- Comparison lines are smoothly curved.
-- Returned single-point friend series are retained even if the selected friend id needs fallback matching; overlapping points remain outlined.
-- Deleting a workout or erasing logs rebuilds and replaces online comparison points, removing deleted derived e1RM history.
-- The e1RM explanation remains visually secondary.
-
-## Tracker
-- Tracker rows have a neutral completion fill with a proportional expected-progress marker for the current time.
-- Completed tracker rows turn light green while existing text-status colours remain.
-- Tracker remains daily and resets to a fresh local-date total at midnight without deleting prior dated entries.
+# Gym Progress PWA v1.5.11 — 2026-09-01
 
 ## Active workout
-- Barbell selectable increments are 2.5 kg.
-- Next-after-rest information identifies ramp-up and the relevant exercise.
-- Dumbbell exercise circles omit the cramped “each” wording.
-- The active header shows current exercise number/name and periodically fades to what is next.
-- All progression/future-adjustment prompts identify the exercise, including bodyweight/superset follow-ups.
-- The earlier rest-skip state-path fix remains in place.
+- Current/Next labels are now phase-aware across Warm-up, Ramp-up, working sets, Result, Rest, Remove weights, Stretching and completion.
+- During ramp-up, Next reports the actual working exercise/superset.
+- After a last working set, Result and Rest report the actual next exercise/ramp-up/weight-removal/stretching action.
+- Result-entry rest panels no longer have Skip; only −30 s / +30 s remain.
+- Rest expiry or missing-rest state now settles/advances safely instead of leaving a blank phase.
+- Resume/reload validates the persisted runtime and rebuilds a stale phase when necessary.
+- Set progress labels are `x/y` in all languages; additional active-workout Latvian labels were localized.
+
+## Tracker
+- Completion fill is confined to the text/progress zone and stops before the minus button.
+- More separation is provided before the ± controls.
+- The vertical time marker uses only progress through each item’s configured active period, so identical periods align exactly.
+
+## Friend comparison
+- Combined histories shorter than 30 days default from the earliest comparison point through today.
+- Existing curved blue/red series and isolated single-point markers are retained.
+
+## Finish flow
+- Finish & Save first shows the supplied celebration image with a brief entrance/fade animation.
+- It then opens a detailed workout conclusion with session metrics/exercise summary and shareable cards below.
 
 ## Safety
-- IndexedDB identity is unchanged and no Supabase schema migration is required.
+- IndexedDB database/store/key identity is unchanged.
+- No Supabase schema migration is required.

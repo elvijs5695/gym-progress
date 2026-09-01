@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.10'||!app.includes("APP_VERSION='1.5.10'")||!sw.includes('gym-progress-pwa-v1.5.10'))errors.push('v1.5.10 version markers are inconsistent');
+if(pkg.version!=='1.5.11'||!app.includes("APP_VERSION='1.5.11'")||!sw.includes('gym-progress-pwa-v1.5.11'))errors.push('v1.5.11 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -40,7 +40,7 @@ if(!app.includes('Available only for comparable barbell and dumbbell catalogue e
 if(!app.includes("[Equipment.BARBELL,Equipment.OTHER].includes(eq)"))errors.push('add-form unload control is not restricted to relevant equipment');
 if(!app.includes('exercise-primary-grid')||!app.includes('Exercise type')||!app.includes('Tracking'))errors.push('exercise form metadata layout missing');
 if(!app.includes('exerciseFormChangeLink')||!app.includes('exerciseFormUnlink')||!app.includes('saveCatalogueLink'))errors.push('catalogue relink/unlink/save flow missing');
-if(!app.includes("if(rt.phase==='SUPERSET_ENTRY'&&Array.isArray(rt.supersetEntry))")||!app.includes('NEXT · SUPERSET'))errors.push('superset paired Next information missing');
+if(!app.includes("rt.phase==='SUPERSET_ENTRY'&&Array.isArray(rt.supersetEntry)")||!app.includes("S('NEXT','TĀLĀK')"))errors.push('superset paired Next information missing');
 if(!sw.includes('./icons/catalogue-link.png'))errors.push('service worker missing catalogue link icon');
 
 
@@ -76,6 +76,17 @@ if(migration.users.some(x=>!['LINK','KEEP_LOCAL'].includes(x.mappingStatus)))err
 const sql=read('supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql');
 if(!sql.includes('begin;')||!sql.includes('commit;')||!sql.includes('grant select, insert, update, delete on public.exercise_comparison_points to authenticated')||!sql.includes('social_replace_exercise_comparison_points'))errors.push('Supabase migration transaction/API grants/retroactive sync RPC missing');
 const shellMatch=sw.match(/const APP_SHELL = (\[[\s\S]*?\]);/);if(!shellMatch)errors.push('APP_SHELL not found');else{const shell=JSON.parse(shellMatch[1]);for(const rel of ['./exercise-identity.js','./exercise-catalogue.js','./exercise-catalogue.json','./exercise-migration-map.js','./exercise-migration-map.json'])if(!shell.includes(rel))errors.push(`service worker missing ${rel}`);for(const item of shell){const rel=item.replace(/^\.\//,'');if(!fs.existsSync(path.join(root,rel)))errors.push(`missing service-worker asset: ${item}`);}}
+
+
+if(!app.includes('function runtimeNeedsRecovery')||!app.includes("if(runtimeNeedsRecovery(id))rebuildRuntime(id)"))errors.push('stale active-workout runtime recovery missing');
+if(!app.includes('restPanel(restRemaining(rt),false,false,false)')||!app.includes('restPanel(remaining,false,false,false)'))errors.push('result-entry rest still exposes Skip');
+if(!app.includes('settleRestOrRender')||!app.includes("rt.phase==='REST'&&!rt.rest"))errors.push('rest/result blank-screen recovery missing');
+if(!app.includes('previewNextAction')||!app.includes('currentPhaseLabel')||!app.includes("forceWorking:!!headerAction.forceWorking"))errors.push('phase-aware current/next workout header missing');
+if(!app.includes('hasPendingRamp')||!app.includes("rt.phase==='RAMP_PROMPT'||rt.phase==='RAMP_ACTIVE'"))errors.push('ramp-up current/next phase distinction missing');
+if(app.includes('pulse-set">SET ${item.set.setNumber} / ${item.sets.length}'))errors.push('superset active set counter still uses language-specific Set prefix');
+if(!css.includes('grid-template-columns:minmax(0,1fr) auto')||!app.includes('trackerTimeFraction(item,at)'))errors.push('Tracker progress zone/time marker alignment missing');
+if(!app.includes('historyDays<30?Math.max(today,rawMaxT):rawMaxT'))errors.push('friend comparison short-history zoom-to-today rule missing');
+if(!app.includes('showWorkoutFinishCelebration')||!app.includes('finish-celebration.png')||!app.includes('workoutConclusionHtml')||!fs.existsSync(path.join(root,'finish-celebration.png')))errors.push('PWA finish celebration/conclusion flow missing');
 
 const gpExport=app.match(/window\.gp=\{([^}]*)\};/s);
 if(!gpExport)errors.push('window.gp export object not found');
