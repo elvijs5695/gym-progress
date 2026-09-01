@@ -257,3 +257,14 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 @keyframes finishCelebrationFade{0%{opacity:0}12%,73%{opacity:1}100%{opacity:0}}
 @keyframes finishCelebrationImage{0%{transform:scale(1.08);filter:brightness(.65)}18%{transform:scale(1.02);filter:brightness(1)}78%{transform:scale(1);filter:brightness(1)}100%{transform:scale(1.015);filter:brightness(.7)}}
 .workout-conclusion{text-align:left}.workout-conclusion>.small{text-align:center;letter-spacing:.12em}.workout-conclusion>h2{text-align:center;margin:5px 0 14px}.conclusion-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.conclusion-metrics>div{background:var(--surface2);border-radius:12px;padding:10px;display:grid;gap:2px}.conclusion-metrics span{font-size:11px;color:var(--muted)}.conclusion-metrics strong{font-size:16px}.conclusion-exercises{display:grid;gap:0;margin-top:12px;border-top:1px solid var(--line)}.conclusion-exercise-row{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13px}.conclusion-exercise-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conclusion-exercise-row strong{white-space:nowrap;font-weight:650}.share-section-head{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* v1.5.12 fixed active header + finish/share polish */
+.active-workout-context{min-width:0}
+.active-workout-name{font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.active-workout-line{display:flex;align-items:baseline;gap:8px;min-width:0;font-size:11px;line-height:1.25;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.active-workout-line>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.active-workout-line strong{font-weight:700;color:inherit}
+.active-context-sep{opacity:.55;margin:0 2px}
+.finish-celebration{animation-duration:4.4s!important}
+.finish-celebration img{animation-duration:4.4s!important}
+.conclusion-exercise-row strong{font-size:12px;text-align:right;white-space:normal;max-width:62%}

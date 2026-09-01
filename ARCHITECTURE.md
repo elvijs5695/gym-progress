@@ -24,3 +24,6 @@ Tracker item configuration remains in the existing IndexedDB app state. The mast
 Normal Progress and friend comparison share the same `niceChartAxis` scale generator. Rest Skip now explicitly handles ENTRY/SUPERSET_ENTRY states that still own a rest object.
 
 The v1.5.11 active-workout header is derived from runtime phase plus pending-set/ramp state. Resume validates runtime references and reconstructs a stale runtime from immutable session/set records when necessary. The finish-celebration image is part of the service-worker app shell. No IndexedDB schema identity changes are introduced.
+
+## v1.5.12 focus-stage header and finish summary
+The active header derives logical focus stages from ordered session exercises and collapses each superset group into one stage. Runtime phase determines whether stage numbering is shown. Current and next phase labels are displayed simultaneously. The finish summary keeps its state in the existing in-memory share draft; share-card rerenders restore dialog/page scroll instead of resetting it. No IndexedDB schema identity changes are introduced.

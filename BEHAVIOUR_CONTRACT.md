@@ -41,3 +41,12 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - Result-entry rest never exposes Skip; dedicated REST may expose Skip.
 - A stale persisted active runtime must be recoverable without deleting local workout data.
 - Tracker time-position markers are based only on configured productive start/end times.
+
+## v1.5.12 active-header / finish contract
+- The active header shows elapsed time, optional focus-stage `x/y`, `Now`, and `Next` simultaneously; it does not alternate/fade these labels.
+- Warm-up and stretching are not focus stages.
+- Ramp-up, working sets, result entry, rest and deload belong to the same focus stage for that exercise.
+- Two exercises joined as one superset count as one focus stage.
+- The PWA finish celebration image uses a 4.4-second animation window before the conclusion/share screen.
+- Selecting shareable cards must not reset the summary scroll position when comment fields appear/disappear.
+- Weighted exercise conclusion rows identify both exercise volume and maximum weight reached.

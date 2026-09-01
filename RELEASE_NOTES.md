@@ -1,26 +1,18 @@
-# Gym Progress PWA v1.5.11 — 2026-09-01
+# Gym Progress PWA v1.5.12 — 2026-09-01
 
-## Active workout
-- Current/Next labels are now phase-aware across Warm-up, Ramp-up, working sets, Result, Rest, Remove weights, Stretching and completion.
-- During ramp-up, Next reports the actual working exercise/superset.
-- After a last working set, Result and Rest report the actual next exercise/ramp-up/weight-removal/stretching action.
-- Result-entry rest panels no longer have Skip; only −30 s / +30 s remain.
-- Rest expiry or missing-rest state now settles/advances safely instead of leaving a blank phase.
-- Resume/reload validates the persisted runtime and rebuilds a stale phase when necessary.
-- Set progress labels are `x/y` in all languages; additional active-workout Latvian labels were localized.
-
-## Tracker
-- Completion fill is confined to the text/progress zone and stops before the minus button.
-- More separation is provided before the ± controls.
-- The vertical time marker uses only progress through each item’s configured active period, so identical periods align exactly.
-
-## Friend comparison
-- Combined histories shorter than 30 days default from the earliest comparison point through today.
-- Existing curved blue/red series and isolated single-point markers are retained.
+## Active workout header
+- Replaced the fading Current/Next cycle with a persistent elapsed-time + stage + Now + Next line.
+- Focus-stage numbering groups both members of a superset into one stage.
+- Warm-up and stretching are unnumbered.
+- Ramp-up, working set, result/rest and deload retain the same focus-stage index until the workout actually advances.
 
 ## Finish flow
-- Finish & Save first shows the supplied celebration image with a brief entrance/fade animation.
-- It then opens a detailed workout conclusion with session metrics/exercise summary and shareable cards below.
+- Celebration image duration doubled from 2.2 s to 4.4 s.
+- Weighted exercise rows in the conclusion identify both total exercise volume and maximum weight reached.
+- Timed/bodyweight exercise rows use appropriate duration/max-rep summaries.
+
+## Shareable cards
+- Toggling a card no longer sends the summary back to the top when the comment input is inserted/removed; the dialog and page scroll positions are restored after the card rerender.
 
 ## Safety
 - IndexedDB database/store/key identity is unchanged.
