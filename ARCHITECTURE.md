@@ -18,7 +18,7 @@ Private programme/log data is never sent to Supabase. Workout/record cards are c
 
 Social/API failures must degrade only the Friends feature. The rest of the PWA remains usable offline.
 
-## v1.5.9 Tracker notification setting
+## v1.5.10 Tracker notification setting
 Tracker item configuration remains in the existing IndexedDB app state. The master reminder switch is stored separately in localStorage (`gym-progress-tracker-notifications-enabled`) and therefore does not alter IndexedDB identity or migration requirements.
 
 Normal Progress and friend comparison share the same `niceChartAxis` scale generator. Rest Skip now explicitly handles ENTRY/SUPERSET_ENTRY states that still own a rest object.

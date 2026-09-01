@@ -1,25 +1,29 @@
-# Gym Progress PWA v1.5.9 — 2026-08-30
+# Gym Progress PWA v1.5.10 — 2026-09-01
+
+## Timeline and logs
+- When workout history spans less than one month, the default timeline frames the first recorded event through today.
+- Timeline state resets to that event-driven default when returning to Logs.
+- Latvian log rows use language-specific grid widths and compact labels.
+
+## Friend comparison
+- Your comparison series/occurrences are blue and the friend series/occurrences are red.
+- Comparison lines are smoothly curved.
+- Returned single-point friend series are retained even if the selected friend id needs fallback matching; overlapping points remain outlined.
+- Deleting a workout or erasing logs rebuilds and replaces online comparison points, removing deleted derived e1RM history.
+- The e1RM explanation remains visually secondary.
 
 ## Tracker
-- Added Delete beside Edit in Tracker settings.
-- Added an easy-to-find master Tracker notifications switch; browser permission state is shown when notifications are blocked.
-- Tracker home rows are more compact and use regular-weight text.
-- +/- controls are smaller and lower-emphasis; completion remains the strongest state cue.
-- Local-midnight daily rollover is retained and preserves prior dated tracker entries.
+- Tracker rows have a neutral completion fill with a proportional expected-progress marker for the current time.
+- Completed tracker rows turn light green while existing text-status colours remain.
+- Tracker remains daily and resets to a fresh local-date total at midnight without deleting prior dated entries.
 
-## Charts / friend comparison
-- Normal Progress and friend-comparison charts use rounded, readable grid intervals instead of arbitrary decimals.
-- Weight/e1RM axes favour gym-friendly steps such as 2.5, 5, 10 and 20 kg according to scale.
-- One-point friend series are explicitly rendered as enlarged dots with an outline.
-- Per-user point counts are shown in the comparison legend.
-- If two users have the same timestamp and e1RM, the friend point receives an additional outline so it cannot disappear underneath the other point.
-- The friend-comparison e1RM explanation uses smaller text.
+## Active workout
+- Barbell selectable increments are 2.5 kg.
+- Next-after-rest information identifies ramp-up and the relevant exercise.
+- Dumbbell exercise circles omit the cramped “each” wording.
+- The active header shows current exercise number/name and periodically fades to what is next.
+- All progression/future-adjustment prompts identify the exercise, including bodyweight/superset follow-ups.
+- The earlier rest-skip state-path fix remains in place.
 
-## Rest control
-- Fixed a PWA state-path where Skip during ENTRY/SUPERSET_ENTRY only moved the rest end time to now, leaving a non-advancing 0:00 panel.
-- Skip now finalizes and clears that rest immediately; normal REST-phase Skip continues to advance to the next action.
-
-## Preserved behaviour / safety
-- PWA 1.5.8 mixed timed supersets, tracking/equipment guardrails, dumbbell comparison eligibility, catalogue deduplication, 3-second notices and cumulative What’s New logic are retained.
-- IndexedDB identity remains `gym-progress-pwa` / `kv` / `app-state`.
-- No Supabase schema migration is required.
+## Safety
+- IndexedDB identity is unchanged and no Supabase schema migration is required.

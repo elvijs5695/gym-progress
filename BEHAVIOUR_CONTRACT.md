@@ -30,7 +30,7 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - Deleting a social event never deletes or edits the local workout.
 - Unseen friend activity, incoming requests and accepted-request confirmations may badge Friends but cannot interrupt a workout. Friend request/acceptance notifications are social metadata, not training data.
 
-## v1.5.9 Tracker/chart/rest contract
+## v1.5.10 Tracker/chart/rest contract
 - Tracker settings expose the master notification switch and Edit/Delete actions; deleting an item must not trigger a general data reset.
 - Tracker current-day state rolls over by local calendar date at midnight while prior dated entries remain stored.
 - Weight/e1RM chart grids use human-readable gym-friendly intervals rather than arbitrary fraction-derived labels.

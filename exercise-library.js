@@ -77,7 +77,7 @@ export function suggestions(query='',limit=8){
 
 const snap=(n,step)=>Math.round(Number(n||0)/step)*step;
 export function gradingIncrement(equipment){
-  if(equipment===Equipment.BARBELL)return .25;
+  if(equipment===Equipment.BARBELL)return 2.5;
   if(equipment===Equipment.DUMBBELL)return .5;
   if(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)return 2.5;
   if(equipment===Equipment.BODYWEIGHT)return .5;
