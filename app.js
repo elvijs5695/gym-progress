@@ -1,20 +1,20 @@
-import {loadState,saveState,wipeState} from './db.js?v=1.5.15';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.5.15';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.5.15';
-import {evaluateAutoregulation} from './autoregulation.js?v=1.5.15';
-import {manualHtml} from './manual.js?v=1.5.15';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.5.15';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.5.15';
-import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.5.15';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.5.15';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js?v=1.5.15';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.5.15';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.5.15';
+import {loadState,saveState,wipeState} from './db.js?v=1.5.16';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.5.16';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.5.16';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.5.16';
+import {manualHtml} from './manual.js?v=1.5.16';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.5.16';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.5.16';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.5.16';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.5.16';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison} from './social-api.js?v=1.5.16';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.5.16';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.5.16';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.5.15';
+const APP_VERSION='1.5.16';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -181,7 +181,7 @@ const UPDATE_FEATURES=[
   {version:'1.5.11',key:'phase-cues',en:'Workout current/next cues and result-entry rest controls are more reliable.',lv:'Treniņa pašreizējās/nākamās darbības norādes un atpūtas vadība rezultātu ievadē ir uzticamākas.'},
   {version:'1.5.12',key:'fixed-stage-header',en:'The workout header now shows stage, current action and next action together, and the finish summary is clearer.',lv:'Treniņa galvene tagad vienlaikus rāda posmu, pašreizējo un nākamo darbību, un treniņa noslēguma kopsavilkums ir skaidrāks.'},
   {version:'1.5.13',key:'scrolling-active-status',en:'The workout header now keeps time and stage fixed while long Now/Next text scrolls.',lv:'Treniņa galvenē laiks un posms paliek vietā, bet garš Tagad/Tālāk teksts rit horizontāli.'}
-  ,{version:'1.5.15',key:'interface-polish',en:'Home, workout and Friends screens are cleaner and faster to use.',lv:'Sākuma, treniņa un Draugu ekrāni tagad ir tīrāki un ātrāk lietojami.'}
+  ,{version:'1.5.16',key:'interface-polish',en:'Home, workout and Friends screens are cleaner and faster to use.',lv:'Sākuma, treniņa un Draugu ekrāni tagad ir tīrāki un ātrāk lietojami.'}
 ];
 function versionParts(v){return String(v||'0').split('.').map(x=>Number(x)||0);}
 function compareVersions(a,b){const aa=versionParts(a),bb=versionParts(b),n=Math.max(aa.length,bb.length);for(let i=0;i<n;i++){const d=(aa[i]||0)-(bb[i]||0);if(d)return d;}return 0;}

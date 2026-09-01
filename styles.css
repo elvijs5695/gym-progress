@@ -409,7 +409,7 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
   .workout-expand-chevron{width:26px;min-width:26px}
 }
 
-/* v1.5.15 visual correction pass */
+/* v1.5.16 visual correction pass */
 :root{
   --pastel-green:#B9E6C3;
   --tracker-pale:#E8F7EC;
@@ -517,3 +517,47 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 }
 .home-action-buttons{display:flex!important;width:auto!important;flex:0 0 auto!important;align-items:center!important}
 .tracker-card-accent .note{color:var(--tracker-muted)!important}
+
+/* v1.5.16 light-green tracker palette + completion-only green progress */
+:root{
+  --pastel-green:#88E788;
+  --tracker-pale:#E7FBE7;
+  --tracker-pale-top:#F2FFF2;
+  --tracker-border:#9BEA9B;
+  --tracker-ink:#16351B;
+  --tracker-muted:#49644E;
+  --tracker-control:#246B2F;
+}
+
+/* Keep the Tracker fresh/light while retaining strong control contrast. */
+.tracker-card-accent{
+  background:linear-gradient(180deg,var(--tracker-pale-top) 0%,var(--tracker-pale) 100%)!important;
+  border-color:var(--tracker-border)!important;
+}
+.tracker-card-accent .tracker-settings-btn{
+  color:var(--tracker-control)!important;
+  border-color:rgba(36,107,47,.34)!important;
+  background:rgba(255,255,255,.38)!important;
+}
+.tracker-card-accent .tracker-step-btn{
+  color:var(--tracker-control)!important;
+  border-color:rgba(36,107,47,.25)!important;
+}
+
+/* Progress itself is neutral until the daily target is actually complete. */
+.tracker-card-accent .tracker-progress-bg{
+  background:rgba(56,64,59,.075)!important;
+}
+.tracker-card-accent .tracker-progress-fill{
+  background:rgba(143,151,146,.42)!important;
+}
+.tracker-card-accent .tracker-row.done .tracker-progress-fill{
+  background:#88E788!important;
+}
+.tracker-card-accent .tracker-progress-now{
+  background:rgba(22,53,27,.48)!important;
+}
+.tracker-card-accent .tracker-row.done .tracker-name,
+.tracker-card-accent .tracker-row.done .tracker-amount-button{
+  color:#1E6A2A!important;
+}

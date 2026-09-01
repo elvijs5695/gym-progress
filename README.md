@@ -1,8 +1,8 @@
-# Gym Progress PWA v1.5.15
+# Gym Progress PWA v1.5.16
 
 Update from v1.5.12 in place on the same origin. Do not clear site data.
 
-## v1.5.15 highlights
+## v1.5.16 highlights
 
 - Active-workout elapsed time and focus-stage counter stay fixed.
 - Only the `Now / Next` segment scrolls horizontally, and only when it overflows.
