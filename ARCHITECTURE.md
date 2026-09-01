@@ -27,3 +27,7 @@ The v1.5.11 active-workout header is derived from runtime phase plus pending-set
 
 ## v1.5.12 focus-stage header and finish summary
 The active header derives logical focus stages from ordered session exercises and collapses each superset group into one stage. Runtime phase determines whether stage numbering is shown. Current and next phase labels are displayed simultaneously. The finish summary keeps its state in the existing in-memory share draft; share-card rerenders restore dialog/page scroll instead of resetting it. No IndexedDB schema identity changes are introduced.
+
+## v1.5.13 active header + finish image preload
+
+The active header separates immutable-width status cells (elapsed time and focus-stage index) from an overflow viewport containing `Now / Next`. After render, the viewport is measured; marquee animation is enabled only when content overflows. The finish image is listed in the service-worker shell, preloaded from HTML and decoded eagerly at application startup to avoid first-use animation delay.

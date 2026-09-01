@@ -1,11 +1,9 @@
-# PWA v1.5.12 validation
+# PWA v1.5.13 validation
 
-- JavaScript syntax check: PASS (`node --check app.js`).
-- PWA validator: PASS (`npm run check`, 56 files).
-- Version/cache markers: 1.5.12.
-- Fixed focus-stage active header present.
-- Finish celebration duration: 4.4 s.
-- Share-card rerender preserves scroll position.
-- Workout conclusion labels weighted exercise Volume + Max weight.
-- IndexedDB identity unchanged.
-- No Supabase schema migration required.
+- JavaScript syntax: PASS (`node --check`).
+- Static source validator: PASS (56 PWA files).
+- Version/cache markers: 1.5.13.
+- Active header: fixed time/stage + overflow-only `Now / Next` marquee present.
+- Finish image: HTML preload + startup fetch/decode + service-worker app-shell cache present.
+- Expand/collapse UI: shared Friends-style SVG chevron present.
+- Runtime/device verification remains recommended after deployment.

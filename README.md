@@ -1,15 +1,13 @@
-# Gym Progress PWA v1.5.12
+# Gym Progress PWA v1.5.13
 
-Local-first Gym Progress PWA. Deploy over the existing site/origin and **do not clear browser/site data**. IndexedDB identity and recovery safeguards are unchanged.
+Update from v1.5.12 in place on the same origin. Do not clear site data.
 
-## v1.5.12 highlights
+## v1.5.13 highlights
 
-- Active-workout header no longer alternates/fades between Current and Next. Elapsed time, focus-stage number, **Now**, and **Next** are shown together.
-- Warm-up and stretching are outside the stage count; ramp-up, exercise, result/rest and deload stay within the same focus stage.
-- Supersets count as one focus stage.
-- The finish celebration image remains visible for twice as long (4.4 s total animation window).
-- Selecting shareable cards preserves the summary dialog/page scroll position when the optional comment field appears.
-- Per-exercise workout conclusion now explicitly reports **Volume** and **Max weight** for weighted exercises, rather than an ambiguous weight value.
-- Timed/bodyweight summaries retain modality-appropriate metrics.
+- Active-workout elapsed time and focus-stage counter stay fixed.
+- Only the `Now / Next` segment scrolls horizontally, and only when it overflows.
+- Finish celebration image is preloaded and decoded during startup; it remains in the service-worker app-shell cache.
+- Expand/collapse chevrons use the same SVG convention as the Friends panel across PWA expandable controls.
+- Existing v1.5.12 finish-celebration duration remains 4.4 s.
 
-No IndexedDB identity change and no Supabase schema migration are required.
+No IndexedDB identity change and no Supabase migration are required.

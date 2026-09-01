@@ -268,3 +268,57 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .finish-celebration{animation-duration:4.4s!important}
 .finish-celebration img{animation-duration:4.4s!important}
 .conclusion-exercise-row strong{font-size:12px;text-align:right;white-space:normal;max-width:62%}
+
+/* v1.5.13 fixed time/stage + overflow marquee and unified expand chevrons */
+.active-workout-line{
+  display:flex!important;
+  align-items:baseline;
+  gap:8px;
+  min-width:0;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.active-workout-line .active-workout-static{flex:none;white-space:nowrap}
+.active-workout-line .active-stage-static{font-weight:600;color:var(--muted)}
+.active-workout-marquee{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;display:block;position:relative}
+.active-workout-marquee-inner{display:inline-block;min-width:max-content;white-space:nowrap;will-change:transform}
+.active-workout-marquee.overflowing{
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7px,#000 calc(100% - 10px),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 7px,#000 calc(100% - 10px),transparent 100%);
+}
+.active-workout-marquee.overflowing .active-workout-marquee-inner{
+  animation:activeWorkoutMarquee var(--active-marquee-duration,9s) ease-in-out 1s infinite;
+}
+@keyframes activeWorkoutMarquee{
+  0%,12%{transform:translateX(0)}
+  43%,62%{transform:translateX(calc(-1 * var(--active-marquee-shift,0px)))}
+  93%,100%{transform:translateX(0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .active-workout-marquee.overflowing{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+  .active-workout-marquee.overflowing .active-workout-marquee-inner{animation:none}
+}
+
+.app-expand-chevron{
+  display:grid;
+  place-items:center;
+  width:38px;
+  min-width:38px;
+  height:30px;
+  padding:0;
+  line-height:0;
+  color:var(--muted);
+}
+.app-expand-chevron svg{display:block;width:22px;height:13px;overflow:visible;transform:rotate(0deg);transform-origin:50% 50%;transition:transform .15s ease}
+.app-expand-chevron path{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter}
+.app-expand-chevron.expanded svg,
+.friends-toggle-chevron.expanded svg,
+.workout-expand-chevron.expanded svg,
+.starter-settings[open] .app-expand-chevron svg,
+.advanced-settings[open] .app-expand-chevron svg,
+.friend-comparison-card.stack .app-expand-chevron svg{transform:rotate(180deg)}
+.workout-expand-chevron{width:28px;min-width:28px;height:28px;margin-left:2px}
+.workout-expand-chevron svg{width:18px;height:11px}
+.details-chevron{font-size:0!important;transform:none!important}
+.friend-comparison-card .friend-comparison-head .details-chevron{transform:none!important;font-size:0!important}
+.friend-comparison-card.stack .friend-comparison-head .details-chevron{transform:none!important}

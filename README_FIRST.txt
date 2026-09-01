@@ -1,12 +1,7 @@
-GYM PROGRESS PWA 1.5.12 - UPDATE NOTES
+GYM PROGRESS PWA 1.5.13 - UPDATE NOTES
 
-1. Do NOT clear browser/site data and do NOT uninstall the installed PWA.
-2. Keep the user's latest JSON backup outside the browser.
-3. Deploy all contents of this package over the same site origin.
-4. Open once online and verify Settings shows PWA v1.5.12.
-5. Check Programme, Logs, Progress, Tracker and one existing workout before editing data.
-6. Test the fixed active header through Warm-up -> Ramp-up -> exercise -> Rest/Result -> Deload -> next exercise -> Stretching.
-7. If a superset exists, confirm the pair counts as one focus stage.
-8. Finish a workout and confirm the celebration image remains for about 4.4 s.
-9. Scroll down the finish summary, toggle a share card and confirm the comment field does not reset the scroll position.
-10. No new Supabase SQL is required for this release.
+1. Deploy over the existing PWA on the same origin.
+2. Do not clear browser/site data.
+3. Open once online so the new service worker and finish-image cache are installed.
+4. Verify Settings shows PWA v1.5.13.
+5. Start a workout with a long current/next label and confirm time + x/y stay fixed while only Now/Next scrolls.

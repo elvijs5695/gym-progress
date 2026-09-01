@@ -50,3 +50,11 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - The PWA finish celebration image uses a 4.4-second animation window before the conclusion/share screen.
 - Selecting shareable cards must not reset the summary scroll position when comment fields appear/disappear.
 - Weighted exercise conclusion rows identify both exercise volume and maximum weight reached.
+
+## v1.5.13 active-status / expansion contract
+
+- Active elapsed time and focus-stage counter are fixed-position status elements.
+- `Now / Next` is one single-line overflow region. It auto-scrolls only when its measured content is wider than the available region.
+- Short `Now / Next` content does not animate.
+- The finish celebration image is requested/decoded during startup and remains part of the service-worker app-shell cache.
+- PWA expand/collapse controls use the same chevron SVG geometry as the Friends expansion control.
