@@ -1,6 +1,12 @@
-# Gym Progress PWA v1.5.16
+# Gym Progress PWA v1.5.17
 
 Update from v1.5.12 in place on the same origin. Do not clear site data.
+
+## v1.5.17 highlights
+- Near-white glass Tracker with dark neutral typography.
+- Grey progress until completion, then restrained green.
+- #313C36 upcoming workout card and toned-down green status accents.
+- Thick outline Play icon with optical centring.
 
 ## v1.5.16 highlights
 

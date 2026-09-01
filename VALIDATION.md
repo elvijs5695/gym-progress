@@ -1,8 +1,8 @@
-# PWA v1.5.16 validation
+# PWA v1.5.17 validation
 
 - JavaScript syntax: PASS (`node --check`).
 - Static source validator: PASS (56 PWA files).
-- Version/cache markers: 1.5.16.
+- Version/cache markers: 1.5.17.
 - Active header: fixed time/stage + overflow-only `Now / Next` marquee present.
 - Finish image: HTML preload + startup fetch/decode + service-worker app-shell cache present.
 - Expand/collapse UI: shared Friends-style SVG chevron present.
@@ -19,3 +19,7 @@
 - Tracker incomplete progress: neutral grey.
 - Tracker completed progress: `#88E788`.
 - Light-green card palette retains dark, high-contrast controls.
+
+## 1.5.17
+- Visual-only patch; no IndexedDB or Supabase schema changes.
+- Validate near-white Tracker glass contrast, completion-only green state, #313C36 upcoming card, and outline Play icon centring.

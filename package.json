@@ -1,7 +1,7 @@
 {
   "name": "gym-progress-pwa",
   "private": true,
-  "version": "1.5.16",
+  "version": "1.5.17",
   "type": "module",
   "scripts": {
     "check": "node tools/validate.mjs"

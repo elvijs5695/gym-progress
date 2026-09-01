@@ -1,4 +1,4 @@
-# Gym Progress PWA 1.5.16
+# Gym Progress PWA 1.5.17
 
 ## Interface simplification
 
@@ -38,3 +38,10 @@ No IndexedDB or Supabase schema migration.
 ## 1.5.16
 - Tracker progress fill stays neutral grey while a daily target is incomplete and changes to light green only when the target is completed.
 - Refreshed green accents around `#88E788` with darker green controls for reliable contrast.
+
+## 1.5.17 visual polish
+- Tracker uses a near-white glass-like gradient with dark neutral text and controls.
+- Tracker progress remains grey until completion; completed fill uses a restrained green.
+- Upcoming workout accent card uses #313C36.
+- Green accent text is toned down.
+- Home Play control now uses an optically centred thick outline triangle inside the thinner circular button border.

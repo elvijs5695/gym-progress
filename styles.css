@@ -200,7 +200,7 @@ label.field{display:block;font-size:12px;color:var(--muted);font-weight:700;marg
 .exercise-form>.field{margin-top:2px}.exercise-primary-grid{margin-top:12px}.exercise-primary-grid>div{min-width:0}.exercise-primary-grid .field{min-height:18px;display:block}.exercise-primary-grid select,.exercise-primary-grid input{width:100%;min-width:0}
 .starter-settings>summary,.advanced-settings>summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;list-style:none}.starter-settings>summary::-webkit-details-marker,.advanced-settings>summary::-webkit-details-marker{display:none}.details-chevron{font-size:20px;transition:transform .15s ease}.starter-settings[open] .details-chevron,.advanced-settings[open] .details-chevron{transform:rotate(180deg)}.details-body{margin-top:12px}.subsetting{padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
 .pulse-reps-badge{font-size:1.05rem!important;letter-spacing:.04em!important;color:#171010!important;background:rgba(255,255,255,.38);padding:5px 12px;border-radius:999px}.pulse-reps-badge span{font-size:1.55rem;font-weight:950}
-.tracker-card-accent{background:linear-gradient(180deg,rgba(220,220,220,.22),rgba(200,200,200,.10))!important;border-color:rgba(154,129,220,.35)!important}.tracker-row{min-height:34px}.tracker-row.behind .tracker-name,.tracker-row.behind .tracker-amount-button{color:#ff7979!important}.tracker-row.done .tracker-name,.tracker-row.done .tracker-amount-button{color:#69ce88!important;opacity:1!important}.tracker-controls{display:grid;grid-template-columns:minmax(86px,auto) 34px 34px;align-items:center;gap:2px;margin-left:auto}.tracker-step-btn{min-width:32px!important;min-height:32px!important;width:32px!important;height:32px!important;border:1px solid rgba(255,255,255,.09)!important;background:transparent!important;color:var(--muted)!important;font-size:20px!important;font-weight:400!important;line-height:1!important;padding:0!important;opacity:.52}.tracker-step-btn:active{opacity:1}.tracker-amount-button{font-size:14px!important;font-weight:400!important;text-align:right!important;color:var(--text)!important;white-space:nowrap}.tracker-editor-grid .field{min-height:18px;display:block}
+.tracker-card-accent{background:linear-gradient(180deg,rgba(112,91,171,.22),rgba(112,91,171,.10))!important;border-color:rgba(154,129,220,.35)!important}.tracker-row{min-height:34px}.tracker-row.behind .tracker-name,.tracker-row.behind .tracker-amount-button{color:#ff7979!important}.tracker-row.done .tracker-name,.tracker-row.done .tracker-amount-button{color:#69ce88!important;opacity:1!important}.tracker-controls{display:grid;grid-template-columns:minmax(86px,auto) 34px 34px;align-items:center;gap:2px;margin-left:auto}.tracker-step-btn{min-width:32px!important;min-height:32px!important;width:32px!important;height:32px!important;border:1px solid rgba(255,255,255,.09)!important;background:transparent!important;color:var(--muted)!important;font-size:20px!important;font-weight:400!important;line-height:1!important;padding:0!important;opacity:.52}.tracker-step-btn:active{opacity:1}.tracker-amount-button{font-size:14px!important;font-weight:400!important;text-align:right!important;color:var(--text)!important;white-space:nowrap}.tracker-editor-grid .field{min-height:18px;display:block}
 
 .catalogue-inline-status{display:inline-grid;place-items:center;width:19px;height:19px;flex:0 0 19px}.catalogue-inline-status .catalogue-globe{width:18px;height:18px}.catalogue-inline-status.linked{color:#39b86a}.catalogue-inline-status.local{color:#858891}
 
@@ -560,4 +560,83 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .tracker-card-accent .tracker-row.done .tracker-name,
 .tracker-card-accent .tracker-row.done .tracker-amount-button{
   color:#1E6A2A!important;
+}
+
+/* v1.5.17 final visual polish: neutral glass Tracker + restrained green accents. */
+:root{
+  --pastel-green:#71C97A;
+  --tracker-glass-top:rgba(255,255,255,.97);
+  --tracker-glass-mid:rgba(250,252,250,.94);
+  --tracker-glass-bottom:rgba(241,245,242,.92);
+  --tracker-border:rgba(255,255,255,.48);
+  --tracker-ink:#171A18;
+  --tracker-muted:#5E6460;
+  --tracker-control:#252A27;
+  --tracker-complete:#74C97C;
+}
+
+/* Upcoming workout: dark green-grey accent instead of a bright green wash. */
+.card.selected-due{
+  background:#313C36!important;
+  border-color:#46564E!important;
+}
+.status-next-text,
+.next-session-date,
+.next-date-overdue{
+  color:#79CB81!important;
+}
+
+/* Near-white iOS-like glass: light-reflective, neutral and high contrast. */
+.tracker-card-accent{
+  background:
+    linear-gradient(145deg,var(--tracker-glass-top) 0%,var(--tracker-glass-mid) 48%,var(--tracker-glass-bottom) 100%)!important;
+  border-color:var(--tracker-border)!important;
+  color:var(--tracker-ink)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 0 rgba(115,130,120,.08),
+    0 10px 30px rgba(0,0,0,.14)!important;
+  backdrop-filter:blur(18px) saturate(1.12);
+  -webkit-backdrop-filter:blur(18px) saturate(1.12);
+}
+.tracker-card-accent .title,
+.tracker-card-accent .tracker-name,
+.tracker-card-accent .tracker-amount-button,
+.tracker-card-accent .note{
+  color:var(--tracker-ink)!important;
+}
+.tracker-card-accent .subtitle{
+  color:var(--tracker-muted)!important;
+  opacity:1!important;
+}
+.tracker-card-accent .tracker-settings-btn,
+.tracker-card-accent .tracker-step-btn{
+  color:var(--tracker-control)!important;
+  border-color:rgba(37,42,39,.24)!important;
+  background:rgba(255,255,255,.20)!important;
+}
+.tracker-card-accent .tracker-settings-btn:active,
+.tracker-card-accent .tracker-step-btn:active{
+  background:rgba(30,35,32,.07)!important;
+}
+.tracker-card-accent .tracker-row{border-top-color:rgba(23,26,24,.08)!important}
+.tracker-card-accent .tracker-progress-bg{background:rgba(39,45,41,.075)!important}
+.tracker-card-accent .tracker-progress-fill{background:rgba(139,146,141,.42)!important}
+.tracker-card-accent .tracker-row.done .tracker-progress-fill{background:var(--tracker-complete)!important}
+.tracker-card-accent .tracker-progress-now{background:rgba(39,45,41,.42)!important}
+.tracker-card-accent .tracker-row.done .tracker-name,
+.tracker-card-accent .tracker-row.done .tracker-amount-button{color:#315E38!important}
+
+/* Play button: thin circular button, stronger outlined triangle with optical centering. */
+.home-action-buttons .play-btn{display:grid!important;place-items:center!important}
+.home-play-icon{
+  display:block;
+  width:20px;
+  height:20px;
+  fill:none;
+  stroke:#fff;
+  stroke-width:2.5;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+  transform:translateX(1px);
 }
