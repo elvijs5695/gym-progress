@@ -1,4 +1,4 @@
-# Gym Progress PWA 1.5.17
+# Gym Progress PWA 1.5.18
 
 ## Interface simplification
 
@@ -45,3 +45,11 @@ No IndexedDB or Supabase schema migration.
 - Upcoming workout accent card uses #313C36.
 - Green accent text is toned down.
 - Home Play control now uses an optically centred thick outline triangle inside the thinner circular button border.
+
+
+## 1.5.18 tracker pacing and exact programme weights
+
+- Tracker clock markers refresh every 10 minutes while Home remains open, with immediate refresh on app visibility changes.
+- Tracker overdue/red state and reminders now use discrete due windows. Each configured increment gets an equal share of the active day; dense targets use two-hour checkpoints, and the final target is due at the configured end time.
+- Manual programme working weights are stored exactly as entered rather than snapped to equipment grading increments.
+- Rotation-day expansion icons were removed from Home; calendar/play actions remain right aligned.

@@ -39,3 +39,10 @@ The active header separates immutable-width status cells (elapsed time and focus
 - Ramp-up cards separate ramp prescriptions from the final working target rather than repeating the exercise header.
 - Transient status UI renders into the fixed `#status-root` overlay and never participates in normal page flow.
 - The supplied curved-arrow asset is cached in the service worker and used for active-workout undo.
+
+
+## v1.5.18 Tracker deadline pacing
+
+Tracker rendering uses `trackerPace()` as the single source for the time marker, overdue state and reminder due amount. Increment-sized goals use equal completion windows across the configured productive span. If the number of increments exceeds the number of available hours, due checks are grouped into two-hour checkpoints. Home refreshes only the clock-dependent Tracker visuals every 10 minutes; IndexedDB state is unchanged.
+
+Manual programme working weights intentionally bypass `snapSelectable`; selectable grading remains for +/- controls, ramp calculations and automatic progression.

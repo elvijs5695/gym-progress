@@ -66,3 +66,12 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - Social sign-out is destructive enough to require an explicit confirmation step.
 - Warm-up/stretching have no exercise-stage number; ramp-up, working sets, rest/result entry and deload retain the current focus-stage number. A superset is one focus stage.
 - Notice visibility must not shift the app layout; notices overlay the bottom edge.
+
+
+## v1.5.18 Tracker and programme-weight contract
+
+- Tracker is not overdue merely because the productive day has started. It becomes overdue only after a required completion window has passed.
+- The final required amount is due at the configured productive-day end.
+- Dense targets use two-hour due checkpoints.
+- The Tracker time marker updates while Home stays open (10-minute cadence) and refreshes immediately after visibility/focus changes.
+- Manually entered programme weights are stored exactly; automatic controls may still use equipment increments.

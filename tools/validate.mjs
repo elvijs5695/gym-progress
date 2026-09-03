@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.17'||!app.includes("APP_VERSION='1.5.17'")||!sw.includes('gym-progress-pwa-v1.5.17'))errors.push('v1.5.17 version markers are inconsistent');
+if(pkg.version!=='1.5.18'||!app.includes("APP_VERSION='1.5.18'")||!sw.includes('gym-progress-pwa-v1.5.18'))errors.push('v1.5.18 version markers are inconsistent');
 for(const rel of ['exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -20,7 +20,7 @@ if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('barbel
 if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))errors.push('ramp permanent-disable or Next panel missing');
 if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))errors.push('updated audio cue patterns missing');
 if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.includes('checkTrackerReminders'))errors.push('Tracker functionality incomplete');
-if(!app.includes('sentTrackerReminderKeys')||!app.includes('(4*60)')||!css.includes('.tracker-card-accent')||!css.includes('.tracker-row.behind')||!css.includes('.tracker-row.done'))errors.push('Tracker visual/4-hour reminder follow-up missing');
+if(!app.includes('sentTrackerReminderKeys')||!app.includes('function trackerPace')||!app.includes('steps>span/60')||!app.includes('Math.floor(elapsed/120')||!css.includes('.tracker-card-accent')||!css.includes('.tracker-row.behind')||!css.includes('.tracker-row.done'))errors.push('Tracker deadline-window/two-hour dense-target pacing missing');
 if(!app.includes('closeDialog();startWorkout(id)'))errors.push('Start Anyway does not close its warning');
 if(!app.includes('await afterRest()')||!app.includes('async function skipExercise()'))errors.push('Skip exercise direct transition missing');
 if(!app.includes("S('Remove','Noņemt')")||!app.includes("S('Skip','Izlaist')")||!app.includes('Remove ramp-up?'))errors.push('simplified ramp-up wording missing');
@@ -53,11 +53,15 @@ if(!app.includes('function currentRampMembers')||!app.includes('rampMembersNeedP
 if(!app.includes('function validTrackingModes')||!app.includes('return [TrackingMode.WEIGHT_REPS,TrackingMode.TIME_ONLY]')||!app.includes('return [TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]'))errors.push('equipment-aware tracking guardrail matrix missing');
 if(app.includes('Timed / mat')||app.includes('timed/mat'))errors.push('obsolete Timed / mat wording remains in app UI');
 if(!app.includes('LAST_SEEN_APP_VERSION_KEY')||!app.includes("||'1.3.0'")||!app.includes('introducedVersion')&&!app.includes('UPDATE_FEATURES')||!app.includes('dismissUpdateAnnouncement'))errors.push('version-delta multilingual update brief missing');
-if(!app.includes('milestones=[0,.25,.5,.75,1]'))errors.push('Tracker 0/25/50/75/100 reminder milestones missing');
+if(!app.includes('trackerPace(item,d)')||!app.includes('actual+1e-6>=pace.dueAmount'))errors.push('Tracker reminders are not gated by discrete due windows');
 if(!app.includes('function exerciseFormChangeLink()')||app.includes("exerciseFormChangeLink(){") && app.includes("exerciseFormChangeLink(){") && app.split('function exerciseFormChangeLink()')[1].split('}')[0].includes('exerciseNameChanged()'))errors.push('Change catalogue link still immediately relinks/suppresses keyboard');
 
 
 if(!app.includes('trackerRenderedDate=trackerTodayKey()')||!app.includes('trackerDateNow!==trackerRenderedDate'))errors.push('local-midnight Tracker rollover missing');
+if(!app.includes('trackerVisualBucket')||!app.includes('/10);if(bucket!==trackerVisualBucket')||!app.includes('refreshTrackerTimeVisuals'))errors.push('Tracker clock marker does not refresh on a 10-minute cadence');
+if(!app.includes('initialWeightKg:resolvedEquipment===Equipment.BODYWEIGHT?0:rawWeight')||!app.includes('id="f-weight" type="number" min="0" step="any"'))errors.push('programme manual weights are still rounded/snapped');
+if(app.includes('workout-expand-chevron ${expanded'))errors.push('Home rotation expansion chevrons remain');
+
 if(!app.includes('renderFriendComparisonChart')||!app.includes('orderedIds=[me,friendId')||!app.includes('pts.length>=2')||!app.includes('pts.length===1?5.5:4')||!app.includes('niceChartAxis'))errors.push('one-chart combined-domain/single-point friend comparison missing');
 
 if(!app.includes('TRACKER_NOTIFICATIONS_KEY')||!app.includes('setTrackerNotifications')||!app.includes('deleteTrackerItem')||!app.includes('Tracker notifications'))errors.push('Tracker notification controls/delete settings missing');

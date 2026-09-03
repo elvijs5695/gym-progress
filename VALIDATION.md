@@ -1,8 +1,8 @@
-# PWA v1.5.17 validation
+# PWA v1.5.18 validation
 
 - JavaScript syntax: PASS (`node --check`).
 - Static source validator: PASS (56 PWA files).
-- Version/cache markers: 1.5.17.
+- Version/cache markers: 1.5.18.
 - Active header: fixed time/stage + overflow-only `Now / Next` marquee present.
 - Finish image: HTML preload + startup fetch/decode + service-worker app-shell cache present.
 - Expand/collapse UI: shared Friends-style SVG chevron present.
@@ -23,3 +23,11 @@
 ## 1.5.17
 - Visual-only patch; no IndexedDB or Supabase schema changes.
 - Validate near-white Tracker glass contrast, completion-only green state, #313C36 upcoming card, and outline Play icon centring.
+
+
+## 1.5.18
+
+- Tracker pace uses deadline windows and two-hour grouping for dense targets.
+- Tracker visual clock refresh does not require app reopen.
+- Programme manual weights bypass equipment snapping.
+- Rotation cards omit expansion chevrons.
