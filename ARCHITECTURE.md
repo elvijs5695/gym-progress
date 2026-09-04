@@ -41,8 +41,18 @@ The active header separates immutable-width status cells (elapsed time and focus
 - The supplied curved-arrow asset is cached in the service worker and used for active-workout undo.
 
 
-## v1.5.18 Tracker deadline pacing
+## v1.5.19 Tracker deadline pacing
 
-Tracker rendering uses `trackerPace()` as the single source for the time marker, overdue state and reminder due amount. Increment-sized goals use equal completion windows across the configured productive span. If the number of increments exceeds the number of available hours, due checks are grouped into two-hour checkpoints. Home refreshes only the clock-dependent Tracker visuals every 10 minutes; IndexedDB state is unchanged.
+Tracker rendering uses `trackerPace()` as the single source for the time marker, overdue state and reminder due amount. Increment-sized goals use equal completion windows across the configured productive span. If the number of increments exceeds the number of available hours, due checks are grouped into six evenly spaced checkpoints across the productive window. Home refreshes only the clock-dependent Tracker visuals every 10 minutes; IndexedDB state is unchanged.
 
 Manual programme working weights intentionally bypass `snapSelectable`; selectable grading remains for +/- controls, ramp calculations and automatic progression.
+
+## v1.5.20 adaptive intelligence
+
+`progression-intelligence.js` sits above the existing immediate progression/future-adjustment rules. It derives personal exposure-based progression rhythm, normalised recent performance, explainable exercise trend/confidence and persistent workout-wide fatigue evidence. The rule layer is deterministic and stores reasons so Android/PWA outputs and exported histories can be compared during tuning.
+
+## v1.5.20 sync-ready local metadata
+
+`sync-foundation.js` preserves the existing IndexedDB identity and adds shadow metadata inside saved application state. It assigns stable global UUIDs, tracks record revisions/pending state/deletion tombstones and keeps programme/workout-log sync state separate. `persistImmediately()`/normal persistence updates this metadata before saving local state.
+
+This is intentionally not a cloud cache architecture: local training data remains complete and usable without login. The supplied Supabase table is dormant infrastructure in this release. A later client must exchange records by stable IDs, preserve referential relationships, use per-domain cursors, merge programme fields safely and union/deduplicate workout history without destructive whole-state replacement.

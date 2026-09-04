@@ -640,3 +640,9 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
   stroke-linecap:round;
   transform:translateX(1px);
 }
+
+/* v1.5.20 workout status progress */
+.workout-progress-track{height:2px;width:100%;background:rgba(255,255,255,.055);overflow:hidden}
+.workout-progress-fill{height:100%;width:0;background:rgba(112,185,149,.62);transition:width .22s linear}
+.intelligence-summary{margin:14px 0;padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(112,185,149,.055)}
+.conclusion-trend{margin-top:3px;font-weight:400}

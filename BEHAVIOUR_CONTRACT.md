@@ -68,10 +68,23 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 - Notice visibility must not shift the app layout; notices overlay the bottom edge.
 
 
-## v1.5.18 Tracker and programme-weight contract
+## v1.5.19 Tracker and programme-weight contract
 
 - Tracker is not overdue merely because the productive day has started. It becomes overdue only after a required completion window has passed.
 - The final required amount is due at the configured productive-day end.
-- Dense targets use two-hour due checkpoints.
+- Dense targets use six evenly spaced due checkpoints across the productive window.
 - The Tracker time marker updates while Home stays open (10-minute cadence) and refreshes immediately after visibility/focus changes.
 - Manually entered programme weights are stored exactly; automatic controls may still use equipment increments.
+
+## v1.5.20 active-status / intelligence / sync-foundation contract
+
+This section supersedes the older v1.5.12-v1.5.13 active-header presentation rules.
+
+- Active status is exercise-centric: `x/y • Next: Exercise`; ramp-up, working sets, result entry, rest and unloading remain under the exercise identity.
+- A thin live progress line is derived from work/rest/timed progress and is presentation-only.
+- With Progress set to All occurrences, multiple programme occurrences are aligned by cycle/exposure index and max weight, volume and e1RM use the strongest occurrence result; specific occurrence selection remains unchanged.
+- Recommendation (`PROGRESS / HOLD / REDUCE`) is persisted separately from accepted/declined user decision.
+- Exercise trend is deterministic, exposure-based and personal-history-based, with calibration/rapid-adaptation protection and persisted reason/confidence data.
+- Workout fatigue interpretation requires broad/persistent evidence and does not diagnose fatigue or automatically prescribe a deload.
+- IndexedDB remains the complete offline source of truth. v1.5.20 adds stable sync IDs/revisions/tombstones/per-domain metadata without changing database/store/key identity.
+- Cloud programme/history exchange is not activated in v1.5.20; local data must never be replaced wholesale by a cloud snapshot.
