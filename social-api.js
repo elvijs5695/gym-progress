@@ -71,14 +71,23 @@ export async function deleteMyAccount(){
   return result;
 }
 
-export async function listTrainingSyncSnapshots(){
-  return authedFetch('/rest/v1/training_sync_records?entity_type=eq.device_snapshot&select=domain,sync_id,payload,server_revision,updated_at&order=server_revision.asc');
+export async function listTrainingSyncRecords(){
+  return authedFetch('/rest/v1/training_sync_records?select=domain,entity_type,sync_id,revision,deleted_at,payload,server_revision,updated_at&order=server_revision.asc');
 }
-export async function upsertTrainingSyncSnapshot(row){
+export async function upsertTrainingSyncRecords(rows){
   const uid=socialUser()?.id;if(!uid)throw new Error('Sign in to sync training data.');
-  const body=[{owner_id:uid,...row}];
+  const list=Array.isArray(rows)?rows:[rows];if(!list.length)return [];
+  const body=list.map(row=>({owner_id:uid,...row}));
   return authedFetch('/rest/v1/training_sync_records?on_conflict=owner_id,sync_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
 }
+export async function deleteLegacyTrainingSyncSnapshots(domains=[]){
+  const selected=(domains||[]).filter(Boolean);if(!selected.length)return null;
+  const domainFilter=`domain=in.(${selected.join(',')})`;
+  return authedFetch(`/rest/v1/training_sync_records?entity_type=eq.device_snapshot&${domainFilter}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});
+}
+// Compatibility aliases retained for older call sites during the record-level sync migration.
+export const listTrainingSyncSnapshots=listTrainingSyncRecords;
+export async function upsertTrainingSyncSnapshot(row){return upsertTrainingSyncRecords([row]);}
 
 function comparisonPointBody(points){
   return (points||[]).map(p=>({

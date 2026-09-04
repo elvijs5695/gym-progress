@@ -1,6 +1,6 @@
 import {uuid} from './exercise-identity.js';
 import {ensureSyncFoundation} from './sync-foundation.js';
-import {listTrainingSyncSnapshots,upsertTrainingSyncSnapshot} from './social-api.js';
+import {listTrainingSyncRecords,upsertTrainingSyncRecords,deleteLegacyTrainingSyncSnapshots} from './social-api.js';
 
 const TYPE_TO_ARRAY={
   workout_template:'workout_templates',template_exercise:'template_exercises',user_exercise:'user_exercises',
@@ -8,14 +8,13 @@ const TYPE_TO_ARRAY={
   tracker_item:'tracker_items',tracker_entry:'tracker_entries'
 };
 const TYPE_DOMAIN={
-  workout_template:'programme',template_exercise:'programme',user_exercise:'programme',
+  workout_template:'programme',template_exercise:'programme',user_exercise:'programme',programme_schedule:'programme',
   workout_session:'workout_log',session_exercise:'workout_log',performed_set:'workout_log',
   tracker_item:'tracker',tracker_entry:'tracker'
 };
-const ORDER=['workout_template','user_exercise','template_exercise','workout_session','session_exercise','performed_set','tracker_item','tracker_entry'];
-const REVERSE_ORDER=[...ORDER].reverse();
+const ORDER=['workout_template','user_exercise','template_exercise','programme_schedule','workout_session','session_exercise','performed_set','tracker_item','tracker_entry'];
 const NUMERIC_TYPES=new Set(['workout_template','template_exercise','workout_session','session_exercise','performed_set']);
-const REF_KEYS=new Set(['workoutSyncId','userExerciseSyncId','sessionSyncId','templateExerciseSyncId','sessionExerciseSyncId','itemSyncId']);
+const REF_KEYS=new Set(['workoutSyncId','userExerciseSyncId','sessionSyncId','templateExerciseSyncId','sessionExerciseSyncId','itemSyncId','nextWorkoutSyncId']);
 
 const clone=v=>v==null?v:structuredClone(v);
 const stable=v=>{
@@ -29,16 +28,22 @@ const norm=s=>String(s??'').trim().toLocaleLowerCase();
 const nextNumericId=arr=>arr.reduce((m,x)=>Math.max(m,Number(x?.id)||0),0)+1;
 const timeToMinutes=v=>{const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||''));return m?Math.max(0,Math.min(1439,Number(m[1])*60+Number(m[2]))):0;};
 const minutesToTime=v=>{const n=Math.max(0,Math.min(1439,Number(v)||0));return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;};
+const asMs=v=>{if(v==null)return null;if(typeof v==='number')return v;const n=Date.parse(v);return Number.isFinite(n)?n:null;};
 
 function metaForLocal(state,type,localId){return state.sync_foundation?.records?.[key(type,localId)]||null;}
-function metaForSync(state,syncId){return Object.values(state.sync_foundation?.records||{}).find(r=>r.syncId===syncId)||null;}
+function directMetaForSync(state,syncId){return Object.values(state.sync_foundation?.records||{}).find(r=>r.syncId===syncId)||null;}
+function aliasForSync(state,syncId){return state.sync_foundation?.aliases?.[syncId]||null;}
+function metaForSync(state,syncId){const direct=directMetaForSync(state,syncId);if(direct)return direct;const a=aliasForSync(state,syncId);return a?metaForLocal(state,a.entityType,a.localId):null;}
+function registerAlias(state,syncId,type,localId){if(!syncId)return;state.sync_foundation.aliases=state.sync_foundation.aliases||{};state.sync_foundation.aliases[syncId]={entityType:type,localId:String(localId)};}
 function localIdForSync(state,syncId){return metaForSync(state,syncId)?.localId??null;}
 function syncIdForLocal(state,type,localId){return metaForLocal(state,type,localId)?.syncId??null;}
-function rowForMeta(state,meta){const arr=state[TYPE_TO_ARRAY[meta.entityType]]||[];return arr.find(x=>String(x.id)===String(meta.localId))||null;}
+function scheduleRow(state){return {id:'global',nextWorkoutSyncId:state?.app_state?.nextWorkoutId==null?null:syncIdForLocal(state,'workout_template',state.app_state.nextWorkoutId),nextSessionAt:state?.app_state?.nextSessionAt??null};}
+function rowForMeta(state,meta){if(meta.entityType==='programme_schedule')return scheduleRow(state);const arr=state[TYPE_TO_ARRAY[meta.entityType]]||[];return arr.find(x=>String(x.id)===String(meta.localId))||null;}
 function cleanPayload(p){if(!p||typeof p!=='object')return p;return Object.fromEntries(Object.entries(p).filter(([k])=>!REF_KEYS.has(k)&&k!=='preferredId'));}
 
 function recordPayload(state,meta){
   if(meta.deletedAt!=null)return null;
+  if(meta.entityType==='programme_schedule'){const s=scheduleRow(state);return {nextWorkoutSyncId:s.nextWorkoutSyncId,nextSessionAt:s.nextSessionAt};}
   const row=rowForMeta(state,meta);if(!row)return null;
   const base={...clone(row)};delete base.id;
   switch(meta.entityType){
@@ -69,7 +74,7 @@ function recordPayload(state,meta){
   }
 }
 
-function eligibleSnapshotRecord(state,meta){
+function eligibleCloudRecord(state,meta){
   if(meta.domain!=='workout_log'||meta.deletedAt!=null)return true;
   const row=rowForMeta(state,meta);if(!row)return false;
   let session=null;
@@ -82,27 +87,38 @@ function eligibleSnapshotRecord(state,meta){
   return !!session&&String(session.status||'').toUpperCase()!=='ACTIVE';
 }
 
-function snapshot(state,domain){
-  ensureSyncFoundation(state);
-  const sync=state.sync_foundation,records=Object.values(sync.records)
-    .filter(r=>r.domain===domain&&eligibleSnapshotRecord(state,r))
-    .map(r=>({syncId:r.syncId,entityType:r.entityType,revision:Number(r.revision||1),deletedAt:r.deletedAt??null,updatedAt:Number(r.updatedAt||0),payload:recordPayload(state,r)}));
-  return {schema:'gym-progress-sync-snapshot-v1',deviceId:sync.deviceId,domain,generatedAt:Date.now(),records};
-}
-
 function remoteRecords(rows,state){
   const own=state.sync_foundation?.deviceId,all=[];
   for(const row of rows||[]){
-    const snap=row?.payload;if(!snap||snap.schema!=='gym-progress-sync-snapshot-v1'||!Array.isArray(snap.records))continue;
-    if(snap.deviceId===own)continue;
-    for(const r of snap.records)all.push({...r,domain:row.domain||TYPE_DOMAIN[r.entityType],sourceDeviceId:snap.deviceId,sourceServerRevision:Number(row.server_revision||0),sourceUpdatedAt:row.updated_at||null});
+    if(row?.entity_type==='device_snapshot'){
+      const snap=row?.payload;if(!snap||snap.schema!=='gym-progress-sync-snapshot-v1'||!Array.isArray(snap.records))continue;
+      if(snap.deviceId===own)continue;
+      for(const r of snap.records){
+        if(!TYPE_DOMAIN[r.entityType])continue;
+        all.push({...r,domain:row.domain||TYPE_DOMAIN[r.entityType],sourceDeviceId:snap.deviceId||'legacy',sourceServerRevision:Number(row.server_revision||0),sourceUpdatedAt:row.updated_at||null,sourceKind:'legacy'});
+      }
+      continue;
+    }
+    if(!TYPE_DOMAIN[row?.entity_type]||!row?.sync_id)continue;
+    all.push({
+      domain:row.domain||TYPE_DOMAIN[row.entity_type],entityType:row.entity_type,syncId:row.sync_id,
+      revision:Number(row.revision||1),deletedAt:asMs(row.deleted_at),updatedAt:asMs(row.updated_at)||0,
+      payload:row.payload??null,sourceDeviceId:'cloud',sourceServerRevision:Number(row.server_revision||0),sourceUpdatedAt:row.updated_at||null,sourceKind:'record'
+    });
   }
+  const better=(a,b)=>{
+    if(Number(a.revision)!==Number(b.revision))return Number(a.revision)>Number(b.revision);
+    if(a.sourceKind!==b.sourceKind)return a.sourceKind==='record';
+    if(Number(a.updatedAt)!==Number(b.updatedAt))return Number(a.updatedAt)>Number(b.updatedAt);
+    return Number(a.sourceServerRevision)>Number(b.sourceServerRevision);
+  };
   const best=new Map();
-  for(const r of all){const prev=best.get(r.syncId);if(!prev||r.sourceServerRevision>prev.sourceServerRevision)best.set(r.syncId,r);}
+  for(const r of all){const prev=best.get(r.syncId);if(!prev||better(r,prev))best.set(r.syncId,r);}
   return [...best.values()].sort((a,b)=>ORDER.indexOf(a.entityType)-ORDER.indexOf(b.entityType));
 }
 
 function logicalMatch(state,type,p){
+  if(type==='programme_schedule')return {id:'global'};
   const arr=state[TYPE_TO_ARRAY[type]]||[];
   switch(type){
     case'workout_template':return arr.find(x=>norm(x.name)===norm(p?.name)&&Number(x.position)===Number(p?.position))||null;
@@ -117,13 +133,9 @@ function logicalMatch(state,type,p){
       const parent=localIdForSync(state,p?.sessionSyncId),user=localIdForSync(state,p?.userExerciseSyncId);
       return arr.find(x=>String(x.sessionId)===String(parent)&&Number(x.position)===Number(p?.position)&&((p?.programmeExerciseId&&x.programmeExerciseId===p.programmeExerciseId)||(p?.canonicalExerciseId&&x.canonicalExerciseId===p.canonicalExerciseId)||(user&&String(x.userExerciseId)===String(user))||norm(x.name)===norm(p?.name)))||null;
     }
-    case'performed_set':{
-      const parent=localIdForSync(state,p?.sessionExerciseSyncId);return arr.find(x=>String(x.sessionExerciseId)===String(parent)&&Number(x.setNumber)===Number(p?.setNumber))||null;
-    }
+    case'performed_set':{const parent=localIdForSync(state,p?.sessionExerciseSyncId);return arr.find(x=>String(x.sessionExerciseId)===String(parent)&&Number(x.setNumber)===Number(p?.setNumber))||null;}
     case'tracker_item':return arr.find(x=>(p?.preferredId&&String(x.id)===String(p.preferredId))||(norm(x.name)===norm(p?.name)&&Number(x.position)===Number(p?.position)))||null;
-    case'tracker_entry':{
-      const parent=localIdForSync(state,p?.itemSyncId);return arr.find(x=>String(x.itemId)===String(parent)&&String(x.localDate)===String(p?.localDate))||null;
-    }
+    case'tracker_entry':{const parent=localIdForSync(state,p?.itemSyncId);return arr.find(x=>String(x.itemId)===String(parent)&&String(x.localDate)===String(p?.localDate))||null;}
     default:return null;
   }
 }
@@ -142,67 +154,142 @@ function makeLocalRow(state,type,p,existing=null){
   return base;
 }
 
-function removeRow(state,type,localId){const name=TYPE_TO_ARRAY[type];state[name]=(state[name]||[]).filter(x=>String(x.id)!==String(localId));}
+function removeRow(state,type,localId){
+  if(type==='programme_schedule'){state.app_state.nextWorkoutId=null;state.app_state.nextSessionAt=null;return;}
+  if(type==='workout_session'){
+    const exIds=new Set((state.session_exercises||[]).filter(x=>String(x.sessionId)===String(localId)).map(x=>String(x.id)));
+    state.workout_sessions=(state.workout_sessions||[]).filter(x=>String(x.id)!==String(localId));
+    state.session_exercises=(state.session_exercises||[]).filter(x=>String(x.sessionId)!==String(localId));
+    state.performed_sets=(state.performed_sets||[]).filter(x=>!exIds.has(String(x.sessionExerciseId)));
+    return;
+  }
+  if(type==='session_exercise'){state.performed_sets=(state.performed_sets||[]).filter(x=>String(x.sessionExerciseId)!==String(localId));}
+  if(type==='tracker_item'){state.tracker_entries=(state.tracker_entries||[]).filter(x=>String(x.itemId)!==String(localId));}
+  const name=TYPE_TO_ARRAY[type];state[name]=(state[name]||[]).filter(x=>String(x.id)!==String(localId));
+}
 function saveRow(state,type,row){const name=TYPE_TO_ARRAY[type],arr=state[name]||[],i=arr.findIndex(x=>String(x.id)===String(row.id));if(i>=0)arr[i]=row;else arr.push(row);state[name]=arr;}
-function setMeta(state,type,rowId,remote,{pending=false}={}){
-  const k=key(type,rowId);state.sync_foundation.records[k]={domain:TYPE_DOMAIN[type],entityType:type,localId:String(rowId),syncId:remote.syncId,revision:Number(remote.revision||1),deletedAt:remote.deletedAt??null,updatedAt:Number(remote.updatedAt||Date.now()),pending,fingerprint:remote.deletedAt==null?JSON.stringify(stable(rowForMeta(state,{entityType:type,localId:String(rowId)}))):null,legacy:false};
+function localPayloadForMeta(state,meta){return recordPayload(state,meta);}
+function setMetaFromRemote(state,type,rowId,remote,{pending=false,preserveSyncId=true}={}){
+  const k=key(type,rowId),old=state.sync_foundation.records[k]||{};
+  const syncId=preserveSyncId&&old.syncId?old.syncId:remote.syncId;
+  state.sync_foundation.records[k]={...old,domain:TYPE_DOMAIN[type],entityType:type,localId:String(rowId),syncId,revision:Number(remote.revision||1),deletedAt:remote.deletedAt??null,updatedAt:Number(remote.updatedAt||Date.now()),pending,fingerprint:remote.deletedAt==null?JSON.stringify(stable(rowForMeta(state,{entityType:type,localId:String(rowId)}))):null,legacy:false};
+  if(remote.syncId!==syncId)registerAlias(state,remote.syncId,type,rowId);
+  return state.sync_foundation.records[k];
 }
 function adoptMeta(state,type,rowId,remote){
-  const k=key(type,rowId),m=state.sync_foundation.records[k]||{};m.domain=TYPE_DOMAIN[type];m.entityType=type;m.localId=String(rowId);m.syncId=remote.syncId;state.sync_foundation.records[k]=m;return m;
+  const k=key(type,rowId),m=state.sync_foundation.records[k]||{};
+  m.domain=TYPE_DOMAIN[type];m.entityType=type;m.localId=String(rowId);m.syncId=m.syncId||remote.syncId;state.sync_foundation.records[k]=m;
+  if(remote.syncId!==m.syncId)registerAlias(state,remote.syncId,type,rowId);
+  return m;
 }
+function localState(state,m){return {revision:Number(m?.revision||0),deletedAt:m?.deletedAt??null,payload:m?localPayloadForMeta(state,m):null,pending:!!m?.pending};}
+function sameRecordState(local,remote){return (local.deletedAt!=null)===(remote.deletedAt!=null)&&(local.deletedAt!=null||same(local.payload,remote.payload));}
+function isConflict(local,remote){return local.pending&&!sameRecordState(local,remote)&&local.revision<=Number(remote.revision||0);}
 
-function localPayloadFor(state,type,row){const m=metaForLocal(state,type,row.id);return m?recordPayload(state,m):null;}
-function conflictFor(state,type,row,remote){const m=metaForLocal(state,type,row.id);if(!m)return false;return !!m.pending&&!same(localPayloadFor(state,type,row),remote.payload);
+function findLocalForRemote(state,remote){
+  let m=metaForSync(state,remote.syncId),row=m?rowForMeta(state,m):null;
+  if(!row&&!m&&remote.deletedAt==null){row=logicalMatch(state,remote.entityType,remote.payload);if(row){m=metaForLocal(state,remote.entityType,row.id)||adoptMeta(state,remote.entityType,row.id,remote);if(m?.syncId!==remote.syncId)registerAlias(state,remote.syncId,remote.entityType,row.id);}}
+  return {m,row};
 }
 
 export async function getTrainingSyncPreview(state){
-  ensureSyncFoundation(state);const rows=await listTrainingSyncSnapshots(),remotes=remoteRecords(rows,state);
-  const counts={workouts:0,exercises:0,logs:0,tracker:0,conflicts:0,remoteRecords:remotes.length,cloudDevices:new Set(remotes.map(r=>r.sourceDeviceId)).size};
+  ensureSyncFoundation(state);const rows=await listTrainingSyncRecords(),remotes=remoteRecords(rows,state);
+  const counts={workouts:0,exercises:0,schedule:0,logs:0,tracker:0,conflicts:0,remoteRecords:remotes.length,cloudDevices:new Set(remotes.map(r=>r.sourceDeviceId)).size};
   for(const r of remotes){
-    const local=metaForSync(state,r.syncId),row=local?rowForMeta(state,local):logicalMatch(state,r.entityType,r.payload);
-    const lp=row?localPayloadFor(state,r.entityType,row):null;
-    const different=!row||r.deletedAt!=null||!same(lp,r.payload);
-    if(!different)continue;
+    const {m,row}=findLocalForRemote(state,r);if(!m&&!row&&r.deletedAt!=null)continue;
+    const local=m?localState(state,m):{revision:0,deletedAt:null,payload:null,pending:false};
+    const different=!m||!sameRecordState(local,r);if(!different)continue;
     if(r.entityType==='workout_template')counts.workouts++;
     else if(r.entityType==='template_exercise'||r.entityType==='user_exercise')counts.exercises++;
+    else if(r.entityType==='programme_schedule')counts.schedule++;
     else if(r.entityType==='workout_session')counts.logs++;
     else if(r.entityType.startsWith('tracker_'))counts.tracker++;
-    if(row&&conflictFor(state,r.entityType,row,r))counts.conflicts++;
+    if(m&&isConflict(local,r))counts.conflicts++;
   }
-  const pending=Object.values(state.sync_foundation.records).filter(r=>r.pending&&r.deletedAt==null);
+  const pending=Object.values(state.sync_foundation.records).filter(r=>r.pending);
   counts.localWorkouts=pending.filter(r=>r.entityType==='workout_template').length;
   counts.localExercises=pending.filter(r=>r.entityType==='template_exercise'||r.entityType==='user_exercise').length;
+  counts.localSchedule=pending.filter(r=>r.entityType==='programme_schedule').length;
   counts.localLogs=pending.filter(r=>r.entityType==='workout_session').length;
   counts.localTracker=pending.filter(r=>r.domain==='tracker').length;
   counts.rows=rows;counts.remotes=remotes;return counts;
 }
 
+function applyRemotePayload(state,type,row,remote){
+  if(type==='programme_schedule'){
+    const wid=remote.payload?.nextWorkoutSyncId?localIdForSync(state,remote.payload.nextWorkoutSyncId):null;
+    state.app_state.nextWorkoutId=wid==null?null:Number(wid);
+    state.app_state.nextSessionAt=remote.payload?.nextSessionAt??null;
+    return true;
+  }
+  if(row){const desired=makeLocalRow(state,type,remote.payload,row);if(!same(row,desired)){saveRow(state,type,desired);return true;}return false;}
+  const desired=makeLocalRow(state,type,remote.payload,null);
+  if((type==='template_exercise'&&!Number.isFinite(desired.workoutId))||(type==='session_exercise'&&!Number.isFinite(desired.sessionId))||(type==='performed_set'&&!Number.isFinite(desired.sessionExerciseId))||(type==='tracker_entry'&&!desired.itemId))return false;
+  saveRow(state,type,desired);return desired.id;
+}
+
+function cloudRowForMeta(state,meta){
+  const payload=recordPayload(state,meta);
+  return {domain:meta.domain,entity_type:meta.entityType,sync_id:meta.syncId,revision:Number(meta.revision||1),deleted_at:meta.deletedAt==null?null:new Date(Number(meta.deletedAt)).toISOString(),payload};
+}
+
 export async function runTrainingSync(state,{domains=['programme','workout_log','tracker'],conflictPolicy='local',preview=null}={}){
-  ensureSyncFoundation(state);const fetched=preview?.rows||await listTrainingSyncSnapshots(),remotes=preview?.remotes||remoteRecords(fetched,state),enabled=new Set(domains);let changed=false,conflicts=0;
+  ensureSyncFoundation(state);const fetched=preview?.rows||await listTrainingSyncRecords(),remotes=preview?.remotes||remoteRecords(fetched,state),enabled=new Set(domains);let changed=false,conflicts=0;
   const byType=Object.fromEntries(ORDER.map(t=>[t,remotes.filter(r=>r.entityType===t&&enabled.has(TYPE_DOMAIN[t]))]));
   for(const type of ORDER){
     for(const remote of byType[type]){
-      let m=metaForSync(state,remote.syncId),row=m?rowForMeta(state,m):null;
-      if(!row&&!m)row=logicalMatch(state,type,remote.payload);
+      let {m,row}=findLocalForRemote(state,remote);
+      if(!m&&!row&&remote.deletedAt!=null)continue;
       if(row&&!m)m=adoptMeta(state,type,row.id,remote);
-      const hasConflict=row&&conflictFor(state,type,row,remote);
-      if(hasConflict){conflicts++;if(conflictPolicy==='local'){m=adoptMeta(state,type,row.id,remote);m.pending=true;continue;}}
-      if(remote.deletedAt!=null){
-        if(row){removeRow(state,type,row.id);setMeta(state,type,row.id,remote,{pending:false});changed=true;}
+      if(!m&&type==='programme_schedule')m=metaForLocal(state,type,'global');
+      const local=m?localState(state,m):null;
+      if(local&&sameRecordState(local,remote)){
+        if(Number(remote.revision||0)>local.revision){m.revision=Number(remote.revision);m.updatedAt=Math.max(Number(m.updatedAt||0),Number(remote.updatedAt||0));}
+        if(m.syncId!==remote.syncId)registerAlias(state,remote.syncId,type,m.localId);
         continue;
       }
-      if(row){const desired=makeLocalRow(state,type,remote.payload,row);if(!same(row,desired)){saveRow(state,type,desired);changed=true;}setMeta(state,type,row.id,remote,{pending:false});}
-      else {const desired=makeLocalRow(state,type,remote.payload,null);if((type==='template_exercise'&&!Number.isFinite(desired.workoutId))||(type==='session_exercise'&&!Number.isFinite(desired.sessionId))||(type==='performed_set'&&!Number.isFinite(desired.sessionExerciseId))||(type==='tracker_entry'&&!desired.itemId))continue;saveRow(state,type,desired);setMeta(state,type,desired.id,remote,{pending:false});changed=true;}
+      if(local&&local.revision>Number(remote.revision||0)){
+        // Cloud copy is stale. Preserve the newer local version and repair cloud below.
+        m.pending=true;continue;
+      }
+      const conflict=local&&isConflict(local,remote);
+      if(conflict){
+        conflicts++;
+        if(conflictPolicy==='local'){
+          m.revision=Math.max(local.revision,Number(remote.revision||0))+1;m.updatedAt=Date.now();m.pending=true;
+          if(m.syncId!==remote.syncId)registerAlias(state,remote.syncId,type,m.localId);
+          continue;
+        }
+      }
+      if(remote.deletedAt!=null){
+        if(m){removeRow(state,type,m.localId);setMetaFromRemote(state,type,m.localId,remote,{pending:false});changed=true;}
+        continue;
+      }
+      if(!remote.payload)continue;
+      if(m&&row){
+        if(applyRemotePayload(state,type,row,remote)===true)changed=true;
+        setMetaFromRemote(state,type,m.localId,remote,{pending:false});
+      }else if(m&&type==='programme_schedule'){
+        if(applyRemotePayload(state,type,{id:'global'},remote)===true)changed=true;
+        setMetaFromRemote(state,type,'global',remote,{pending:false});
+      }else{
+        const created=applyRemotePayload(state,type,null,remote);if(created===false)continue;
+        const newId=created===true?'global':created;setMetaFromRemote(state,type,newId,remote,{pending:false,preserveSyncId:false});changed=true;
+      }
     }
   }
+
   ensureSyncFoundation(state);
+  const upload=Object.values(state.sync_foundation.records).filter(m=>enabled.has(m.domain)&&eligibleCloudRecord(state,m));
+  for(let i=0;i<upload.length;i+=200)await upsertTrainingSyncRecords(upload.slice(i,i+200).map(m=>cloudRowForMeta(state,m)));
+  // Old 1.5.0/1.6.0 clients stored whole-device snapshots. Once canonical record rows
+  // exist, remove those legacy rows so they cannot keep reintroducing stale state.
+  await deleteLegacyTrainingSyncSnapshots([...enabled]);
   const maxCursor=Math.max(0,...(fetched||[]).map(x=>Number(x.server_revision||0)));
+  const completedAt=Date.now();
   for(const domain of enabled){
-    const d=state.sync_foundation.domains[domain];d.enabled=true;d.status='Syncing';
-    const snap=snapshot(state,domain),row={domain,entity_type:'device_snapshot',sync_id:d.snapshotSyncId,revision:1,deleted_at:null,payload:snap};
-    await upsertTrainingSyncSnapshot(row);
-    Object.values(state.sync_foundation.records).filter(r=>r.domain===domain).forEach(r=>{r.pending=false;});
-    d.lastSuccessfulSyncAt=Date.now();d.serverCursor=String(maxCursor);d.status='Synced';
+    Object.values(state.sync_foundation.records).filter(r=>r.domain===domain&&eligibleCloudRecord(state,r)).forEach(r=>{r.pending=false;});
+    const d=state.sync_foundation.domains[domain];d.enabled=true;d.lastSuccessfulSyncAt=completedAt;d.serverCursor=String(maxCursor);d.status='Synced';
   }
   return {changed,conflicts};
 }

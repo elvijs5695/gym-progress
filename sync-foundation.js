@@ -1,5 +1,8 @@
 import {uuid} from './exercise-identity.js';
 
+const SCHEDULE_SYNC_ID='00000000-0000-4000-8000-000000000001';
+const SCHEDULE_KEY='programme_schedule:global';
+
 const DEFINITIONS=[
   ['programme','workout_template','workout_templates'],
   ['programme','template_exercise','template_exercises'],
@@ -51,6 +54,22 @@ export function ensureSyncFoundation(state,{migration=false}={}){
       }
     }
   }
+
+  // Training schedule is user-created programme state, not a device preference.
+  // It uses one deterministic sync identity on every device and refers to the
+  // workout by its cross-device sync ID rather than by a local numeric ID.
+  const nextWorkoutId=state?.app_state?.nextWorkoutId;
+  const nextWorkoutSyncId=nextWorkoutId==null?null:sync.records[key('workout_template',nextWorkoutId)]?.syncId||null;
+  const scheduleValue={nextWorkoutSyncId,nextSessionAt:state?.app_state?.nextSessionAt??null};
+  const scheduleFp=fingerprint(scheduleValue);seen.add(SCHEDULE_KEY);
+  const schedule=sync.records[SCHEDULE_KEY];
+  if(!schedule){
+    sync.records[SCHEDULE_KEY]={domain:'programme',entityType:'programme_schedule',localId:'global',syncId:SCHEDULE_SYNC_ID,revision:1,deletedAt:null,updatedAt:timestamp,pending:true,fingerprint:scheduleFp,legacy:migration===true};
+  }else if(schedule.deletedAt!=null||schedule.fingerprint!==scheduleFp){
+    schedule.domain='programme';schedule.entityType='programme_schedule';schedule.localId='global';schedule.syncId=SCHEDULE_SYNC_ID;schedule.deletedAt=null;
+    schedule.revision=Math.max(1,Number(schedule.revision||0)+1);schedule.updatedAt=timestamp;schedule.pending=true;schedule.fingerprint=scheduleFp;
+  }else{schedule.syncId=SCHEDULE_SYNC_ID;}
+
   for(const [k,record] of Object.entries(sync.records)){
     if(seen.has(k)||record.deletedAt!=null)continue;
     record.deletedAt=timestamp;record.updatedAt=timestamp;record.revision=Math.max(1,Number(record.revision||0)+1);record.pending=true;
