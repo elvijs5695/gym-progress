@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.6.0'||!app.includes("APP_VERSION='1.6.0'")||!sw.includes('gym-progress-pwa-v1.6.0'))errors.push('v1.6.0 version markers are inconsistent');
+if(pkg.version!=='1.6.1'||!app.includes("APP_VERSION='1.6.1'")||!sw.includes('gym-progress-pwa-v1.6.1'))errors.push('v1.6.1 version markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -114,7 +114,12 @@ if(!read('training-sync.js').includes('eligibleSnapshotRecord')||!read('training
 if(!app.includes('focusStageGroups')||!app.includes('simpleActiveHeaderState'))errors.push('superset-as-one-stage workout header missing');
 if(app.includes('Shareable workout card'))errors.push('obsolete Shareable workout card label remains');
 if(!css.includes('.trend-progress')||!css.includes('.trend-attention'))errors.push('post-workout trend colour semantics missing');
-if(!fs.existsSync(path.join(root,'supabase','SUPABASE_TRAINING_SYNC_UPDATE_1.5.0_1.6.0.sql'))||!fs.existsSync(path.join(root,'DATABASE_UPDATE_INSTRUCTIONS_1.5.0_1.6.0.md')))errors.push('release database update SQL/instructions missing');
+if(!fs.existsSync(path.join(root,'supabase','SUPABASE_ACCOUNT_DATA_CONTROL_UPDATE_1.5.1_1.6.1.sql'))||!fs.existsSync(path.join(root,'DATABASE_UPDATE_INSTRUCTIONS_1.5.1_1.6.1.md')))errors.push('v1.6.1 account/data database update SQL/instructions missing');
+if(!app.includes('maybeOfferTrainingSyncAfterUpdate')||!app.includes('SYNC_PROMPT_VERSION_KEY'))errors.push('already-authenticated post-update sync review missing');
+if(!app.includes('account-chip')||!app.includes('openAccount()')||!app.includes('requestDeleteAccount'))errors.push('global account UX/account deletion missing');
+if(!app.includes('setting-toggle-row sync-domain-row')||!app.includes('sync-difference-list'))errors.push('aligned toggle/list sync dialogue missing');
+if(!read('social-api.js').includes('gym_erase_my_training_cloud')||!read('social-api.js').includes('gym_delete_my_account'))errors.push('cloud erase/account-delete RPC client missing');
+if(!read('manual.js').includes('immediate recommendation')||!read('manual.js').includes('Exercise trends'))errors.push('recommendation/trend principle explanation missing from PWA manual');
 
 const gpExport=app.match(/window\.gp=\{([^}]*)\};/s);
 if(!gpExport)errors.push('window.gp export object not found');

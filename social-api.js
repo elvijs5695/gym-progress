@@ -62,6 +62,15 @@ export async function publishEvents(events){
 }
 export async function deleteEvent(id){return authedFetch(`/rest/v1/activity_events?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});}
 
+export async function eraseMyCloudTraining(scope='all'){
+  return rpc('gym_erase_my_training_cloud',{p_scope:scope});
+}
+export async function deleteMyAccount(){
+  const result=await rpc('gym_delete_my_account');
+  writeSession(null);
+  return result;
+}
+
 export async function listTrainingSyncSnapshots(){
   return authedFetch('/rest/v1/training_sync_records?entity_type=eq.device_snapshot&select=domain,sync_id,payload,server_revision,updated_at&order=server_revision.asc');
 }
