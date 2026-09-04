@@ -8,7 +8,7 @@ create sequence if not exists public.training_sync_revision_seq;
 
 create table if not exists public.training_sync_records (
   owner_id uuid not null references auth.users(id) on delete cascade,
-  domain text not null check (domain in ('programme','workout_log')),
+  domain text not null check (domain in ('programme','workout_log','tracker')),
   entity_type text not null,
   sync_id uuid not null,
   revision bigint not null default 1,
@@ -97,7 +97,7 @@ on public.training_programme_snapshots for delete to authenticated
 using (owner_id = auth.uid());
 
 comment on table public.training_sync_records is
-  'Private local-first Gym Progress programme/workout-log exchange records. Clients must merge by sync_id/revision; never treat this table as permission to replace a whole local database.';
+  'Private local-first Gym Progress programme/workout-log/tracker exchange records. Clients must merge by sync_id/revision; never treat this table as permission to replace a whole local database.';
 
 -- Explicit API privileges. RLS remains the ownership boundary.
 grant usage, select on sequence public.training_sync_revision_seq to authenticated;

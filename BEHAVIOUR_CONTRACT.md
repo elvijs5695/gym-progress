@@ -88,3 +88,14 @@ This section supersedes the older v1.5.12-v1.5.13 active-header presentation rul
 - Workout fatigue interpretation requires broad/persistent evidence and does not diagnose fatigue or automatically prescribe a deload.
 - IndexedDB remains the complete offline source of truth. v1.5.20 adds stable sync IDs/revisions/tombstones/per-domain metadata without changing database/store/key identity.
 - Cloud programme/history exchange is not activated in v1.5.20; local data must never be replaced wholesale by a cloud snapshot.
+
+
+## Current account-sync contract
+
+- Programme, completed Workout history and Tracker are separately selectable sync domains.
+- Tracker includes both item configuration and dated daily entries.
+- Signing in never clears local data; signing out only pauses authenticated exchange.
+- First-device sync uploads/merges the local copy. Another device detects differing cloud/local records and offers merge.
+- Routine synchronisation is automatic after consent; genuine conflicts require explicit review.
+- An active workout is local only until it is completed.
+- Server/network failure must leave local data usable and report that local data is safe.

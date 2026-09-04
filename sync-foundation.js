@@ -6,7 +6,9 @@ const DEFINITIONS=[
   ['programme','user_exercise','user_exercises'],
   ['workout_log','workout_session','workout_sessions'],
   ['workout_log','session_exercise','session_exercises'],
-  ['workout_log','performed_set','performed_sets']
+  ['workout_log','performed_set','performed_sets'],
+  ['tracker','tracker_item','tracker_items'],
+  ['tracker','tracker_entry','tracker_entries']
 ];
 
 function stableObject(value){
@@ -16,21 +18,22 @@ function stableObject(value){
 }
 function fingerprint(record){return JSON.stringify(stableObject(record));}
 function key(type,id){return `${type}:${String(id)}`;}
-function newDomain(){return {enabled:false,lastSuccessfulSyncAt:null,serverCursor:null};}
+function newDomain(){return {enabled:false,lastSuccessfulSyncAt:null,serverCursor:null,snapshotSyncId:uuid(),status:'Not enabled'};}
 
 /**
- * Local-only sync metadata. It does not contact a server. Calling it before each
- * IndexedDB save makes future cloud exchange safe to add without changing the
- * IndexedDB database/store/key identity or replacing the local training state.
+ * Local-first sync metadata. Every user-created training record receives a stable
+ * cross-device UUID while the existing IndexedDB/local IDs remain untouched.
  */
 export function ensureSyncFoundation(state,{migration=false}={}){
   state.sync_foundation=state.sync_foundation&&typeof state.sync_foundation==='object'?state.sync_foundation:{};
   const sync=state.sync_foundation;
-  sync.version=1;
+  sync.version=2;
   sync.deviceId=sync.deviceId||uuid();
   sync.domains=sync.domains&&typeof sync.domains==='object'?sync.domains:{};
-  sync.domains.programme={...newDomain(),...(sync.domains.programme||{})};
-  sync.domains.workout_log={...newDomain(),...(sync.domains.workout_log||{})};
+  for(const domain of ['programme','workout_log','tracker']){
+    sync.domains[domain]={...newDomain(),...(sync.domains[domain]||{})};
+    sync.domains[domain].snapshotSyncId=sync.domains[domain].snapshotSyncId||uuid();
+  }
   sync.records=sync.records&&typeof sync.records==='object'?sync.records:{};
   const timestamp=Date.now(),seen=new Set();
 
@@ -60,6 +63,7 @@ export function syncFoundationCounts(state){
   return {
     programme:records.filter(r=>r.domain==='programme'&&r.deletedAt==null).length,
     workoutLog:records.filter(r=>r.domain==='workout_log'&&r.deletedAt==null).length,
+    tracker:records.filter(r=>r.domain==='tracker'&&r.deletedAt==null).length,
     pending:records.filter(r=>r.pending).length,
     tombstones:records.filter(r=>r.deletedAt!=null).length
   };

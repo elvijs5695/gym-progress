@@ -1,13 +1,10 @@
-# Gym Progress PWA v1.5.20
+# Gym Progress PWA v1.6.0
 
-Deploy over the existing PWA on the same origin without clearing site data.
+Local-first Gym Progress PWA paired with Android v1.5.0.
 
-## Highlights
-- `N/X • Next: Exercise` workout status and thin live progress bar.
-- Cycle-best all-occurrence Progress values for max weight, volume and e1RM.
-- Deterministic adaptive progression/fatigue interpretation with explainable reason codes and confidence.
-- Sync-ready local metadata (stable IDs, revisions, tombstones and separate programme/history domains) without changing IndexedDB identity.
-- Backup schema v5 and new deterministic integration validation.
+This release enables real authenticated bidirectional exchange for **Programme**, **completed Workout history**, and **Tracker** while preserving a complete offline local copy. It also includes adaptive progression/fatigue explanations, grouped superset workout stages and a revised full-width workout summary.
 
-## Important sync boundary
-v1.5.20 remains fully local-first and does not upload private training programme/history. The included Supabase SQL and local metadata are foundations for the later bidirectional merge client; whole-database replacement is intentionally not implemented.
+## Required database step
+Before testing account sync, follow `DATABASE_UPDATE_INSTRUCTIONS_1.5.0_1.6.0.md` and run the included Supabase update SQL. Local PWA storage upgrades automatically; do not clear site data.
+
+Run `npm run check` for release static validation.

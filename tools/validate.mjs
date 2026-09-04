@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.5.20'||!app.includes("APP_VERSION='1.5.20'")||!sw.includes('gym-progress-pwa-v1.5.20'))errors.push('v1.5.20 version markers are inconsistent');
+if(pkg.version!=='1.6.0'||!app.includes("APP_VERSION='1.6.0'")||!sw.includes('gym-progress-pwa-v1.6.0'))errors.push('v1.6.0 version markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -103,12 +103,18 @@ const intelligence=read('progression-intelligence.js'),syncFoundation=read('sync
 for(const token of ['CALIBRATING','RAPID_ADAPTATION','PROGRESSION_APPROACHING','SLOWING','STALLED','DECLINING','FATIGUE_SUSPECTED','DELOAD_CANDIDATE','INSUFFICIENT_PERSONAL_HISTORY'])if(!intelligence.includes(token))errors.push(`adaptive progression intelligence token missing: ${token}`);
 if(!app.includes('persistWorkoutIntelligence(state,s.id)')||!app.includes('recommendationDecision')||!app.includes('futureAdjustmentAccepted'))errors.push('adaptive recommendation decisions are not persisted in PWA history');
 if(!syncFoundation.includes('syncId:uuid()')||!syncFoundation.includes('revision')||!syncFoundation.includes('deletedAt')||!syncFoundation.includes('pending:true'))errors.push('PWA local-first stable-ID/revision/tombstone sync substrate missing');
-if(!app.includes("saveRecoveryState(loaded,'pre-sync-foundation-v1')")||!app.includes('internalVersion:5'))errors.push('PWA sync-foundation migration snapshot/version guard missing');
+if(!app.includes("saveRecoveryState(loaded,'pre-sync-v2')")||!app.includes('internalVersion:6'))errors.push('PWA sync-v2 migration snapshot/version guard missing');
 if(!fs.existsSync(path.join(root,'supabase','SUPABASE_TRAINING_SYNC_FOUNDATION.sql')))errors.push('training sync Supabase foundation migration missing');
 else{const trainingSyncSql=read('supabase/SUPABASE_TRAINING_SYNC_FOUNDATION.sql');for(const token of ['begin;','commit;','alter table public.training_sync_records enable row level security','grant usage, select on sequence public.training_sync_revision_seq to authenticated','revoke all on table public.training_sync_records from anon'])if(!trainingSyncSql.includes(token))errors.push(`training sync Supabase safety token missing: ${token}`);}
 if(!app.includes("schema:'gym-progress-export-v4'")||!app.includes('fatigue_state:s.fatigueState')||!app.includes('normalised_performance:e.normalisedPerformance'))errors.push('adaptive diagnostics missing from PWA exports');
 if(!app.includes('cycleMembers:members.length')||!app.includes('volume:Math.max(...members.map(x=>x.volume))')||!app.includes('bestE1rm:Math.max(...members.map(x=>x.bestE1rm))'))errors.push('all-occurrence Progress cycle-best aggregation missing');
-if(!sw.includes('./progression-intelligence.js')||!sw.includes('./sync-foundation.js'))errors.push('service worker does not cache new intelligence/sync modules');
+if(!sw.includes('./progression-intelligence.js')||!sw.includes('./sync-foundation.js')||!sw.includes('./training-sync.js'))errors.push('service worker does not cache intelligence/sync modules');
+if(!app.includes('openTrainingSyncDialog')||!app.includes('performTrainingSync')||!app.includes('scheduleTrainingSync')||!read('training-sync.js').includes("['programme','workout_log','tracker']"))errors.push('actual three-domain account sync orchestration missing');
+if(!read('training-sync.js').includes('eligibleSnapshotRecord')||!read('training-sync.js').includes("!=='ACTIVE'"))errors.push('active workout exclusion from cloud snapshots missing');
+if(!app.includes('focusStageGroups')||!app.includes('simpleActiveHeaderState'))errors.push('superset-as-one-stage workout header missing');
+if(app.includes('Shareable workout card'))errors.push('obsolete Shareable workout card label remains');
+if(!css.includes('.trend-progress')||!css.includes('.trend-attention'))errors.push('post-workout trend colour semantics missing');
+if(!fs.existsSync(path.join(root,'supabase','SUPABASE_TRAINING_SYNC_UPDATE_1.5.0_1.6.0.sql'))||!fs.existsSync(path.join(root,'DATABASE_UPDATE_INSTRUCTIONS_1.5.0_1.6.0.md')))errors.push('release database update SQL/instructions missing');
 
 const gpExport=app.match(/window\.gp=\{([^}]*)\};/s);
 if(!gpExport)errors.push('window.gp export object not found');

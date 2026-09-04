@@ -62,6 +62,15 @@ export async function publishEvents(events){
 }
 export async function deleteEvent(id){return authedFetch(`/rest/v1/activity_events?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});}
 
+export async function listTrainingSyncSnapshots(){
+  return authedFetch('/rest/v1/training_sync_records?entity_type=eq.device_snapshot&select=domain,sync_id,payload,server_revision,updated_at&order=server_revision.asc');
+}
+export async function upsertTrainingSyncSnapshot(row){
+  const uid=socialUser()?.id;if(!uid)throw new Error('Sign in to sync training data.');
+  const body=[{owner_id:uid,...row}];
+  return authedFetch('/rest/v1/training_sync_records?on_conflict=owner_id,sync_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
+}
+
 function comparisonPointBody(points){
   return (points||[]).map(p=>({
     client_point_id:p.clientPointId,

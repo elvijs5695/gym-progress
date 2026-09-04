@@ -56,3 +56,8 @@ Manual programme working weights intentionally bypass `snapSelectable`; selectab
 `sync-foundation.js` preserves the existing IndexedDB identity and adds shadow metadata inside saved application state. It assigns stable global UUIDs, tracks record revisions/pending state/deletion tombstones and keeps programme/workout-log sync state separate. `persistImmediately()`/normal persistence updates this metadata before saving local state.
 
 This is intentionally not a cloud cache architecture: local training data remains complete and usable without login. The supplied Supabase table is dormant infrastructure in this release. A later client must exchange records by stable IDs, preserve referential relationships, use per-domain cursors, merge programme fields safely and union/deduplicate workout history without destructive whole-state replacement.
+
+
+## Account sync enabled in current release
+
+The client now exchanges three independent private domains: `programme`, `workout_log` and `tracker`. Each device keeps its complete local database; Supabase stores per-device domain snapshots composed of stable record `sync_id`, revision, tombstone and payload data. Incoming records are relationship-aware and merged into local storage. Completed workout history is synchronised; active sessions are intentionally excluded. Same-record competing offline edits are treated as conflicts rather than authorising whole-database replacement.
