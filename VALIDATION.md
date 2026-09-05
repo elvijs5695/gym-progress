@@ -1,4 +1,4 @@
-# PWA v1.6.3 validation
+# PWA v1.6.4 validation
 
 - Static validator: PASS.
 - 69 PWA files checked.

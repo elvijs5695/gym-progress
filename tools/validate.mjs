@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.6.3'||!app.includes("APP_VERSION='1.6.3'")||!sw.includes('gym-progress-pwa-v1.6.3'))errors.push('v1.6.3 version markers are inconsistent');
+if(pkg.version!=='1.6.4'||!app.includes("APP_VERSION='1.6.4'")||!sw.includes('gym-progress-pwa-v1.6.4'))errors.push('v1.6.4 version markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -140,4 +140,11 @@ else{
 
 for(const f of files.filter(f=>/\.(?:js|mjs)$/.test(f))){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)errors.push(`JavaScript syntax error in ${path.relative(root,f)}: ${r.stderr.trim()}`);}
 const rr=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});if(rr.status!==0)errors.push(`performance-rule cases failed: ${(rr.stderr||rr.stdout).trim()}`);
+// v1.6.4 regression guards
+if(!app.includes('sync-conflict-row')||!css.includes('.sync-conflict-row'))errors.push('aligned sync conflict rows missing');
+if(!css.includes('.share-toggle.on .share-check-icon{stroke:var(--green)}'))errors.push('selected share checkmark is not green');
+if(!app.includes('render();socialUi.profile=await getMyProfile()'))errors.push('post-login header rerender missing');
+if(!app.includes("if(action?.type==='STRETCH')next=S('Stretching','Stiepšanās')"))errors.push('final workout stage does not point Next to Stretching');
+if(!read('training-sync.js').includes("r.entityType==='programme_schedule'&&localProgrammeEmpty"))errors.push('empty-device schedule metadata can still create a sync conflict');
+
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);

@@ -1,4 +1,4 @@
-# Gym Progress PWA v1.6.3
+# Gym Progress PWA v1.6.4
 
 Local-first Gym Progress PWA paired with Android v1.5.1.
 

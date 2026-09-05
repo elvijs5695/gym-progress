@@ -74,7 +74,10 @@ function recordPayload(state,meta){
   }
 }
 
+function hasLocalProgramme(state){return (state.workout_templates||[]).length>0;}
+
 function eligibleCloudRecord(state,meta){
+  if(meta.entityType==='programme_schedule')return hasLocalProgramme(state);
   if(meta.domain!=='workout_log'||meta.deletedAt!=null)return true;
   const row=rowForMeta(state,meta);if(!row)return false;
   let session=null;
@@ -194,8 +197,12 @@ function findLocalForRemote(state,remote){
 
 export async function getTrainingSyncPreview(state){
   ensureSyncFoundation(state);const rows=await listTrainingSyncRecords(),remotes=remoteRecords(rows,state);
+  const localProgrammeEmpty=!hasLocalProgramme(state),cloudHasProgramme=remotes.some(r=>r.entityType==='workout_template'&&r.deletedAt==null);
   const counts={workouts:0,exercises:0,schedule:0,logs:0,tracker:0,conflicts:0,remoteRecords:remotes.length,cloudDevices:new Set(remotes.map(r=>r.sourceDeviceId)).size};
   for(const r of remotes){
+    // Schedule/current-day state belongs to a programme. On an empty device it is
+    // restored together with the cloud programme and must never be a standalone conflict.
+    if(r.entityType==='programme_schedule'&&localProgrammeEmpty){continue;}
     const {m,row}=findLocalForRemote(state,r);if(!m&&!row&&r.deletedAt!=null)continue;
     const local=m?localState(state,m):{revision:0,deletedAt:null,payload:null,pending:false};
     const different=!m||!sameRecordState(local,r);if(!different)continue;
@@ -204,12 +211,15 @@ export async function getTrainingSyncPreview(state){
     else if(r.entityType==='programme_schedule')counts.schedule++;
     else if(r.entityType==='workout_session')counts.logs++;
     else if(r.entityType.startsWith('tracker_'))counts.tracker++;
-    if(m&&isConflict(local,r))counts.conflicts++;
+    // A genuinely empty local programme is a restore target, not a competing edit.
+    // Ignore stale/bootstrap programme metadata (especially programme_schedule) when
+    // deciding whether the user must resolve a conflict.
+    if(m&&!(localProgrammeEmpty&&r.domain==='programme')&&isConflict(local,r))counts.conflicts++;
   }
   const pending=Object.values(state.sync_foundation.records).filter(r=>r.pending);
   counts.localWorkouts=pending.filter(r=>r.entityType==='workout_template').length;
   counts.localExercises=pending.filter(r=>r.entityType==='template_exercise'||r.entityType==='user_exercise').length;
-  counts.localSchedule=pending.filter(r=>r.entityType==='programme_schedule').length;
+  counts.localSchedule=localProgrammeEmpty?0:pending.filter(r=>r.entityType==='programme_schedule').length;
   counts.localLogs=pending.filter(r=>r.entityType==='workout_session').length;
   counts.localTracker=pending.filter(r=>r.domain==='tracker').length;
   counts.rows=rows;counts.remotes=remotes;return counts;
@@ -234,25 +244,41 @@ function cloudRowForMeta(state,meta){
 }
 
 export async function runTrainingSync(state,{domains=['programme','workout_log','tracker'],conflictPolicy='local',preview=null}={}){
-  ensureSyncFoundation(state);const fetched=preview?.rows||await listTrainingSyncRecords(),remotes=preview?.remotes||remoteRecords(fetched,state),enabled=new Set(domains);let changed=false,conflicts=0;
+  ensureSyncFoundation(state);const localProgrammeInitiallyEmpty=!hasLocalProgramme(state);
+  const fetched=preview?.rows||await listTrainingSyncRecords(),remotes=preview?.remotes||remoteRecords(fetched,state),enabled=new Set(domains);let changed=false,conflicts=0;
+  const cloudHasProgramme=remotes.some(r=>r.entityType==='workout_template'&&r.deletedAt==null);
+  const restoreProgramme=localProgrammeInitiallyEmpty&&cloudHasProgramme;
   const byType=Object.fromEntries(ORDER.map(t=>[t,remotes.filter(r=>r.entityType===t&&enabled.has(TYPE_DOMAIN[t]))]));
   for(const type of ORDER){
     for(const remote of byType[type]){
       let {m,row}=findLocalForRemote(state,remote);
+      if(restoreProgramme&&remote.domain==='programme'&&type!=='programme_schedule'&&m&&!row){
+        // Bootstrap/stale metadata without a local row must not block a clean restore.
+        delete state.sync_foundation.records[key(type,m.localId)];m=null;
+      }
       if(!m&&!row&&remote.deletedAt!=null)continue;
       if(row&&!m)m=adoptMeta(state,type,row.id,remote);
       if(!m&&type==='programme_schedule')m=metaForLocal(state,type,'global');
       const local=m?localState(state,m):null;
+      if(type==='programme_schedule'&&localProgrammeInitiallyEmpty){
+        // Empty local programme = restore, not conflict. Ignore orphan schedule rows
+        // unless the cloud also contains an actual programme to restore.
+        if(!cloudHasProgramme)continue;
+        if(remote.deletedAt!=null||!remote.payload)continue;
+        if(applyRemotePayload(state,type,{id:'global'},remote)===true)changed=true;
+        setMetaFromRemote(state,type,'global',remote,{pending:false,preserveSyncId:false});
+        continue;
+      }
       if(local&&sameRecordState(local,remote)){
         if(Number(remote.revision||0)>local.revision){m.revision=Number(remote.revision);m.updatedAt=Math.max(Number(m.updatedAt||0),Number(remote.updatedAt||0));}
         if(m.syncId!==remote.syncId)registerAlias(state,remote.syncId,type,m.localId);
         continue;
       }
-      if(local&&local.revision>Number(remote.revision||0)){
+      if(local&&local.revision>Number(remote.revision||0)&&!(restoreProgramme&&remote.domain==='programme')){
         // Cloud copy is stale. Preserve the newer local version and repair cloud below.
         m.pending=true;continue;
       }
-      const conflict=local&&isConflict(local,remote);
+      const conflict=local&&!(restoreProgramme&&remote.domain==='programme')&&isConflict(local,remote);
       if(conflict){
         conflicts++;
         if(conflictPolicy==='local'){

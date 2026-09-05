@@ -675,3 +675,12 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .view.has-account .view-account-chip{max-width:min(38vw,170px)}
 .view.has-account .view-account-chip .account-chip{max-width:100%}
 @media(max-width:360px){.view.has-account .home-title{font-size:25px}.view.has-account .view-account-chip{max-width:36vw}}
+/* v1.6.4 sync conflict alignment */
+.sync-conflict-list{display:flex;flex-direction:column;margin-top:8px}
+.sync-conflict-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:40px;padding:5px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.sync-conflict-row:last-child{border-bottom:0}
+.sync-conflict-row input[type="radio"]{margin:0;flex:0 0 auto}
+
+/* v1.6.4 share selection: keep the card/title neutral; the checkmark is the positive cue. */
+.share-toggle.on{background:transparent;color:var(--green);border-color:var(--line)}
+.share-toggle.on .share-check-icon{stroke:var(--green)}
