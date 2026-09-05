@@ -74,10 +74,20 @@ export async function deleteMyAccount(){
 export async function listTrainingSyncRecords(){
   return authedFetch('/rest/v1/training_sync_records?select=domain,entity_type,sync_id,revision,deleted_at,payload,server_revision,updated_at&order=server_revision.asc');
 }
+function preferTrainingSyncRow(a,b){
+  const ar=Number(a?.revision||0),br=Number(b?.revision||0);if(ar!==br)return br>ar?b:a;
+  const at=Date.parse(a?.updated_at||a?.updatedAt||0)||Number(a?.updatedAt||0)||0;
+  const bt=Date.parse(b?.updated_at||b?.updatedAt||0)||Number(b?.updatedAt||0)||0;if(at!==bt)return bt>at?b:a;
+  if((a?.deleted_at??a?.deletedAt)==null&&(b?.deleted_at??b?.deletedAt)!=null)return b;
+  return a;
+}
 export async function upsertTrainingSyncRecords(rows){
   const uid=socialUser()?.id;if(!uid)throw new Error('Sign in to sync training data.');
   const list=Array.isArray(rows)?rows:[rows];if(!list.length)return [];
-  const body=list.map(row=>({owner_id:uid,...row}));
+  const unique=new Map();
+  for(const row of list){const id=String(row?.sync_id||'').trim();if(!id)continue;const prev=unique.get(id);unique.set(id,prev?preferTrainingSyncRow(prev,row):row);}
+  const body=[...unique.values()].map(row=>({owner_id:uid,...row}));
+  if(!body.length)return [];
   return authedFetch('/rest/v1/training_sync_records?on_conflict=owner_id,sync_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
 }
 export async function deleteLegacyTrainingSyncSnapshots(domains=[]){

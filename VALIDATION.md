@@ -1,8 +1,10 @@
-# PWA v1.6.2 validation
+# PWA v1.6.3 validation
 
-- `npm run check`: PASS — 68 PWA files checked.
-- JavaScript syntax validation: PASS.
-- Rule/intelligence validation: PASS.
-- Checks include version/cache markers, three-domain sync, active-workout cloud exclusion, account UX, cloud erase/account-delete clients and prior regression coverage.
-- No new Supabase SQL or IndexedDB migration is required for 1.6.2.
-- Live multi-device convergence still requires verification against the user's actual Supabase project.
+- Static validator: PASS.
+- 69 PWA files checked.
+- JavaScript syntax checks: PASS.
+- Performance-rule cases: PASS.
+- Sync hotfix guard confirms upload canonicalisation by `sync_id` both before chunking and at the Supabase API boundary.
+- Friends Add friend/header alignment guard: PASS.
+- Home `Gym Progress` single-line title guard: PASS.
+- Database: no new SQL/IndexedDB migration required.

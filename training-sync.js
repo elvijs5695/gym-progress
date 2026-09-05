@@ -280,7 +280,13 @@ export async function runTrainingSync(state,{domains=['programme','workout_log',
   }
 
   ensureSyncFoundation(state);
-  const upload=Object.values(state.sync_foundation.records).filter(m=>enabled.has(m.domain)&&eligibleCloudRecord(state,m));
+  const uploadCandidates=Object.values(state.sync_foundation.records).filter(m=>enabled.has(m.domain)&&eligibleCloudRecord(state,m));
+  const uploadBySyncId=new Map();
+  for(const m of uploadCandidates){
+    if(!m?.syncId)continue;const prev=uploadBySyncId.get(m.syncId);
+    if(!prev||Number(m.revision||0)>Number(prev.revision||0)||(Number(m.revision||0)===Number(prev.revision||0)&&Number(m.updatedAt||0)>Number(prev.updatedAt||0))||(Number(m.revision||0)===Number(prev.revision||0)&&Number(m.updatedAt||0)===Number(prev.updatedAt||0)&&m.deletedAt!=null&&prev.deletedAt==null))uploadBySyncId.set(m.syncId,m);
+  }
+  const upload=[...uploadBySyncId.values()];
   for(let i=0;i<upload.length;i+=200)await upsertTrainingSyncRecords(upload.slice(i,i+200).map(m=>cloudRowForMeta(state,m)));
   // Old 1.5.0/1.6.0 clients stored whole-device snapshots. Once canonical record rows
   // exist, remove those legacy rows so they cannot keep reintroducing stale state.

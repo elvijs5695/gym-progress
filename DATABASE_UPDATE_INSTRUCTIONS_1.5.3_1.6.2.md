@@ -1,4 +1,4 @@
-# Gym Progress database update — Android 1.5.3 / PWA 1.6.2
+# Gym Progress database update — Android 1.5.4 / PWA 1.6.3
 
 ## Required action
 
@@ -14,7 +14,7 @@
 - Do not clear site data before updating.
 
 ### Supabase
-Run **no additional SQL** for 1.5.3 / 1.6.2 if you already applied the previous required migrations:
+Run **no additional SQL** for 1.5.3 / 1.6.3 if you already applied the previous required migrations:
 1. training-sync foundation;
 2. Tracker sync-domain update;
 3. account/data-control RPC update from Android 1.5.1 / PWA 1.6.1.

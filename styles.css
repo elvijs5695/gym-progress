@@ -647,7 +647,7 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .intelligence-summary{margin:14px 0;padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(112,185,149,.055)}
 .conclusion-trend{margin-top:3px;font-weight:400}
 
-/* v1.6.2 account-level identity and sync polish */
+/* v1.6.3 account-level identity and sync polish */
 .global-account-bar{display:flex;justify-content:flex-end;align-items:center;min-height:42px;padding:calc(6px + env(safe-area-inset-top)) 14px 5px;max-width:760px;margin:0 auto}
 .account-chip{min-height:30px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:12px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .account-chip.signed-in{background:var(--surface2)}
@@ -659,10 +659,19 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 
 .workout-summary-open .global-account-bar{display:none!important}
 
-/* v1.6.2 account header alignment: identity shares the title row and never adds height. */
+/* v1.6.3 account header alignment: identity shares the title row and never adds height. */
 .view-account-chip{position:absolute;right:18px;top:13px;z-index:6;max-width:48%}
 .view.has-account h1:first-of-type{padding-right:min(48vw,210px)}
 .topbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
 .topbar-actions .account-chip{max-width:min(42vw,190px)}
 @media(min-width:700px){.view-account-chip{right:26px}}
 @media(max-width:390px){.view-account-chip{right:14px}.account-chip{max-width:44vw}}
+
+/* v1.6.3 hotfix: keep account/title geometry stable and Friends action clear of account identity. */
+.friends-head-action-row{display:flex;align-items:center;justify-content:flex-end;width:100%;margin-top:8px}
+.friends-head-action-row .social-add-friend{margin:0;min-width:max-content}
+.home-title{white-space:nowrap}
+.view.has-account .home-title{max-width:calc(100% - min(38vw,170px) - 12px);padding-right:0!important;font-size:clamp(26px,8.2vw,36px);overflow:hidden;text-overflow:clip}
+.view.has-account .view-account-chip{max-width:min(38vw,170px)}
+.view.has-account .view-account-chip .account-chip{max-width:100%}
+@media(max-width:360px){.view.has-account .home-title{font-size:25px}.view.has-account .view-account-chip{max-width:36vw}}

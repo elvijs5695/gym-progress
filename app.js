@@ -1,23 +1,23 @@
-import {loadState,saveState,wipeState} from './db.js?v=1.6.2';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.6.2';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.6.2';
-import {evaluateAutoregulation} from './autoregulation.js?v=1.6.2';
-import {manualHtml} from './manual.js?v=1.6.2';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.6.2';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.6.2';
-import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.6.2';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.6.2';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.6.2';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.6.2';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.6.2';
-import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.6.2';
-import {ensureSyncFoundation} from './sync-foundation.js?v=1.6.2';
-import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.6.2';
+import {loadState,saveState,wipeState} from './db.js?v=1.6.3';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.6.3';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.6.3';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.6.3';
+import {manualHtml} from './manual.js?v=1.6.3';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.6.3';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.6.3';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.6.3';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.6.3';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.6.3';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.6.3';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm} from './exercise-identity.js?v=1.6.3';
+import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.6.3';
+import {ensureSyncFoundation} from './sync-foundation.js?v=1.6.3';
+import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.6.3';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.6.2';
+const APP_VERSION='1.6.3';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -305,11 +305,11 @@ const UPDATE_FEATURES=[
   ,{version:'1.5.19',key:'tracker-six-checkpoints',en:'Dense Tracker goals now use six evenly spaced checkpoints across your active day.',lv:'Blīviem Tracker mērķiem tagad ir seši vienmērīgi sadalīti kontrolpunkti aktīvās dienas laikā.'}
   ,{version:'1.5.20',key:'workout-progress-intelligence',en:'Workout progress is clearer and Progress uses the best occurrence in each cycle.',lv:'Treniņa progress ir skaidrāks, un Progresa sadaļa ciklā izmanto labāko izpildījumu.'}
   ,{version:'1.6.0',key:'account-sync',en:'Account sync now exchanges and merges your programme, workout history and Tracker between signed-in devices. Gym Progress still works fully offline.',lv:'Konta sinhronizācija tagad apmaina un apvieno tavu programmu, treniņu vēsturi un Tracker starp pieslēgtām ierīcēm. Gym Progress joprojām pilnībā darbojas bezsaistē.'}
-  ,{version:'1.6.2',key:'account-home',en:'Account is now an app-level control instead of a Friends setting. Use the account button from anywhere; Settings is the main place for account, sync and deletion controls.',lv:'Konts tagad ir visas lietotnes vadība, nevis Draugu iestatījums. Konta poga pieejama visur; Iestatījumi ir galvenā vieta kontam, sinhronizācijai un dzēšanai.'}
-  ,{version:'1.6.2',key:'trend-actions',en:'PROGRESS / HOLD / REDUCE are the app’s immediate recommendation for the next exposure: increase the challenge, keep it unchanged, or consider reducing it. They are based on completed sets versus the programmed target and RIR/failure—not a rating of you.',lv:'PROGRESS / HOLD / REDUCE ir lietotnes tūlītējais ieteikums nākamajai reizei: palielināt slodzi, saglabāt to vai apsvērt samazinājumu. Tas balstās pabeigtajos piegājienos pret mērķi un RIR/atteici, nevis vērtē tevi.'}
-  ,{version:'1.6.2',key:'trend-states',en:'Trend labels describe how one exercise is changing across recent exposures compared with your own pattern: On track = normal; Progression approaching = improving; Slower than usual = taking longer; Stalled = flat materially longer; Declining = recent performance is moving down. Calibrating means there is not enough history yet.',lv:'Tendenču apzīmējumi rāda, kā vingrinājums mainās pēdējās reizēs pret tavu paša ritmu: On track = normāli; Progression approaching = uzlabojas; Slower than usual = prasa ilgāku laiku; Stalled = ilgstoši stāv uz vietas; Declining = sniegums krītas. Calibrating nozīmē, ka vēstures vēl nepietiek.'}
-  ,{version:'1.6.2',key:'sync-convergence',en:'Sync now converges record by record, includes your scheduled/current programme day, and prevents stale device copies from repeatedly bringing old workout history back.',lv:'Sinhronizācija tagad saplūst ierakstu līmenī, ietver ieplānoto/pašreizējo programmas dienu un neļauj novecojušām ierīces kopijām atkārtoti atjaunot vecu treniņu vēsturi.'}
-  ,{version:'1.6.2',key:'tracker-live',en:'Tracker changes now appear immediately on this device; cloud sync happens afterwards in the background.',lv:'Tracker izmaiņas tagad uzreiz parādās šajā ierīcē; mākoņa sinhronizācija notiek pēc tam fonā.'}
+  ,{version:'1.6.3',key:'account-home',en:'Account is now an app-level control instead of a Friends setting. Use the account button from anywhere; Settings is the main place for account, sync and deletion controls.',lv:'Konts tagad ir visas lietotnes vadība, nevis Draugu iestatījums. Konta poga pieejama visur; Iestatījumi ir galvenā vieta kontam, sinhronizācijai un dzēšanai.'}
+  ,{version:'1.6.3',key:'trend-actions',en:'PROGRESS / HOLD / REDUCE are the app’s immediate recommendation for the next exposure: increase the challenge, keep it unchanged, or consider reducing it. They are based on completed sets versus the programmed target and RIR/failure—not a rating of you.',lv:'PROGRESS / HOLD / REDUCE ir lietotnes tūlītējais ieteikums nākamajai reizei: palielināt slodzi, saglabāt to vai apsvērt samazinājumu. Tas balstās pabeigtajos piegājienos pret mērķi un RIR/atteici, nevis vērtē tevi.'}
+  ,{version:'1.6.3',key:'trend-states',en:'Trend labels describe how one exercise is changing across recent exposures compared with your own pattern: On track = normal; Progression approaching = improving; Slower than usual = taking longer; Stalled = flat materially longer; Declining = recent performance is moving down. Calibrating means there is not enough history yet.',lv:'Tendenču apzīmējumi rāda, kā vingrinājums mainās pēdējās reizēs pret tavu paša ritmu: On track = normāli; Progression approaching = uzlabojas; Slower than usual = prasa ilgāku laiku; Stalled = ilgstoši stāv uz vietas; Declining = sniegums krītas. Calibrating nozīmē, ka vēstures vēl nepietiek.'}
+  ,{version:'1.6.3',key:'sync-convergence',en:'Sync now converges record by record, includes your scheduled/current programme day, and prevents stale device copies from repeatedly bringing old workout history back.',lv:'Sinhronizācija tagad saplūst ierakstu līmenī, ietver ieplānoto/pašreizējo programmas dienu un neļauj novecojušām ierīces kopijām atkārtoti atjaunot vecu treniņu vēsturi.'}
+  ,{version:'1.6.3',key:'tracker-live',en:'Tracker changes now appear immediately on this device; cloud sync happens afterwards in the background.',lv:'Tracker izmaiņas tagad uzreiz parādās šajā ierīcē; mākoņa sinhronizācija notiek pēc tam fonā.'}
 ];
 function versionParts(v){return String(v||'0').split('.').map(x=>Number(x)||0);}
 function compareVersions(a,b){const aa=versionParts(a),bb=versionParts(b),n=Math.max(aa.length,bb.length);for(let i=0;i<n;i++){const d=(aa[i]||0)-(bb[i]||0);if(d)return d;}return 0;}
@@ -613,7 +613,7 @@ function renderHome(){
   const active=activeSession();
   if(active&&ui.selectedWorkoutId==null)ui.selectedWorkoutId=active.workoutId;
   else if(!active&&ui.selectedWorkoutId==null)ui.selectedWorkoutId=state.app_state.nextWorkoutId;
-  let content=`<h1>Gym Progress</h1>`;
+  let content=`<h1 class="home-title">Gym Progress</h1>`;
   if(!workouts.length){content+=`<div class="card empty"><h3>No programme yet</h3><button onclick="gp.nav('programme')">Create programme</button></div>`;}
   else{
     content+=`<div class="section-title">Workout rotation</div>`;
@@ -1191,7 +1191,7 @@ async function syncComparisonHistory(){if(!socialConfigured()||!socialSignedIn()
 
 function renderFriends(){
   const configured=socialConfigured(),signed=socialSignedIn(),profile=socialUi.profile;
-  let c=`<div class="friends-head"><div class="friends-head-top"><h1>${esc(S('Friends','Draugi'))}</h1>${signed?`<button class="tiny-btn ghost social-add-friend" onclick="gp.openAddFriend()">+ ${esc(S('Add friend','Pievienot draugu'))}</button>`:''}</div></div>`;
+  let c=`<div class="friends-head"><div class="friends-head-top"><h1>${esc(S('Friends','Draugi'))}</h1></div>${signed?`<div class="friends-head-action-row"><button class="tiny-btn ghost social-add-friend" onclick="gp.openAddFriend()">+ ${esc(S('Add friend','Pievienot draugu'))}</button></div>`:''}</div>`;
   if(!configured){c+=`<div class="card"><div class="title">${esc(S('Friends backend is not configured','Draugu serveris nav konfigurēts'))}</div><div class="note">${esc(S('Add your Supabase publishable key to social-config.js. Everything else in Gym Progress continues to work offline.','Ievieto Supabase publicējamo atslēgu social-config.js failā. Pārējā Gym Progress darbība turpinās bezsaistē.'))}</div></div>`;return shell(c);}
   if(!signed){c+=`<div class="card social-onboarding"><div class="title">${esc(S('Log in to use Friends','Pieslēdzies, lai izmantotu Draugus'))}</div><div class="note">${esc(S('Friends requires your Gym Progress account. Your private programme, workout history and Tracker are shared only through account sync, never with friends. Social cards are published only when you select them.','Draugu sadaļai nepieciešams Gym Progress konts. Privātā programma, treniņu vēsture un Tracker ar draugiem netiek kopīgoti; tie tiek sinhronizēti tikai tavā kontā. Sociālās kartītes publicē tikai tad, kad tās pats izvēlies.'))}</div><button class="full" onclick="gp.openAccount()">${esc(S('Log in','Pieslēgties'))}</button></div>`;return shell(c);}
   if(socialUi.loading&&!socialUi.loaded)c+=`<div class="card"><div class="note">${esc(S('Loading friends…','Ielādē draugus…'))}</div></div>`;
