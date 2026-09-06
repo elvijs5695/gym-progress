@@ -5,14 +5,14 @@ import {listTrainingSyncRecords,upsertTrainingSyncRecords,deleteLegacyTrainingSy
 const TYPE_TO_ARRAY={
   workout_template:'workout_templates',template_exercise:'template_exercises',user_exercise:'user_exercises',
   workout_session:'workout_sessions',session_exercise:'session_exercises',performed_set:'performed_sets',
-  tracker_item:'tracker_items',tracker_entry:'tracker_entries'
+  tracker_item:'tracker_items',tracker_state:'tracker_states'
 };
 const TYPE_DOMAIN={
   workout_template:'programme',template_exercise:'programme',user_exercise:'programme',programme_schedule:'programme',
   workout_session:'workout_log',session_exercise:'workout_log',performed_set:'workout_log',
-  tracker_item:'tracker',tracker_entry:'tracker'
+  tracker_item:'tracker',tracker_state:'tracker'
 };
-const ORDER=['workout_template','user_exercise','template_exercise','programme_schedule','workout_session','session_exercise','performed_set','tracker_item','tracker_entry'];
+const ORDER=['workout_template','user_exercise','template_exercise','programme_schedule','workout_session','session_exercise','performed_set','tracker_item','tracker_state'];
 const NUMERIC_TYPES=new Set(['workout_template','template_exercise','workout_session','session_exercise','performed_set']);
 const REF_KEYS=new Set(['workoutSyncId','userExerciseSyncId','sessionSyncId','templateExerciseSyncId','sessionExerciseSyncId','itemSyncId','nextWorkoutSyncId']);
 
@@ -29,6 +29,8 @@ const nextNumericId=arr=>arr.reduce((m,x)=>Math.max(m,Number(x?.id)||0),0)+1;
 const timeToMinutes=v=>{const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||''));return m?Math.max(0,Math.min(1439,Number(m[1])*60+Number(m[2]))):0;};
 const minutesToTime=v=>{const n=Math.max(0,Math.min(1439,Number(v)||0));return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;};
 const asMs=v=>{if(v==null)return null;if(typeof v==='number')return v;const n=Date.parse(v);return Number.isFinite(n)?n:null;};
+const trackerTodayKey=()=>{const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
+const currentTrackerPayload=p=>{if(!p||typeof p!=='object')return p;return String(p.localDate||'')===trackerTodayKey()?p:{...p,localDate:trackerTodayKey(),amount:0};};
 
 function metaForLocal(state,type,localId){return state.sync_foundation?.records?.[key(type,localId)]||null;}
 function directMetaForSync(state,syncId){return Object.values(state.sync_foundation?.records||{}).find(r=>r.syncId===syncId)||null;}
@@ -38,7 +40,7 @@ function registerAlias(state,syncId,type,localId){if(!syncId)return;state.sync_f
 function localIdForSync(state,syncId){return metaForSync(state,syncId)?.localId??null;}
 function syncIdForLocal(state,type,localId){return metaForLocal(state,type,localId)?.syncId??null;}
 function scheduleRow(state){return {id:'global',nextWorkoutSyncId:state?.app_state?.nextWorkoutId==null?null:syncIdForLocal(state,'workout_template',state.app_state.nextWorkoutId),nextSessionAt:state?.app_state?.nextSessionAt??null};}
-function rowForMeta(state,meta){if(meta.entityType==='programme_schedule')return scheduleRow(state);const arr=state[TYPE_TO_ARRAY[meta.entityType]]||[];return arr.find(x=>String(x.id)===String(meta.localId))||null;}
+function rowForMeta(state,meta){if(meta.entityType==='programme_schedule')return scheduleRow(state);const arr=state[TYPE_TO_ARRAY[meta.entityType]]||[];if(meta.entityType==='tracker_state')return arr.find(x=>String(x.itemId)===String(meta.localId))||null;return arr.find(x=>String(x.id)===String(meta.localId))||null;}
 function cleanPayload(p){if(!p||typeof p!=='object')return p;return Object.fromEntries(Object.entries(p).filter(([k])=>!REF_KEYS.has(k)&&k!=='preferredId'));}
 
 function recordPayload(state,meta){
@@ -66,9 +68,9 @@ function recordPayload(state,meta){
       return {...base,sessionExerciseSyncId:syncIdForLocal(state,'session_exercise',row.sessionExerciseId)};
     }
     case'tracker_item':{delete base.productiveStart;delete base.productiveEnd;return {...base,preferredId:String(row.id),productiveStartMinutes:timeToMinutes(row.productiveStart||'08:00'),productiveEndMinutes:timeToMinutes(row.productiveEnd||'22:00')};}
-    case'tracker_entry':{
+    case'tracker_state':{
       delete base.itemId;
-      return {...base,itemSyncId:syncIdForLocal(state,'tracker_item',row.itemId)};
+      return currentTrackerPayload({...base,itemSyncId:syncIdForLocal(state,'tracker_item',row.itemId)});
     }
     default:return base;
   }
@@ -138,13 +140,17 @@ function logicalMatch(state,type,p){
     }
     case'performed_set':{const parent=localIdForSync(state,p?.sessionExerciseSyncId);return arr.find(x=>String(x.sessionExerciseId)===String(parent)&&Number(x.setNumber)===Number(p?.setNumber))||null;}
     case'tracker_item':return arr.find(x=>(p?.preferredId&&String(x.id)===String(p.preferredId))||(norm(x.name)===norm(p?.name)&&Number(x.position)===Number(p?.position)))||null;
-    case'tracker_entry':{const parent=localIdForSync(state,p?.itemSyncId);return arr.find(x=>String(x.itemId)===String(parent)&&String(x.localDate)===String(p?.localDate))||null;}
+    case'tracker_state':{const parent=localIdForSync(state,p?.itemSyncId);return arr.find(x=>String(x.itemId)===String(parent))||null;}
     default:return null;
   }
 }
 
 function makeLocalRow(state,type,p,existing=null){
   const arr=state[TYPE_TO_ARRAY[type]]||[],base=cleanPayload(clone(p||{}));
+  if(type==='tracker_state'){
+    const current=currentTrackerPayload(base);base.localDate=current.localDate;base.amount=current.amount;base.itemId=localIdForSync(state,p.itemSyncId);delete base.itemSyncId;
+    return base;
+  }
   if(existing)base.id=existing.id;
   else if(NUMERIC_TYPES.has(type))base.id=nextNumericId(arr);
   else {const preferred=String(p?.preferredId||'');base.id=preferred&&!arr.some(x=>String(x.id)===preferred)?preferred:uuid();}
@@ -153,7 +159,6 @@ function makeLocalRow(state,type,p,existing=null){
   if(type==='session_exercise'){base.sessionId=Number(localIdForSync(state,p.sessionSyncId));const te=p.templateExerciseSyncId?localIdForSync(state,p.templateExerciseSyncId):null;base.templateExerciseId=te==null?null:Number(te);base.userExerciseId=p.userExerciseSyncId?localIdForSync(state,p.userExerciseSyncId):null;}
   if(type==='performed_set')base.sessionExerciseId=Number(localIdForSync(state,p.sessionExerciseSyncId));
   if(type==='tracker_item'){base.productiveStart=minutesToTime(p.productiveStartMinutes??480);base.productiveEnd=minutesToTime(p.productiveEndMinutes??1320);delete base.productiveStartMinutes;delete base.productiveEndMinutes;delete base.preferredId;}
-  if(type==='tracker_entry')base.itemId=localIdForSync(state,p.itemSyncId);
   return base;
 }
 
@@ -167,11 +172,12 @@ function removeRow(state,type,localId){
     return;
   }
   if(type==='session_exercise'){state.performed_sets=(state.performed_sets||[]).filter(x=>String(x.sessionExerciseId)!==String(localId));}
-  if(type==='tracker_item'){state.tracker_entries=(state.tracker_entries||[]).filter(x=>String(x.itemId)!==String(localId));}
-  const name=TYPE_TO_ARRAY[type];state[name]=(state[name]||[]).filter(x=>String(x.id)!==String(localId));
+  if(type==='tracker_item'){state.tracker_states=(state.tracker_states||[]).filter(x=>String(x.itemId)!==String(localId));}
+  const name=TYPE_TO_ARRAY[type];if(type==='tracker_state'){state[name]=(state[name]||[]).filter(x=>String(x.itemId)!==String(localId));return;}state[name]=(state[name]||[]).filter(x=>String(x.id)!==String(localId));
 }
-function saveRow(state,type,row){const name=TYPE_TO_ARRAY[type],arr=state[name]||[],i=arr.findIndex(x=>String(x.id)===String(row.id));if(i>=0)arr[i]=row;else arr.push(row);state[name]=arr;}
+function saveRow(state,type,row){const name=TYPE_TO_ARRAY[type],arr=state[name]||[],i=type==='tracker_state'?arr.findIndex(x=>String(x.itemId)===String(row.itemId)):arr.findIndex(x=>String(x.id)===String(row.id));if(i>=0)arr[i]=row;else arr.push(row);state[name]=arr;}
 function localPayloadForMeta(state,meta){return recordPayload(state,meta);}
+function localIdOfRow(type,row){return type==='tracker_state'?row?.itemId:row?.id;}
 function setMetaFromRemote(state,type,rowId,remote,{pending=false,preserveSyncId=true}={}){
   const k=key(type,rowId),old=state.sync_foundation.records[k]||{};
   const syncId=preserveSyncId&&old.syncId?old.syncId:remote.syncId;
@@ -186,12 +192,12 @@ function adoptMeta(state,type,rowId,remote){
   return m;
 }
 function localState(state,m){return {revision:Number(m?.revision||0),deletedAt:m?.deletedAt??null,payload:m?localPayloadForMeta(state,m):null,pending:!!m?.pending};}
-function sameRecordState(local,remote){return (local.deletedAt!=null)===(remote.deletedAt!=null)&&(local.deletedAt!=null||same(local.payload,remote.payload));}
+function sameRecordState(local,remote){if((local.deletedAt!=null)!==(remote.deletedAt!=null))return false;if(local.deletedAt!=null)return true;const lp=remote.entityType==='tracker_state'?currentTrackerPayload(local.payload):local.payload,rp=remote.entityType==='tracker_state'?currentTrackerPayload(remote.payload):remote.payload;return same(lp,rp);}
 function isConflict(local,remote){return local.pending&&!sameRecordState(local,remote)&&local.revision<=Number(remote.revision||0);}
 
 function findLocalForRemote(state,remote){
   let m=metaForSync(state,remote.syncId),row=m?rowForMeta(state,m):null;
-  if(!row&&!m&&remote.deletedAt==null){row=logicalMatch(state,remote.entityType,remote.payload);if(row){m=metaForLocal(state,remote.entityType,row.id)||adoptMeta(state,remote.entityType,row.id,remote);if(m?.syncId!==remote.syncId)registerAlias(state,remote.syncId,remote.entityType,row.id);}}
+  if(!row&&!m&&remote.deletedAt==null){row=logicalMatch(state,remote.entityType,remote.payload);if(row){const localId=localIdOfRow(remote.entityType,row);m=metaForLocal(state,remote.entityType,localId)||adoptMeta(state,remote.entityType,localId,remote);if(m?.syncId!==remote.syncId)registerAlias(state,remote.syncId,remote.entityType,localId);}}
   return {m,row};
 }
 
@@ -234,8 +240,8 @@ function applyRemotePayload(state,type,row,remote){
   }
   if(row){const desired=makeLocalRow(state,type,remote.payload,row);if(!same(row,desired)){saveRow(state,type,desired);return true;}return false;}
   const desired=makeLocalRow(state,type,remote.payload,null);
-  if((type==='template_exercise'&&!Number.isFinite(desired.workoutId))||(type==='session_exercise'&&!Number.isFinite(desired.sessionId))||(type==='performed_set'&&!Number.isFinite(desired.sessionExerciseId))||(type==='tracker_entry'&&!desired.itemId))return false;
-  saveRow(state,type,desired);return desired.id;
+  if((type==='template_exercise'&&!Number.isFinite(desired.workoutId))||(type==='session_exercise'&&!Number.isFinite(desired.sessionId))||(type==='performed_set'&&!Number.isFinite(desired.sessionExerciseId))||(type==='tracker_state'&&!desired.itemId))return false;
+  saveRow(state,type,desired);return localIdOfRow(type,desired);
 }
 
 function cloudRowForMeta(state,meta){
@@ -257,7 +263,7 @@ export async function runTrainingSync(state,{domains=['programme','workout_log',
         delete state.sync_foundation.records[key(type,m.localId)];m=null;
       }
       if(!m&&!row&&remote.deletedAt!=null)continue;
-      if(row&&!m)m=adoptMeta(state,type,row.id,remote);
+      if(row&&!m)m=adoptMeta(state,type,localIdOfRow(type,row),remote);
       if(!m&&type==='programme_schedule')m=metaForLocal(state,type,'global');
       const local=m?localState(state,m):null;
       if(type==='programme_schedule'&&localProgrammeInitiallyEmpty){

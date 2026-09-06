@@ -10,8 +10,8 @@ const DEFINITIONS=[
   ['workout_log','workout_session','workout_sessions'],
   ['workout_log','session_exercise','session_exercises'],
   ['workout_log','performed_set','performed_sets'],
-  ['tracker','tracker_item','tracker_items'],
-  ['tracker','tracker_entry','tracker_entries']
+  ['tracker','tracker_item','tracker_items','id'],
+  ['tracker','tracker_state','tracker_states','itemId']
 ];
 
 function stableObject(value){
@@ -30,7 +30,7 @@ function newDomain(){return {enabled:false,lastSuccessfulSyncAt:null,serverCurso
 export function ensureSyncFoundation(state,{migration=false}={}){
   state.sync_foundation=state.sync_foundation&&typeof state.sync_foundation==='object'?state.sync_foundation:{};
   const sync=state.sync_foundation;
-  sync.version=2;
+  sync.version=3;
   sync.deviceId=sync.deviceId||uuid();
   sync.domains=sync.domains&&typeof sync.domains==='object'?sync.domains:{};
   for(const domain of ['programme','workout_log','tracker']){
@@ -38,18 +38,23 @@ export function ensureSyncFoundation(state,{migration=false}={}){
     sync.domains[domain].snapshotSyncId=sync.domains[domain].snapshotSyncId||uuid();
   }
   sync.records=sync.records&&typeof sync.records==='object'?sync.records:{};
+  // tracker_entry was the pre-1.7.1 accumulating daily-history model. It is
+  // deliberately retired rather than tombstoned: new clients ignore old cloud rows
+  // and a clean cloud reseed removes them without creating more obsolete records.
+  for(const [k,record] of Object.entries(sync.records)){if(record?.entityType==='tracker_entry')delete sync.records[k];}
+  if(sync.aliases&&typeof sync.aliases==='object'){for(const [sid,a] of Object.entries(sync.aliases)){if(a?.entityType==='tracker_entry')delete sync.aliases[sid];}}
   const timestamp=Date.now(),seen=new Set();
 
-  for(const [domain,type,arrayName] of DEFINITIONS){
+  for(const [domain,type,arrayName,idField='id'] of DEFINITIONS){
     const rows=Array.isArray(state[arrayName])?state[arrayName]:[];
     for(const row of rows){
-      if(row?.id==null)continue;
-      const k=key(type,row.id),fp=fingerprint(row);seen.add(k);
+      const localId=row?.[idField];if(localId==null)continue;
+      const k=key(type,localId),fp=fingerprint(row);seen.add(k);
       const existing=sync.records[k];
       if(!existing){
-        sync.records[k]={domain,entityType:type,localId:String(row.id),syncId:uuid(),revision:1,deletedAt:null,updatedAt:timestamp,pending:true,fingerprint:fp,legacy:migration===true};
+        sync.records[k]={domain,entityType:type,localId:String(localId),syncId:uuid(),revision:1,deletedAt:null,updatedAt:timestamp,pending:true,fingerprint:fp,legacy:migration===true};
       }else if(existing.deletedAt!=null||existing.fingerprint!==fp){
-        existing.domain=domain;existing.entityType=type;existing.localId=String(row.id);existing.deletedAt=null;
+        existing.domain=domain;existing.entityType=type;existing.localId=String(localId);existing.deletedAt=null;
         existing.revision=Math.max(1,Number(existing.revision||0)+1);existing.updatedAt=timestamp;existing.pending=true;existing.fingerprint=fp;
       }
     }

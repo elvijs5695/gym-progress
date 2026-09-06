@@ -1,12 +1,15 @@
-# Gym Progress PWA v1.6.4
+# Gym Progress PWA v1.7.1
 
-Local-first Gym Progress PWA paired with Android v1.5.1.
+Paired release: **PWA 1.7.1 / Android 1.6.1**.
 
-This patch makes the Gym Progress account an app-level concept rather than a Friends-only control, improves sync onboarding for already-authenticated users, clarifies progression/trend terminology, and adds cloud-aware destructive data/account controls.
+This release changes Tracker persistence to match its intended purpose: current-day progress rather than an accumulating history log.
 
-## Required database step
-**Manual Supabase action is required before using cloud erase or Delete account.** Follow `DATABASE_UPDATE_INSTRUCTIONS_1.5.1_1.6.3.md` and run `supabase/SUPABASE_ACCOUNT_DATA_CONTROL_UPDATE_1.5.1_1.6.3.sql` once. This is applied after the previous social + training-sync migrations.
+- `tracker_item` remains persistent configuration.
+- `tracker_state` is one mutable current-day state per Tracker item.
+- The same state record resets to zero on the next local day instead of creating another dated history row.
+- Legacy `tracker_entry` data is migration input only: today's value is preserved; older values are intentionally discarded.
+- Account sync exchanges `tracker_item` + `tracker_state`; historical cloud `tracker_entry` rows are ignored by current clients.
 
-PWA IndexedDB needs no manual migration and must not be cleared during update.
+PWA 1.7.1 keeps the existing IndexedDB database/store identity and performs an internal v6 -> v7 state migration with a recovery snapshot. Do not clear site data.
 
-Run `npm run check` for release static validation.
+No Supabase schema migration is required. After both current clients are installed, the recommended cloud cleanup is a per-account backup and clean reseed; see `DATABASE_UPDATE_INSTRUCTIONS_1.6.1_1.7.1.md`.

@@ -1,11 +1,12 @@
-GYM PROGRESS PWA 1.6.4 / ANDROID 1.5.4
+GYM PROGRESS PWA 1.7.1 / ANDROID 1.6.1
 
-SYNC HOTFIX RELEASE
+Tracker now uses one current-day state per Tracker item instead of accumulating historical daily rows.
 
-1. No new Supabase SQL is required for this release.
-2. Deploy PWA 1.6.4 over the existing files on the same origin.
-3. Do not clear IndexedDB/site data.
-4. Install/build Android 1.5.4 normally; Room remains v14.
-5. Retry Sync. Existing cloud rows do not need to be deleted.
+IMPORTANT DATABASE NOTE
+- No new Supabase schema SQL.
+- Deploy PWA 1.7.1 over the existing files on the same origin; do not clear site data.
+- Install Android 1.6.1 over the existing app; Room migrates v16 -> v17 automatically.
+- Today's Tracker values are preserved; older Tracker daily values are intentionally retired.
+- Do not use the old cleanup procedure. After both clients are updated, use DATABASE_CLEAN_RESEED_1.6.1_1.7.1.sql for a controlled per-account cloud reseed.
 
-See DATABASE_UPDATE_INSTRUCTIONS_1.5.4_1.6.3.md.
+Read DATABASE_UPDATE_INSTRUCTIONS_1.6.1_1.7.1.md before cloud cleanup.

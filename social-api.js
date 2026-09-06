@@ -72,7 +72,7 @@ export async function deleteMyAccount(){
 }
 
 export async function listTrainingSyncRecords(){
-  return authedFetch('/rest/v1/training_sync_records?select=domain,entity_type,sync_id,revision,deleted_at,payload,server_revision,updated_at&order=server_revision.asc');
+  return authedFetch('/rest/v1/training_sync_records?select=domain,entity_type,sync_id,revision,deleted_at,payload,server_revision,updated_at&entity_type=neq.tracker_entry&order=server_revision.asc');
 }
 function preferTrainingSyncRow(a,b){
   const ar=Number(a?.revision||0),br=Number(b?.revision||0);if(ar!==br)return br>ar?b:a;

@@ -32,7 +32,7 @@ Android is authoritative. PWA must reproduce the externally observable rules bel
 
 ## v1.5.11 Tracker/chart/rest/phase contract
 - Tracker settings expose the master notification switch and Edit/Delete actions; deleting an item must not trigger a general data reset.
-- Tracker current-day state rolls over by local calendar date at midnight while prior dated entries remain stored.
+- Tracker has one mutable current-day state per item. At local midnight the same logical state resets for the new day; prior daily values are not retained as Tracker history.
 - Weight/e1RM chart grids use human-readable gym-friendly intervals rather than arbitrary fraction-derived labels.
 - Friend comparison always renders an isolated qualifying point, including an overlap-safe marker when both users occupy the same chart coordinate.
 - Rest Skip must work both in the normal REST phase and while ENTRY/SUPERSET_ENTRY is displaying a still-active rest object.
@@ -93,9 +93,20 @@ This section supersedes the older v1.5.12-v1.5.13 active-header presentation rul
 ## Current account-sync contract
 
 - Programme, completed Workout history and Tracker are separately selectable sync domains.
-- Tracker includes both item configuration and dated daily entries.
+- Tracker sync includes persistent item configuration plus one mutable current-day state per item; it does not accumulate historical daily state rows.
 - Signing in never clears local data; signing out only pauses authenticated exchange.
 - First-device sync uploads/merges the local copy. Another device detects differing cloud/local records and offers merge.
 - Routine synchronisation is automatic after consent; genuine conflicts require explicit review.
 - An active workout is local only until it is completed.
 - Server/network failure must leave local data usable and report that local data is safe.
+
+
+## v1.7.1 Tracker current-state contract
+
+- Every Tracker item has at most one live `tracker_state` record.
+- The live state is keyed logically by Tracker item, not by item + date.
+- The state stores its local calendar date only to determine whether the amount belongs to today.
+- On a new local day, stale state is treated as zero and rewritten as today's state.
+- Legacy `tracker_entry` rows are migration input only and must never be uploaded by current clients.
+- Syncing an unchanged Tracker repeatedly must keep the same cloud row identities and row count.
+- Historical Tracker analytics are outside the current feature; future history must be a separate opt-in data stream.

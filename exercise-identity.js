@@ -57,7 +57,7 @@ function ensureMappedUserExercise(state,row,template,lang){
 export function ensureExerciseIdentityState(state){
   if(!state.user_exercises)state.user_exercises=[];
   if(!state.tracker_items)state.tracker_items=[];
-  if(!state.tracker_entries)state.tracker_entries=[];
+  if(!state.tracker_states)state.tracker_states=[];
   const lang=state.app_state?.languageCode==='lv'?'lv':'en',label=inferReviewedUser(state);
   const byTemplateId=new Map();
   for(const t of state.template_exercises||[]){

@@ -61,3 +61,10 @@ This is intentionally not a cloud cache architecture: local training data remain
 ## Account sync enabled in current release
 
 The client now exchanges three independent private domains: `programme`, `workout_log` and `tracker`. Each device keeps its complete local database; Supabase stores per-device domain snapshots composed of stable record `sync_id`, revision, tombstone and payload data. Incoming records are relationship-aware and merged into local storage. Completed workout history is synchronised; active sessions are intentionally excluded. Same-record competing offline edits are treated as conflicts rather than authorising whole-database replacement.
+
+
+## v1.7.1 Tracker current-state persistence
+
+Tracker is intentionally not a historical event stream. PWA state now stores `tracker_states`, with one mutable state keyed by Tracker item ID. Every state carries the local calendar date and current amount. A new local day resets that same logical state to zero instead of appending another historical record.
+
+The sync contract mirrors this model: `tracker_item` is persistent configuration and `tracker_state` is one revisioned record per item. Legacy `tracker_entry` cloud rows are not recognised as current sync entities. Historical Tracker analytics, if ever introduced, must use a separate explicit history model rather than reusing live state.

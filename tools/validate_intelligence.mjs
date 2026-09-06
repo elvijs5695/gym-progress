@@ -7,7 +7,7 @@ const state={
   workout_templates:[{id:1,name:'A',position:0,isActive:true}],
   template_exercises:[{id:1,workoutId:1,userExerciseId:'bench',programmeExerciseId:'bench-a',name:'Bench Press'}],
   user_exercises:[{id:'bench',displayName:'Bench Press',equipment:'BARBELL'}],
-  workout_sessions:[],session_exercises:[],performed_sets:[],tracker_items:[],tracker_entries:[]
+  workout_sessions:[],session_exercises:[],performed_sets:[],tracker_items:[],tracker_states:[]
 };
 for(let i=0;i<10;i++){
   const sid=i+1,eid=i+1,accepted=[0,3,6].includes(i);

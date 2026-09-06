@@ -684,3 +684,8 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 /* v1.6.4 share selection: keep the card/title neutral; the checkmark is the positive cue. */
 .share-toggle.on{background:transparent;color:var(--green);border-color:var(--line)}
 .share-toggle.on .share-check-icon{stroke:var(--green)}
+
+/* v1.7.0 sync review responsiveness */
+.sync-loading-row{display:flex;align-items:center;gap:12px;min-height:44px}
+.sync-loading-spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:sync-spin .8s linear infinite;flex:0 0 auto}
+@keyframes sync-spin{to{transform:rotate(360deg)}}

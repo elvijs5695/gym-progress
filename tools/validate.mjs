@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.6.4'||!app.includes("APP_VERSION='1.6.4'")||!sw.includes('gym-progress-pwa-v1.6.4'))errors.push('v1.6.4 version markers are inconsistent');
+if(pkg.version!=='1.7.1'||!app.includes("APP_VERSION='1.7.1'")||!sw.includes('gym-progress-pwa-v1.7.1')||!read('index.html').includes('app.js?v=1.7.1')||!read('index.html').includes('styles.css?v=1.7.1'))errors.push('v1.7.1 version/cache markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -103,7 +103,7 @@ const intelligence=read('progression-intelligence.js'),syncFoundation=read('sync
 for(const token of ['CALIBRATING','RAPID_ADAPTATION','PROGRESSION_APPROACHING','SLOWING','STALLED','DECLINING','FATIGUE_SUSPECTED','DELOAD_CANDIDATE','INSUFFICIENT_PERSONAL_HISTORY'])if(!intelligence.includes(token))errors.push(`adaptive progression intelligence token missing: ${token}`);
 if(!app.includes('persistWorkoutIntelligence(state,s.id)')||!app.includes('recommendationDecision')||!app.includes('futureAdjustmentAccepted'))errors.push('adaptive recommendation decisions are not persisted in PWA history');
 if(!syncFoundation.includes('syncId:uuid()')||!syncFoundation.includes('revision')||!syncFoundation.includes('deletedAt')||!syncFoundation.includes('pending:true'))errors.push('PWA local-first stable-ID/revision/tombstone sync substrate missing');
-if(!app.includes("saveRecoveryState(loaded,'pre-sync-v2')")||!app.includes('internalVersion:6'))errors.push('PWA sync-v2 migration snapshot/version guard missing');
+if(!app.includes("saveRecoveryState(loaded,'pre-sync-v2')")||!app.includes('internalVersion:7'))errors.push('PWA sync/tracker-state migration snapshot/version guard missing');
 if(!fs.existsSync(path.join(root,'supabase','SUPABASE_TRAINING_SYNC_FOUNDATION.sql')))errors.push('training sync Supabase foundation migration missing');
 else{const trainingSyncSql=read('supabase/SUPABASE_TRAINING_SYNC_FOUNDATION.sql');for(const token of ['begin;','commit;','alter table public.training_sync_records enable row level security','grant usage, select on sequence public.training_sync_revision_seq to authenticated','revoke all on table public.training_sync_records from anon'])if(!trainingSyncSql.includes(token))errors.push(`training sync Supabase safety token missing: ${token}`);}
 if(!app.includes("schema:'gym-progress-export-v4'")||!app.includes('fatigue_state:s.fatigueState')||!app.includes('normalised_performance:e.normalisedPerformance'))errors.push('adaptive diagnostics missing from PWA exports');
@@ -146,5 +146,21 @@ if(!css.includes('.share-toggle.on .share-check-icon{stroke:var(--green)}'))erro
 if(!app.includes('render();socialUi.profile=await getMyProfile()'))errors.push('post-login header rerender missing');
 if(!app.includes("if(action?.type==='STRETCH')next=S('Stretching','Stiepšanās')"))errors.push('final workout stage does not point Next to Stretching');
 if(!read('training-sync.js').includes("r.entityType==='programme_schedule'&&localProgrammeEmpty"))errors.push('empty-device schedule metadata can still create a sync conflict');
+
+
+// v1.7.0 stable sync-review guards
+if(!app.includes('function openTrainingSyncLoadingDialog()')||!app.includes('Checking local and cloud data…')||!css.includes('.sync-loading-spinner'))errors.push('v1.7.0 PWA sync review does not open with a loading dialogue');
+if(!app.includes('function trainingSyncHasDifferences(preview)')||!app.includes("S('Up to date','Viss sinhronizēts')")||!app.includes("S('Close','Aizvērt')"))errors.push('v1.7.0 zero-difference sync review does not collapse to Close-only state');
+if(!app.includes('const token=++trainingSyncReviewToken')||!app.includes('if(token!==trainingSyncReviewToken)return'))errors.push('v1.7.0 sync review cancellation/token guard missing');
+
+
+// v1.7.1 Tracker current-state architecture guards
+if(!app.includes('tracker_states:[]')||!app.includes('function trackerState(item)')||!app.includes('function rollTrackerStatesToToday()'))errors.push('v1.7.1 Tracker current-state local model missing');
+if(!app.includes("schema:'gym-progress-backup-v6'")||!app.includes('tracker_states:state.tracker_states.map'))errors.push('v1.7.1 backup does not store current Tracker state');
+if(!syncFoundation.includes("['tracker','tracker_state','tracker_states','itemId']")||!syncFoundation.includes("entityType==='tracker_entry')delete sync.records"))errors.push('v1.7.1 sync foundation does not replace accumulating tracker_entry metadata with tracker_state');
+if(!trainingSync.includes("tracker_state:'tracker_states'")||!trainingSync.includes("case'tracker_state'")||trainingSync.includes("tracker_entry:'tracker_entries'"))errors.push('v1.7.1 cloud exchange is not using tracker_state exclusively');
+if(!trainingSync.includes("function localIdOfRow(type,row){return type==='tracker_state'?row?.itemId:row?.id;}")||trainingSync.includes('adoptMeta(state,remote.entityType,row.id,remote)'))errors.push('v1.7.1 tracker_state sync still assumes a generic row.id instead of itemId');
+if(!app.includes("saveRecoveryState(loaded,'pre-tracker-state-v1')"))errors.push('v1.7.1 pre-Tracker-state recovery snapshot missing');
+if(!syncApi.includes('entity_type=neq.tracker_entry'))errors.push('v1.7.1 cloud reads still download retired historical tracker_entry rows');
 
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);
