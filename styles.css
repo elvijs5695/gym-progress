@@ -679,7 +679,8 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .sync-conflict-list{display:flex;flex-direction:column;margin-top:8px}
 .sync-conflict-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:40px;padding:5px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
 .sync-conflict-row:last-child{border-bottom:0}
-.sync-conflict-row input[type="radio"]{margin:0;flex:0 0 auto}
+.sync-conflict-row>span,.sync-conflict-row>div{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.35}
+.sync-conflict-row input[type="radio"]{margin:0;flex:0 0 22px;width:22px;height:22px}
 
 /* v1.6.4 share selection: keep the card/title neutral; the checkmark is the positive cue. */
 .share-toggle.on{background:transparent;color:var(--green);border-color:var(--line)}

@@ -46,10 +46,8 @@ export function sessionMetrics(state,session){
   const prev=previousIdenticalSession(state,session);
   let progressPercent=null;
   if(prev){
-    const oldByIdentity=new Map(sessionExercises(state,prev.id).map(e=>[e.userExerciseId||`legacy:${e.name}`,exerciseMetrics(state,e)]));
-    const changes=[];
-    for(const e of es){const m=exerciseMetrics(state,e),old=oldByIdentity.get(e.userExerciseId||`legacy:${e.name}`);if(m.completedSets&&old?.volume>0)changes.push((m.volume/old.volume-1)*100);}
-    if(changes.length)progressPercent=changes.reduce((a,b)=>a+b,0)/changes.length;
+    const previousVolume=sessionExercises(state,prev.id).map(e=>exerciseMetrics(state,e).volume).reduce((a,b)=>a+b,0);
+    if(previousVolume>0)progressPercent=(volume/previousVolume-1)*100;
   }
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
   return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:completeSets.length,progressPercent,failureCount:failures,actionableFailureCount:actionableFailures,failedExercises:em.filter(m=>m.actionableFailureCount>0).length};

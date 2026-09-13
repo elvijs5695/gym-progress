@@ -6,7 +6,7 @@ let session=readSession();
 function readSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch{return null;}}
 function writeSession(s){session=s||null;if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}
 function headers(token=session?.access_token){const h={'apikey':SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'};if(token)h.Authorization=`Bearer ${token}`;return h;}
-async function parse(res){const text=await res.text();let body=null;try{body=text?JSON.parse(text):null;}catch{body=text;}if(!res.ok)throw new Error(body?.message||body?.error_description||body?.error||text||`HTTP ${res.status}`);return body;}
+async function parse(res){const text=await res.text();let body=null;try{body=text?JSON.parse(text):null;}catch{body=text;}if(!res.ok){const error=new Error(body?.message||body?.error_description||body?.error||text||`HTTP ${res.status}`);error.status=res.status;throw error;}return body;}
 export function socialConfigured(){return SOCIAL_CONFIGURED;}
 export function socialSession(){return session;}
 export function socialUser(){return session?.user||null;}
@@ -22,7 +22,7 @@ export async function verifyEmailOtp(email,token){
 }
 export async function refreshSocialSession(){
   if(!session?.refresh_token)return null;
-  try{const data=await parse(await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:headers(null),body:JSON.stringify({refresh_token:session.refresh_token})}));writeSession(data);return data;}catch{writeSession(null);return null;}
+  try{const data=await parse(await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:headers(null),body:JSON.stringify({refresh_token:session.refresh_token})}));writeSession(data);return data;}catch(error){if([400,401,403].includes(Number(error?.status)))writeSession(null);return null;}
 }
 export async function signOutSocial(){
   if(session?.access_token){try{await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:headers()});}catch{}}
@@ -31,7 +31,7 @@ export async function signOutSocial(){
 async function authedFetch(path,options={}){
   if(!session?.access_token)throw new Error('Sign in to use Friends.');
   let res=await fetch(`${SUPABASE_URL}${path}`,{...options,headers:{...headers(),...(options.headers||{})}});
-  if(res.status===401&&session?.refresh_token){await refreshSocialSession();if(session?.access_token)res=await fetch(`${SUPABASE_URL}${path}`,{...options,headers:{...headers(),...(options.headers||{})}});}
+  if(res.status===401&&session?.refresh_token){const refreshed=await refreshSocialSession();if(refreshed?.access_token)res=await fetch(`${SUPABASE_URL}${path}`,{...options,headers:{...headers(),...(options.headers||{})}});}
   return parse(res);
 }
 export async function rpc(name,args={}){return authedFetch(`/rest/v1/rpc/${name}`,{method:'POST',body:JSON.stringify(args)});}

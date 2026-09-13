@@ -156,7 +156,7 @@ function makeLocalRow(state,type,p,existing=null){
   else {const preferred=String(p?.preferredId||'');base.id=preferred&&!arr.some(x=>String(x.id)===preferred)?preferred:uuid();}
   if(type==='template_exercise'){base.workoutId=Number(localIdForSync(state,p.workoutSyncId));base.userExerciseId=p.userExerciseSyncId?localIdForSync(state,p.userExerciseSyncId):null;}
   if(type==='workout_session'){const wid=p.workoutSyncId?localIdForSync(state,p.workoutSyncId):null;base.workoutId=wid==null?null:Number(wid);}
-  if(type==='session_exercise'){base.sessionId=Number(localIdForSync(state,p.sessionSyncId));const te=p.templateExerciseSyncId?localIdForSync(state,p.templateExerciseSyncId):null;base.templateExerciseId=te==null?null:Number(te);base.userExerciseId=p.userExerciseSyncId?localIdForSync(state,p.userExerciseSyncId):null;}
+  if(type==='session_exercise'){base.sessionId=Number(localIdForSync(state,p.sessionSyncId));const te=p.templateExerciseSyncId?localIdForSync(state,p.templateExerciseSyncId):null;base.templateExerciseId=te==null?null:Number(te);base.userExerciseId=p.userExerciseSyncId?localIdForSync(state,p.userExerciseSyncId):null;base.note=typeof base.note==='string'?base.note:'';}
   if(type==='performed_set')base.sessionExerciseId=Number(localIdForSync(state,p.sessionExerciseSyncId));
   if(type==='tracker_item'){base.productiveStart=minutesToTime(p.productiveStartMinutes??480);base.productiveEnd=minutesToTime(p.productiveEndMinutes??1320);delete base.productiveStartMinutes;delete base.productiveEndMinutes;delete base.preferredId;}
   return base;

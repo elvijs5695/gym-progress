@@ -1,13 +1,10 @@
-# PWA v1.7.1 validation
+# PWA v1.7.2 validation
 
-- Version/cache markers: **1.7.1**.
-- Internal state schema: v7.
-- Backup schema: `gym-progress-backup-v6`.
-- One `tracker_state` per Tracker item; today's legacy value is preserved and older values are discarded.
-- Sync foundation exchanges `tracker_state`, removes legacy local `tracker_entry` metadata, and does not recognise `tracker_entry` as a current cloud entity.
-- Midnight rollover updates the same logical state instead of adding a history row.
-- Empty-cloud reseed remains supported because canonical eligible records are uploaded during sync even if previously clean.
-- Existing stable-ID/revision/tombstone/alias sync guards remain enabled.
-- No Supabase schema migration.
-
-Validation is run with `npm run check`, including JavaScript syntax checks and architecture regression guards.
+- Version/cache markers: **1.7.2**.
+- Internal state schema: **v8**.
+- Existing backup schema remains `gym-progress-backup-v6`; exercise notes are included as normal state fields.
+- `node tools/validate.mjs`: **73 PWA files passed**.
+- Performance-rule cases: **10 passed**.
+- Adaptive-progression + local sync metadata tests: **passed**.
+- JavaScript syntax checks for app, auth, training sync and metrics: **passed**.
+- Regression guards cover conflict-row layout, stage-level Next, local-first startup, resilient auth refresh, Tracker current-state sync and stable record identity.
