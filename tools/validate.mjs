@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.7.2'||!app.includes("APP_VERSION='1.7.2'")||!sw.includes('gym-progress-pwa-v1.7.2')||!read('index.html').includes('app.js?v=1.7.2')||!read('index.html').includes('styles.css?v=1.7.2'))errors.push('v1.7.2 version/cache markers are inconsistent');
+if(pkg.version!=='1.7.3'||!app.includes("APP_VERSION='1.7.3'")||!sw.includes('gym-progress-pwa-v1.7.3')||!read('index.html').includes('app.js?v=1.7.3')||!read('index.html').includes('styles.css?v=1.7.3'))errors.push('v1.7.3 version/cache markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -21,7 +21,7 @@ if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))erro
 if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))errors.push('updated audio cue patterns missing');
 if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.includes('checkTrackerReminders'))errors.push('Tracker functionality incomplete');
 if(!app.includes('sentTrackerReminderKeys')||!app.includes('function trackerPace')||!app.includes('steps>span/60')||!app.includes('checkpointCount=6')||!app.includes('span/checkpointCount')||!css.includes('.tracker-card-accent')||!css.includes('.tracker-row.behind')||!css.includes('.tracker-row.done'))errors.push('Tracker deadline-window/six-checkpoint dense-target pacing missing');
-if(!app.includes('closeDialog();startWorkout(id)'))errors.push('Start Anyway does not close its warning');
+if(!app.includes('closeDialog();offerReturnLoadOrStart(id)'))errors.push('Start Anyway does not close its warning');
 if(!app.includes('await afterRest()')||!app.includes('async function skipExercise()'))errors.push('Skip exercise direct transition missing');
 if(!app.includes("S('Remove','Noņemt')")||!app.includes("S('Skip','Izlaist')")||!app.includes('Remove ramp-up?'))errors.push('simplified ramp-up wording missing');
 if(!app.includes('pulse-reps-badge"><span>${set.targetReps}</span> REPS'))errors.push('active pulse rep target is not prominent');
@@ -91,7 +91,7 @@ if(app.includes('pulse-set">SET ${item.set.setNumber} / ${item.sets.length}'))er
 if(!css.includes('grid-template-columns:minmax(0,1fr) auto')||!app.includes('trackerTimeFraction(item,at)'))errors.push('Tracker progress zone/time marker alignment missing');
 if(!app.includes('historyDays<30?Math.max(today,rawMaxT):rawMaxT'))errors.push('friend comparison short-history zoom-to-today rule missing');
 if(!app.includes('showWorkoutFinishCelebration')||!app.includes('finish-celebration.png')||!app.includes('workoutConclusionHtml')||!fs.existsSync(path.join(root,'finish-celebration.png')))errors.push('PWA finish celebration/conclusion flow missing');
-if(!app.includes('preloadFinishCelebration')||!read('index.html').includes('rel="preload" as="image" href="./finish-celebration.png"')||!sw.includes('./finish-celebration.png'))errors.push('finish celebration image preload/cache path missing');
+if(!app.includes('preloadFinishCelebration')||!app.includes('./celebrations/${String(i+1).padStart')||!sw.includes('./finish-celebration.png')||!fs.existsSync(path.join(root,'celebrations','README.txt')))errors.push('finish celebration rotation/fallback path missing');
 if(!app.includes('simpleActiveHeaderState')||!app.includes("S('Next:','Tālāk:')")||!app.includes('workoutProgressFraction')||!app.includes('workout-progress-fill'))errors.push('exercise-level Next / live workout progress header missing');
 if(!app.includes('function expandChevron')||!app.includes("expandChevron('details-chevron')")||!app.includes('friends-toggle-chevron')||!css.includes('.app-expand-chevron'))errors.push('uniform PWA expand/condense chevron missing');
 if(!app.includes('navChevron()')||!css.includes('.nav-chevron svg')||!app.includes('pencil-outline-icon'))errors.push('settings navigation chevron/pencil UI missing');

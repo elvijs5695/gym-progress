@@ -1,6 +1,6 @@
 import {volumeMultiplier} from './exercise-library.js';
 import {PERFORMANCE_RULES,effectiveRir,actionableFailure} from './performance-rules.js';
-import {qualifyingE1rm,TrackingMode} from './exercise-identity.js';
+import {heaviestHistoricalE1rm,TrackingMode} from './exercise-identity.js';
 export const COLORS={blue:'#92b8e8',green:'#70b995',lightgreen:'#a6d9b8',yellow:'#e8cf80',red:'#e99b9b',deepred:'#d97777',orange:'#e9ad83',gray:'#b8bcc4'};
 export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 export function formatKg(v){
@@ -29,7 +29,7 @@ export function exerciseMetrics(state,e){
   const multiplier=volumeMultiplier(e.equipment,e.dumbbellLoad);
   const volume=complete.reduce((a,s)=>a+(Number(s.actualWeightKg)||0)*(Number(s.actualReps)||0)*multiplier,0);
   const rirs=complete.map(effectiveRir).filter(v=>v!=null).map(Number);
-  const bestE1rm=complete.reduce((best,s)=>Math.max(best,qualifyingE1rm(s)||0),0);
+  const bestE1rm=heaviestHistoricalE1rm(complete);
   const totalDurationSeconds=complete.reduce((sum,s)=>sum+Number(s.actualDurationSeconds||0),0);
   const maxWeight=complete.reduce((best,s)=>Math.max(best,Number(s.actualWeightKg)||0),0);
   const maxReps=complete.reduce((best,s)=>Math.max(best,Number(s.actualReps)||0),0);
@@ -84,7 +84,7 @@ function effortFromScore(score,appState){
 }
 export function exerciseProgressPercent(state,e,previous){
   const m=exerciseMetrics(state,e); if(!m.completedSets||!previous)return null;
-  const old=sessionExercises(state,previous.id).find(x=>(e.userExerciseId&&x.userExerciseId===e.userExerciseId)||(!e.userExerciseId&&x.name===e.name)); if(!old)return null;
+  const old=sessionExercises(state,previous.id).find(x=>e.programmeExerciseId&&x.programmeExerciseId===e.programmeExerciseId)||sessionExercises(state,previous.id).find(x=>e.userExerciseId&&x.userExerciseId===e.userExerciseId&&Number(x.position)===Number(e.position))||sessionExercises(state,previous.id).find(x=>x.name===e.name&&Number(x.position)===Number(e.position)); if(!old)return null;
   const oldVol=exerciseMetrics(state,old).volume; return oldVol>0?(m.volume/oldVol-1)*100:null;
 }
 export function phaseDuration(start,end,skipped){return skipped?'Skipped':start!=null&&end!=null?formatDuration(end-start):'—';}

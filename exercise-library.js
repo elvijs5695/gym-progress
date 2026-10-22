@@ -134,17 +134,16 @@ function barbellPlateFriendlyRamp(workingWeightKg, raw, maxSets){
   return [emptyBar,...weights.slice(0,remainingCount).map((weightKg,i)=>{const spec=raw[Math.min(i+1,raw.length-1)];return{weightKg,reps:spec[1],restSeconds:spec[2],percentOfWorkingWeight:Math.round(weightKg/work*100),plateFriendly:true};})].slice(0,targetCount);
 }
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName),maxSets=3){
-  if(!(workingWeightKg>0)) return [];
+  const work=Number(workingWeightKg)||0;if(!(work>0)||maxSets<=0)return[];
+  if(equipment===Equipment.BARBELL&&work<=20.01)return[];
   let raw;
-  if(exerciseType===ExerciseType.HEAVY_COMPOUND){raw=targetReps<=5?[[.42,6,60],[.62,4,75],[.80,2,90],[.90,1,120]]:targetReps<=10?[[.42,8,60],[.62,5,75],[.80,3,90],[.90,1,120]]:[[.45,8,60],[.65,5,75],[.82,2,90]];}
-  else if(exerciseType===ExerciseType.MODERATE_COMPOUND){raw=targetReps<=6?[[.48,6,60],[.68,3,75],[.84,1,90]]:[[.48,6,60],[.68,4,75],[.82,2,90]];}
-  else if(exerciseType===ExerciseType.MACHINE_COMPOUND)raw=[[.50,6,60],[.75,3,75]];
-  else if(exerciseType===ExerciseType.ISOLATION)raw=[[.50,8,45]];
-  else raw=[[.50,6,60],[.75,3,75]];
-  const limit=Math.max(0,Math.min(6,Number(maxSets??3)));
-  if(equipment===Equipment.BARBELL)return barbellPlateFriendlyRamp(workingWeightKg,raw,limit);
-  const rampSnap=n=>equipment===Equipment.DUMBBELL?snap(n,.5):(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)?snap(n,2.5):snapSelectable(n,equipment);
-  const seen=new Set();
-  return raw.slice(0,limit).map(([p,reps,rest])=>({weightKg:rampSnap(workingWeightKg*p),reps,restSeconds:rest,percentOfWorkingWeight:Math.trunc(p*100)}))
-    .filter(s=>s.weightKg>0&&s.weightKg<workingWeightKg).filter(s=>{const k=`${s.weightKg}/${s.reps}`;if(seen.has(k))return false;seen.add(k);return true;});
+  if(exerciseType===ExerciseType.HEAVY_COMPOUND){raw=targetReps<=5?[[.50,6,60],[.70,4,75],[.85,2,90],[.92,1,120]]:targetReps<=10?[[.45,8,60],[.65,5,75],[.82,3,90],[.90,1,120]]:[[.50,8,60],[.70,5,75],[.85,2,90]];}
+  else if(exerciseType===ExerciseType.MODERATE_COMPOUND)raw=[[.50,6,60],[.70,4,75],[.85,2,90]];
+  else if(exerciseType===ExerciseType.MACHINE_COMPOUND)raw=[[.55,6,60],[.75,3,75],[.90,1,90]];
+  else if(exerciseType===ExerciseType.ISOLATION)raw=[[.60,8,45],[.80,4,60]];
+  else raw=[[.50,6,60],[.75,3,75],[.90,1,90]];
+  const limit=Math.max(0,Math.min(6,Number(maxSets??3))),seen=new Set();
+  const rampSnap=n=>equipment===Equipment.BARBELL?snap(n,2.5):equipment===Equipment.DUMBBELL?snap(n,.5):(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)?snap(n,2.5):equipment===Equipment.BODYWEIGHT?0:snap(n,.25);
+  return raw.slice(0,limit).map(([pct,reps,rest])=>{let weight=rampSnap(work*pct);if(equipment===Equipment.BARBELL)weight=Math.max(20,weight);return{weightKg:weight,reps,restSeconds:rest,percentOfWorkingWeight:Math.round(weight/work*100)};})
+    .filter(x=>x.weightKg>0&&x.weightKg<work-.001).filter(x=>{if(seen.has(x.weightKg))return false;seen.add(x.weightKg);return true;});
 }

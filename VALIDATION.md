@@ -1,10 +1,9 @@
-# PWA v1.7.2 validation
+# PWA v1.7.3 validation
 
-- Version/cache markers: **1.7.2**.
-- Internal state schema: **v8**.
-- Existing backup schema remains `gym-progress-backup-v6`; exercise notes are included as normal state fields.
-- `node tools/validate.mjs`: **73 PWA files passed**.
-- Performance-rule cases: **10 passed**.
-- Adaptive-progression + local sync metadata tests: **passed**.
-- JavaScript syntax checks for app, auth, training sync and metrics: **passed**.
-- Regression guards cover conflict-row layout, stage-level Next, local-first startup, resilient auth refresh, Tracker current-state sync and stable record identity.
+- `npm run check`: PASS (75 files).
+- Performance-rule cases: PASS (10 cases).
+- Adaptive progression + local sync metadata tests: PASS.
+- JavaScript syntax checks: PASS.
+- Tested ramp examples: 170 kg heavy compound -> 85 / 120 / 145 kg (3-set cap); 97.5 kg -> 50 / 67.5 / 82.5 kg.
+- Historical e1RM without RIR no longer returns zero when valid weight/reps exist.
+- No IndexedDB schema change and no Supabase schema change.

@@ -1,12 +1,7 @@
-# Gym Progress PWA v1.7.2
+# Gym Progress PWA v1.7.3
 
-Paired release: **PWA 1.7.2 / Android 1.6.2**.
+Paired release: **Android 1.6.3 / PWA 1.7.3**.
 
-- Sync-conflict text now receives the available row width instead of being squeezed by the radio control.
-- Each completed exercise can store its own optional comment; new workouts no longer ask for one workout-wide comment.
-- Active-workout `Next` advances by exercise/superset stage, not set.
-- Startup renders IndexedDB state before optional rules/cloud work; local data remains authoritative.
-- Temporary network/server failures no longer erase the saved login session.
-- Workout volume progress uses the same total-volume basis as the displayed absolute volume.
+Celebration gallery: upload JPEG files as `celebrations/01.jpg` ... `celebrations/12.jpg`. Existing slots are discovered automatically; no code/manifest edit is needed.
 
-No Supabase schema migration is required. Existing IndexedDB data is preserved and normalised to internal state v8. Do not clear site data.
+See `RELEASE_NOTES.md`, `VALIDATION.md`, and `DATABASE_UPDATE_INSTRUCTIONS_1.6.3_1.7.3.md`.

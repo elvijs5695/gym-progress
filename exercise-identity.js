@@ -3,7 +3,7 @@ import {REVIEWED_MIGRATION} from './exercise-migration-map.js';
 import {Equipment,DumbbellLoad,ExerciseType,bestMatch} from './exercise-library.js';
 
 export const TrackingMode={WEIGHT_REPS:'WEIGHT_REPS',BODYWEIGHT_REPS:'BODYWEIGHT_REPS',TIME_ONLY:'TIME_ONLY'};
-export const E1RM_FORMULA_VERSION='EPLEY_RIR_V1';
+export const E1RM_FORMULA_VERSION='EPLEY_HEAVIEST_V2';
 
 export function uuid(){
   if(globalThis.crypto?.randomUUID)return globalThis.crypto.randomUUID();
@@ -14,6 +14,13 @@ export function canonicalExerciseById(id){return id?CANONICAL_BY_ID.get(id)||nul
 export function canonicalExerciseByKey(key){return key?CANONICAL_BY_KEY.get(key)||null:null;}
 export function canonicalDisplayName(canonical,lang='en'){return canonicalName(canonical,lang);}
 export function effectiveRir(set){return set?.failure?0:(set?.rir==null?null:Number(set.rir));}
+export function historicalE1rm(set){
+  if(!set||set.status!=='COMPLETE')return null;
+  const weight=Number(set.actualWeightKg??0),reps=Number(set.actualReps??0);if(!(weight>0)||!(reps>0))return null;
+  const raw=effectiveRir(set),rir=raw!=null&&raw>=0&&raw<=2?raw:0;
+  if(reps===1&&rir===0)return weight;
+  return weight*(1+(reps+rir)/30);
+}
 export function qualifyingE1rm(set){
   if(!set||set.status!=='COMPLETE')return null;
   const weight=Number(set.actualWeightKg??0),reps=Number(set.actualReps??0),rir=effectiveRir(set);
@@ -21,6 +28,16 @@ export function qualifyingE1rm(set){
   const effective=reps+rir;if(effective>10)return null;
   if(reps===1&&rir===0)return weight;
   return weight*(1+effective/30);
+}
+export function heaviestHistoricalE1rm(sets=[]){
+  const eligible=sets.filter(s=>s?.status==='COMPLETE'&&Number(s.actualWeightKg)>0&&Number(s.actualReps)>0)
+    .sort((a,b)=>Number(b.actualWeightKg)-Number(a.actualWeightKg)||Number(a.actualReps)-Number(b.actualReps)||Number(a.setNumber||0)-Number(b.setNumber||0));
+  return eligible.length?(historicalE1rm(eligible[0])||0):0;
+}
+export function heaviestQualifyingE1rm(sets=[]){
+  const eligible=sets.map(s=>({s,v:qualifyingE1rm(s)})).filter(x=>x.v!=null)
+    .sort((a,b)=>Number(b.s.actualWeightKg)-Number(a.s.actualWeightKg)||Number(a.s.actualReps)-Number(b.s.actualReps));
+  return eligible.length?eligible[0].v:null;
 }
 export function e1rmConfidence(set){const rir=effectiveRir(set);if(rir==null)return'NOT_ELIGIBLE';const effective=Number(set.actualReps||0)+rir;if(Number(set.actualReps||0)===1&&rir===0)return'DIRECT';if(effective>=2&&effective<=5)return'HIGH';if(effective>=6&&effective<=10&&rir<=2)return'STANDARD';return'NOT_ELIGIBLE';}
 

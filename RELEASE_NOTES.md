@@ -1,23 +1,20 @@
-# Gym Progress PWA v1.7.2 — 2026-09-12
+# Gym Progress PWA v1.7.3 — 2026-10-22
 
-## Sync review
-- Widened conflict-choice text: the label now consumes the remaining row width while the radio control has a fixed compact width.
+## Major improvements
 
-## Workout comments and status
-- Added one optional comment per exercise, prompted when that exercise finishes.
-- Comments sync as part of `session_exercise`, survive backup/restore and appear in workout history/detail exports.
-- New workouts no longer ask for a final workout-wide note; historical workout notes remain readable.
-- `Next` now advances by exercise/superset stage instead of the next pending set; the final stage points to Stretching.
+- Exact manually entered workout weights are preserved in logs and progression; manual 28.75 kg no longer becomes 30 kg.
+- Progress e1RM uses the heaviest valid completed set and falls back to reps-only Epley when historical RIR is missing. Friends comparison keeps the stricter <=10-effective-rep rule.
+- The current exercise can be postponed after the next exercise or to the end when equipment is occupied.
+- Ramp-up loads now approach working weight using useful percentage stages and 2.5 kg barbell increments.
+- After a >=21-day training gap, the app can offer conservative session-only loading at 95%, 90%, or 85%, depending on the length of the gap. Programme weights are unchanged.
+- Celebration photos can rotate from `celebrations/01.jpg` through `celebrations/12.jpg`; just upload JPEGs into those numbered slots. The legacy image remains a fallback.
 
-## Volume
-- Workout total continues to sum every exercise occurrence.
-- Workout percentage progress is now derived from current total volume versus previous identical-workout total volume, matching the absolute numbers shown.
+## Reliability/UI
 
-## Login and local-first loading
-- Failed token refresh only clears login when the refresh token is explicitly rejected (400/401/403); transient network/server failures keep the local session.
-- IndexedDB loads and renders before the performance-rules fetch and before background cloud reconciliation.
-- Periodic full training sync is reduced to five minutes, with existing launch/change/resume/online sync points retained.
+- Share/PUBLISH is disabled until at least one card is selected.
+- Update announcements are sorted by importance, with major mechanisms before minor fixes.
+- Exercise progress matching prefers stable programme occurrence identity/position rather than name alone.
 
-## Data
-- Internal state version advances to v8 to normalise `session_exercises.note`.
-- No IndexedDB store-version change and no Supabase schema migration.
+## Data compatibility
+
+No IndexedDB or Supabase schema migration is required. Existing historical values already rounded by an older release are not automatically guessed/re-written.
