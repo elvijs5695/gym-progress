@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.7.4'||!app.includes("APP_VERSION='1.7.4'")||!sw.includes('gym-progress-pwa-v1.7.4')||!read('index.html').includes('app.js?v=1.7.4')||!read('index.html').includes('styles.css?v=1.7.4'))errors.push('v1.7.4 version/cache markers are inconsistent');
+if(pkg.version!=='1.7.5'||!app.includes("APP_VERSION='1.7.5'")||!sw.includes('gym-progress-pwa-v1.7.5')||!read('index.html').includes('app.js?v=1.7.5')||!read('index.html').includes('styles.css?v=1.7.5'))errors.push('v1.7.5 version/cache markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -73,7 +73,7 @@ if(!read('exercise-catalogue.json').includes('Machine Hip Thrust'))errors.push('
 const identity=read('exercise-identity.js');
 if(!identity.includes('a display-name similarity alone must never do so')||!identity.includes('const canonical=template.exerciseKey?'))errors.push('generic legacy migration can still auto-link by display name');
 const catalogue=JSON.parse(read('exercise-catalogue.json')),migration=JSON.parse(read('exercise-migration-map.json'));
-if(catalogue.families?.length!==27||catalogue.exercises?.length!==191)errors.push('catalogue count mismatch');
+if(catalogue.families?.length!==34||catalogue.exercises?.length!==205)errors.push('catalogue count mismatch');
 if(catalogue.exercises.filter(x=>x.friendE1rmEligible).length!==9)errors.push('friend-comparable catalogue count mismatch');
 if(migration.users?.length!==32||migration.programmeOccurrences?.length!==42)errors.push('reviewed migration count mismatch');
 if(migration.users.some(x=>!['LINK','KEEP_LOCAL'].includes(x.mappingStatus)))errors.push('reviewed migration still has unresolved mappings');
@@ -140,6 +140,8 @@ else{
 
 for(const f of files.filter(f=>/\.(?:js|mjs)$/.test(f))){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)errors.push(`JavaScript syntax error in ${path.relative(root,f)}: ${r.stderr.trim()}`);}
 const rr=spawnSync(process.execPath,[path.join(root,'tools','validate-rules.mjs')],{encoding:'utf8'});if(rr.status!==0)errors.push(`performance-rule cases failed: ${(rr.stderr||rr.stdout).trim()}`);
+const referenceValidation=spawnSync(process.execPath,[path.join(root,'tools','validate-reference.mjs')],{encoding:'utf8'});
+if(referenceValidation.status!==0)errors.push(`SQL-reference/cache/offline regression tests failed: ${(referenceValidation.stderr||referenceValidation.stdout).trim()}`);
 // v1.6.4 regression guards
 if(!app.includes('sync-conflict-row')||!css.includes('.sync-conflict-row'))errors.push('aligned sync conflict rows missing');
 if(!css.includes('.share-toggle.on .share-check-icon{stroke:var(--green)}'))errors.push('selected share checkmark is not green');
@@ -163,4 +165,11 @@ if(!trainingSync.includes("function localIdOfRow(type,row){return type==='tracke
 if(!app.includes("saveRecoveryState(loaded,'pre-tracker-state-v1')"))errors.push('v1.7.1 pre-Tracker-state recovery snapshot missing');
 if(!syncApi.includes('entity_type=neq.tracker_entry'))errors.push('v1.7.1 cloud reads still download retired historical tracker_entry rows');
 
+// v1.7.5 reference-data and additive SQL regression tests.
+if(!app.includes('restoreCachedReferenceData()')||!app.includes('refreshReferenceData()')||!sw.includes('./exercise-reference-cache.js'))errors.push('shared reference catalogue is not loaded/cached before workout UI');
+if(!read('exercise-reference-cache.js').includes('gym_exercise_reference_snapshot')||!read('exercise-alternatives.js').includes('installPublishedRelations'))errors.push('Supabase substitutions are not loaded as SQL-backed data');
+if(catalogue.exercises.filter(x=>x.category==='CARDIO').length!==14)errors.push('catalogue missing fourteen canonical cardio exercises');
+if(!read('supabase/SUPABASE_EXERCISE_REFERENCE_CARDIO_UPDATE_1.6.5_1.7.5.sql').includes('canonical_exercise_substitutions'))errors.push('SQL substitution migration missing');
+
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);
+

@@ -1,24 +1,25 @@
-import {loadState,saveState,wipeState} from './db.js?v=1.7.4';
-import {alternativeRelation} from './exercise-alternatives.js?v=1.7.4';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.7.4';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.7.4';
-import {evaluateAutoregulation} from './autoregulation.js?v=1.7.4';
-import {manualHtml} from './manual.js?v=1.7.4';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.7.4';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.7.4';
-import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.7.4';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.7.4';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.7.4';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.7.4';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm,heaviestQualifyingE1rm} from './exercise-identity.js?v=1.7.4';
-import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.7.4';
-import {ensureSyncFoundation} from './sync-foundation.js?v=1.7.4';
-import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.7.4';
+import {loadState,saveState,wipeState} from './db.js?v=1.7.5';
+import {alternativeRelation,alternativePriority} from './exercise-alternatives.js?v=1.7.5';
+import {restoreCachedReferenceData,refreshReferenceData} from './exercise-reference-cache.js?v=1.7.5';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.7.5';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.7.5';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.7.5';
+import {manualHtml} from './manual.js?v=1.7.5';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.7.5';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.7.5';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.7.5';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.7.5';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.7.5';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.7.5';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm,heaviestQualifyingE1rm} from './exercise-identity.js?v=1.7.5';
+import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.7.5';
+import {ensureSyncFoundation} from './sync-foundation.js?v=1.7.5';
+import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.7.5';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.7.4';
+const APP_VERSION='1.7.5';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -345,6 +346,8 @@ const UPDATE_FEATURES=[
   ,{version:'1.7.3',key:'postpone-return',importance:4,en:'Occupied equipment? Postpone an exercise until after the next exercise or the end. After a long break the app can offer a conservative session-only load reduction.',lv:'Aprīkojums aizņemts? Atliek vingrinājumu pēc nākamā vai uz treniņa beigām. Pēc ilgāka pārtraukuma lietotne var piedāvāt konservatīvu svaru samazinājumu tikai šim treniņam.'}
   ,{version:'1.7.3',key:'ramp-up',importance:4,en:'Ramp-up sets now climb close to the working load, including decimal work weights such as 97.5 kg.',lv:'Iesildīšanās piegājieni tagad pietuvojas darba svaram, arī pie decimāliem darba svariem, piemēram, 97,5 kg.'}
   ,{version:'1.7.3',key:'celebration-gallery',importance:3,en:'Workout celebration can rotate photos from the celebrations folder, and Share stays disabled until a card is selected.',lv:'Treniņa noslēguma attēls var rotēt fotogrāfijas no celebrations mapes, un Kopīgot paliek neaktīvs, kamēr nav izvēlēta kartīte.'}
+  ,{version:'1.7.5',key:'sql-reference-exercises',importance:5,en:'The exercise-substitution catalogue now updates from shared Supabase reference data, prioritises your familiar exercises, and remains usable offline. Cardio exercises are now linked to canonical catalogue identities.',lv:'Vingrinājumu aizstāšanas katalogs tagad tiek atjaunināts no kopīgajiem Supabase atsauces datiem, dod priekšroku pazīstamiem vingrinājumiem un darbojas arī bezsaistē. Kardio vingrinājumiem piešķirtas kataloga identitātes.'}
+  ,{version:'1.7.5',key:'sql-cardio-categories',importance:4,en:'The shared catalogue now distinguishes cardio from strength exercises. Fourteen cardio activities are available, including running, cycling, rowing, swimming and hiking.',lv:'Kopīgajā katalogā kardio vingrinājumi tagad ir nodalīti no spēka vingrinājumiem. Pieejami četrpadsmit kardio vingrinājumi, tostarp skriešana, riteņbraukšana, airēšana, peldēšana un pārgājieni.'}
   ,{version:'1.7.4',key:'cardio-tracking',importance:5,en:'Cardio exercises track duration, optional distance, heart rate, power and session effort, separately from lifting volume and without an invented overall cardio percentage.',lv:'Kardio vingrinājumi saglabā ilgumu, neobligātu distanci, pulsu, jaudu un pašvērtējumu, atsevišķi no spēka treniņa apjoma un bez izdomāta kopējā kardio procenta.'}
   ,{version:'1.7.4',key:'exercise-replacement',importance:5,en:'Replace an exercise with a related movement, prioritising exercises from other programme days with known recorded weights. Later and Skip actions stay in the workout; the programme is untouched.',lv:'Aizstāj vingrinājumu ar līdzīgu, vispirms piedāvājot vingrinājumus no citām programmas dienām ar zināmiem darba svariem. Atlikt un Izlaist pieejami treniņā; programma netiek mainīta.'}
   ,{version:'1.7.4',key:'warmup-rest-whole-note',importance:4,en:'Barbell ramp-ups use practical large plates, rest shows the real adjusted next weight, and the optional private whole-workout log comment is restored.',lv:'Stieņa iesildīšanās izmanto praktiskus lielo svaru ripu variantus, atpūtā redzams faktiskais nākamais svars, un atjaunots neobligātais privātais treniņa kopējais komentārs.'}
@@ -397,6 +400,7 @@ async function maybeOfferTrainingSyncAfterUpdate(){
 }
 
 async function init(){
+  restoreCachedReferenceData();
   void preloadFinishCelebration();
   // IndexedDB is authoritative for startup. Do not block local rendering on a network/file
   // fetch for performance rules; bundled defaults are immediately usable.
@@ -423,6 +427,7 @@ async function init(){
   // First paint comes directly from IndexedDB/in-memory state. A migration writeback is
   // deliberately deferred until after render so a large history never blocks the UI.
   render();
+  void refreshReferenceData().then(changed=>{if(changed)render();}).catch(()=>{});
   if(persistAfterFirstRender)void saveState(state).catch(console.warn);
   void loadPerformanceRules().then(()=>render()).catch(()=>{});
   if(socialSignedIn())getMyProfile().then(x=>{socialUi.profile=x;render();}).catch(()=>{});
@@ -882,7 +887,7 @@ function exerciseFormChangeLink(){const hidden=$('#f-canonical-id'),preserve=$('
 function exerciseFormUnlink(){const hidden=$('#f-canonical-id'),preserve=$('#f-preserve-canonical'),name=$('#f-name'),feedback=$('#f-catalogue-feedback'),list=$('#f-catalogue-matches');if(hidden)hidden.value='';if(preserve)preserve.value='0';if(name)name.readOnly=false;if(feedback)feedback.innerHTML=`${catalogueInlineGlobe(false)} <span>${esc(S('Not linked. This exercise stays local.','Nav saistīts. Šis vingrinājums paliek lokāls.'))}</span>`;if(list)list.innerHTML='';refreshCompareEligibility();}
 
 function exerciseExistingChanged(){/* retained for old markup compatibility; new Add flow does not select existing exercises */}
-function exerciseNameChanged(){const input=$('#f-name'),q=String(input?.value||'').trim(),hidden=$('#f-canonical-id'),feedback=$('#f-catalogue-feedback'),list=$('#f-catalogue-matches'),preserve=$('#f-preserve-canonical')?.value==='1'&&!!hidden?.value;if(preserve){const c=canonicalExerciseById(hidden.value);if(feedback)feedback.innerHTML=`${catalogueInlineGlobe(true)} <span>${esc(S('Linked to catalogue','Saistīts ar katalogu'))}${c?`: ${esc(canonicalName(c,languageCode(state)))}`:''}</span>${exerciseLinkActionsHtml(c)}`;if(list)list.innerHTML='';refreshCompareEligibility();return;}const exact=catalogueSearchMatch(q);if(hidden)hidden.value='';const suggestions=q.length>=2?canonicalSuggestions(q,languageCode(state)).slice(0,6):[];if(exact){applyCatalogueChoice(exact.id);return;}refreshCompareEligibility();if(feedback)feedback.innerHTML=q?`${catalogueInlineGlobe(false)} <span>${esc(S('Not linked. If no catalogue match is selected, this exercise will remain local and will not support online exercise comparison.','Nav saistīts. Ja netiks izvēlēta kataloga atbilstība, vingrinājums paliks lokāls un tam nebūs tiešsaistes vingrinājumu salīdzināšanas.'))}</span>`:'';if(list)list.innerHTML=suggestions.map(c=>`<button type="button" class="catalogue-match" onclick="gp.applyCatalogueChoice('${c.id}')">${esc(canonicalName(c,languageCode(state)))} <span>${esc(c.equipment.toLowerCase())}</span></button>`).join('');}
+function exerciseNameChanged(){const input=$('#f-name'),q=String(input?.value||'').trim(),hidden=$('#f-canonical-id'),feedback=$('#f-catalogue-feedback'),list=$('#f-catalogue-matches'),preserve=$('#f-preserve-canonical')?.value==='1'&&!!hidden?.value;if(preserve){const c=canonicalExerciseById(hidden.value);if(feedback)feedback.innerHTML=`${catalogueInlineGlobe(true)} <span>${esc(S('Linked to catalogue','Saistīts ar katalogu'))}${c?`: ${esc(canonicalName(c,languageCode(state)))}`:''}</span>${exerciseLinkActionsHtml(c)}`;if(list)list.innerHTML='';refreshCompareEligibility();return;}const exact=catalogueSearchMatch(q);if(hidden)hidden.value='';const suggestions=q.length>=2?canonicalSuggestions(q,languageCode(state)).slice(0,6):[];if(exact){applyCatalogueChoice(exact.id);return;}refreshCompareEligibility();if(feedback)feedback.innerHTML=q?`${catalogueInlineGlobe(false)} <span>${esc(S('Not linked. If no catalogue match is selected, this exercise will remain local and will not support online exercise comparison.','Nav saistīts. Ja netiks izvēlēta kataloga atbilstība, vingrinājums paliks lokāls un tam nebūs tiešsaistes vingrinājumu salīdzināšanas.'))}</span>`:'';if(list)list.innerHTML=suggestions.map(c=>`<button type="button" class="catalogue-match" onclick="gp.applyCatalogueChoice('${c.id}')">${esc(canonicalName(c,languageCode(state)))} <span>${esc(c.category==='CARDIO'?S('Cardio','Kardio'):S('Strength','Spēks'))}</span></button>`).join('');}
 function exerciseTypeChanged(){exerciseTrackingChanged();}
 function exerciseTrackingChanged(){const select=$('#f-tracking'),eq=$('#f-equipment')?.value||Equipment.OTHER,type=$('#f-type')?.value||ExerciseType.MODERATE_COMPOUND,modes=validTrackingModes(eq,type);if(select&&!modes.includes(select.value))select.value=modes[0];const mode=select?.value||modes[0],time=$('#f-time-wrap'),reps=$('#f-reps-wrap'),weight=$('#f-weight-wrap'),ramp=$('#f-ramp'),rampWrap=$('#f-ramp-wrap');if(time)time.style.display=[TrackingMode.TIME_ONLY,TrackingMode.CARDIO].includes(mode)?'':'none';if(reps)reps.style.display=[TrackingMode.TIME_ONLY,TrackingMode.CARDIO].includes(mode)?'none':'';if(weight)weight.style.display=[Equipment.BODYWEIGHT,Equipment.CARDIO].includes(eq)?'none':'';if(ramp)ramp.disabled=[TrackingMode.TIME_ONLY,TrackingMode.CARDIO].includes(mode);if(rampWrap)rampWrap.classList.toggle('control-disabled',[TrackingMode.TIME_ONLY,TrackingMode.CARDIO].includes(mode));if([TrackingMode.TIME_ONLY,TrackingMode.CARDIO].includes(mode)&&ramp)ramp.value=RampMode.NEVER;refreshCompareEligibility();}
 function exerciseEquipmentChanged(){const eq=$('#f-equipment')?.value||Equipment.OTHER,show=eq===Equipment.DUMBBELL,bodyweight=[Equipment.BODYWEIGHT,Equipment.CARDIO].includes(eq);const wrap=$('#f-db-load-wrap');if(wrap)wrap.style.display=show?'':'none';const input=$('#f-weight'),label=$('#f-weight-label');if(input){input.step='any';input.min='0';if(bodyweight)input.value='0';else if(!(Number(input.value)>0))input.value='';input.setCustomValidity('');}if(label)label.textContent=t(show?'Working weight per dumbbell (kg)':'Working weight (kg)',languageCode(state));const removeRow=$('#f-remove-row');if(removeRow&&removeRow.dataset.new==='1'){const allowed=[Equipment.BARBELL,Equipment.OTHER].includes(eq);removeRow.style.display=allowed?'':'none';if(!allowed){const cb=$('#f-remove');if(cb)cb.checked=false;}}syncTrackingOptions($('#f-tracking')?.value||trackingModeFor(eq));}
@@ -1121,12 +1126,12 @@ async function shiftRest(seconds){const rt=runtime();if(!rt.rest)return;rt.rest.
 async function skipRest(){const rt=runtime();if(!rt?.rest)return;if(rt.phase==='ENTRY'||rt.phase==='SUPERSET_ENTRY'){finalizeRest();await persist();render();return;}finalizeRest();await afterRest();}
 function finalizeRest(){const rt=runtime();if(!rt?.rest)return;const seconds=Math.max(0,Math.round((now()-rt.rest.startedAt)/1000)),ids=Array.isArray(rt.rest.setIds)?rt.rest.setIds:[rt.rest.setId];ids.filter(Boolean).forEach(id=>{const set=getSet(id);if(set)set.actualRestSeconds=seconds;});rt.rest=null;}
 async function settleRestOrRender(){const rt=runtime();if(!rt)return;if(rt.phase==='REST'&&(!rt.rest||Number(rt.rest.endsAt)<=now())){if(rt.rest)finalizeRest();await persist();await afterRest();return;}render();}
-async function afterRest(){const rt=runtime(),action=rt.nextAction;rt.nextAction=null;if(!action){beginStretch();return;}if(action.type==='SET'){rt.currentSetIndex=action.setIndex;const {e,set}=currentActiveContext();const prev=exerciseSets(state,e.id).filter(x=>x.status==='COMPLETE').sort((a,b)=>b.setNumber-a.setNumber)[0];rt.workingWeight=set?.autoregulated?set.plannedWeightKg:(prev?.actualWeightKg??set?.plannedWeightKg??e.plannedWeightKg);rt.phase=hasPendingRamp(newE)?'RAMP_PROMPT':'SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();await persist();render();return;}if(action.type==='SUPERSET'){rt.currentExerciseIndex=action.exerciseIndex;rt.currentSetIndex=action.setIndex;const {e,set}=currentActiveContext();e.startedAt=e.startedAt||now();e.status='ACTIVE';rt.workingWeight=set?.plannedWeightKg??e.plannedWeightKg;rt.supersetEntry=null;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();await persist();render();return;}if(action.type==='EXERCISE'){await enterExercise(action.exerciseIndex);return;}beginStretch();}
+async function afterRest(){const rt=runtime(),action=rt.nextAction;rt.nextAction=null;if(!action){beginStretch();return;}if(action.type==='SET'){rt.currentSetIndex=action.setIndex;const {e,set}=currentActiveContext();const prev=exerciseSets(state,e.id).filter(x=>x.status==='COMPLETE').sort((a,b)=>b.setNumber-a.setNumber)[0];rt.workingWeight=set?.autoregulated?set.plannedWeightKg:(prev?.actualWeightKg??set?.plannedWeightKg??e.plannedWeightKg);rt.phase=hasPendingRamp(e)?'RAMP_PROMPT':'SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();await persist();render();return;}if(action.type==='SUPERSET'){rt.currentExerciseIndex=action.exerciseIndex;rt.currentSetIndex=action.setIndex;const {e,set}=currentActiveContext();e.startedAt=e.startedAt||now();e.status='ACTIVE';rt.workingWeight=set?.plannedWeightKg??e.plannedWeightKg;rt.supersetEntry=null;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();await persist();render();return;}if(action.type==='EXERCISE'){await enterExercise(action.exerciseIndex);return;}beginStretch();}
 async function skipSet(){const {rt,exs,e,sets,set}=currentActiveContext();if(!set)return;const skippedNo=set.setNumber,total=sets.length;set.status='SKIPPED';set.completedAt=now();const next=sets.findIndex(x=>x.status==='PENDING');if(next>=0){rt.currentSetIndex=next;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();ui.setStatusMessage=`${skippedNo}/${total} ${S('SKIPPED','IZLAISTS')}`;await persist();render();setTimeout(()=>{if(ui.setStatusMessage){ui.setStatusMessage=null;render();}},INFO_MESSAGE_MS);return;}e.status='COMPLETE';e.endedAt=now();const action=nextActionAfterExercise(exs,e);if(e.removeWeights){e.unloadStartedAt=now();rt.phase='UNLOAD';rt.phaseStartedAt=now();rt.nextAction=action;}else{rt.nextAction=action;rt.rest={setId:null,startedAt:now(),endsAt:now()+e.plannedRestSeconds*1000,plannedSeconds:e.plannedRestSeconds,warned30:false,count3:false,count2:false,count1:false,beeped0:false};rt.phase='REST';}await persist();ui.setStatusMessage=null;render();}
 function nextPostponableExercise(){const {exs,e}=currentActiveContext();if(!e||e.supersetGroupId)return null;const i=exs.findIndex(x=>x.id===e.id);return exs.slice(i+1).find(x=>exerciseSets(state,x.id).some(set=>set.status==='PENDING'))||null;}
-// Local-only exercise substitutions: no backend lookup and no mutation of a programme template.
-// Only offer familiar alternatives with an explicit movement relationship. Even when a
-// closely-related option has weight history, it must never outrank a true equivalent.
+// SQL-backed relationships are cached locally for offline use; only the current session is altered.
+// True equivalents rank above close alternatives even when the latter have weight history.
+// On first offline use, the bundled relationship catalogue is the fallback.
 function replacementExerciseTarget(){
   const rt=runtime();if(!rt)return null;
   const ctx=currentActiveContext();
@@ -1188,6 +1193,7 @@ function replacementCandidates(target){
   }).sort((a,b)=>
     (a.relation==='EQUIVALENT'?0:1)-(b.relation==='EQUIVALENT'?0:1)||
     (a.programme&&a.hist?0:a.hist?1:a.programme?2:3)-(b.programme&&b.hist?0:b.hist?1:b.programme?2:3)||
+    alternativePriority(key,a.key)-alternativePriority(key,b.key)||
     (b.hist?.at||0)-(a.hist?.at||0)||a.name.localeCompare(b.name)
   ).slice(0,16);
 }
@@ -1198,23 +1204,24 @@ function requestReplaceExercise(){
   const options=replacementCandidates(target);
   if(!options.length){alertDialog(S('No close alternatives','Nav piemērotu analogu'),S('No verified alternatives exist in your exercise catalogue yet.','Katalogā vēl nav pārbaudītu analogu.'));return;}
   window.__gpReplacement={targetId:target.id,options};
-  openDialog(`<h2>${esc(S('Replace exercise','Aizstāt vingrinājumu'))}</h2><div class="small">${esc(sessionDisplayName(target))}</div><div class="note">${esc(S('Own recorded weights are preferred. The programme is unchanged.','Priekšroka dotama iepriekš lietotiem svariem. Programma netiks mainīta.'))}</div><div class="alternative-list">${options.map((x,i)=>`<button class="alternative-choice secondary" onclick="gp.selectReplacement(${i})"><span><strong>${esc(x.name)}</strong><small>${esc(x.relation==='EQUIVALENT'?S('Equivalent','Līdzvērtīgs'):S('Close alternative','Līdzīgs'))}${x.programme?' · '+esc(S('Other programme day','Citā programmas dienā')):''}</small></span><span class="alternative-weight">${x.knownWeight!=null?esc(formatKg(x.knownWeight)):esc(S('Set weight','Ievadīt svaru'))}</span></button>`).join('')}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button></div>`);
+  openDialog(`<h2>${esc(S('Replace exercise','Aizstāt vingrinājumu'))}</h2><div class="small">${esc(sessionDisplayName(target))}</div><div class="note">${esc(S('Own recorded weights are preferred. The programme is unchanged.','Priekšroka dotama iepriekš lietotiem svariem. Programma netiks mainīta.'))}</div><div class="alternative-list">${options.map((x,i)=>`<button class="alternative-choice secondary" onclick="gp.selectReplacement(${i})"><span><strong>${esc(x.name)}</strong><small>${esc(x.relation==='EQUIVALENT'?S('Equivalent','Līdzvērtīgs'):S('Close alternative','Līdzīgs'))}${x.programme?' · '+esc(S('Other programme day','Citā programmas dienā')):''}</small></span><span class="alternative-weight">${x.canonical?.category==='CARDIO'?esc(S('Cardio','Kardio')):x.knownWeight!=null?esc(formatKg(x.knownWeight)):esc(S('Set weight','Ievadīt svaru'))}</span></button>`).join('')}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button></div>`);
 }
 function selectReplacement(index){
   const draft=window.__gpReplacement,c=draft?.options?.[index];if(!c)return;
   draft.chosen=c;
   const kg=c.knownWeight??c.programmeWeight;
   const equipment=c.canonical?.equipment||c.legacy?.equipment||Equipment.OTHER;
-  const body=equipment===Equipment.BODYWEIGHT;
-  openDialog(`<h2>${esc(c.name)}</h2><div class="note">${esc(c.knownWeight!=null?S('Your last completed working weight, editable.','Tavs pēdējais reģistrētais svars, labojams.'):S('No recorded working weight. Enter a suitable initial weight.','Nav reģistrēta svara. Ievadi sākotnējo svaru.'))}</div>${body?'':`<label class="field">${esc(S('Working weight (kg)','Darba svars (kg)'))}</label><input type="number" inputmode="decimal" id="f-replace-weight" step="any" min="0" value="${kg==null?'':Number(kg)}" required>`}<div class="dialog-actions"><button class="secondary" onclick="gp.requestReplaceExercise()">${esc(S('Back','Atpakaļ'))}</button><button onclick="gp.confirmReplacement()">${esc(S('Use for this workout','Izmantot šim treniņam'))}</button></div>`);
+  const body=equipment===Equipment.BODYWEIGHT||equipment===Equipment.CARDIO;
+  openDialog(`<h2>${esc(c.name)}</h2><div class="note">${esc(equipment===Equipment.CARDIO?S('Cardio: record duration, distance and effort during the exercise.','Kardio: vingrinājumā reģistrē ilgumu, distanci un piepūli.'):c.knownWeight!=null?S('Your last completed working weight, editable.','Tavs pēdējais reģistrētais svars, labojams.'):S('No recorded working weight. Enter a suitable initial weight.','Nav reģistrēta svara. Ievadi sākotnējo svaru.'))}</div>${body?'':`<label class="field">${esc(S('Working weight (kg)','Darba svars (kg)'))}</label><input type="number" inputmode="decimal" id="f-replace-weight" step="any" min="0" value="${kg==null?'':Number(kg)}" required>`}<div class="dialog-actions"><button class="secondary" onclick="gp.requestReplaceExercise()">${esc(S('Back','Atpakaļ'))}</button><button onclick="gp.confirmReplacement()">${esc(S('Use for this workout','Izmantot šim treniņam'))}</button></div>`);
 }
 async function confirmReplacement(){
   const draft=window.__gpReplacement,c=draft?.chosen,e=getSessionExercise(draft?.targetId);
   if(!c||!e)return;
   const pending=exerciseSets(state,e.id),equipment=c.canonical?.equipment||c.legacy?.equipment||Equipment.OTHER;
   if(pending.some(s=>s.status==='COMPLETE')){toast('Cannot replace after completing a set');return;}
-  const raw=equipment===Equipment.BODYWEIGHT?0:Number($('#f-replace-weight')?.value);
-  if(!Number.isFinite(raw)||raw<0||(equipment!==Equipment.BODYWEIGHT&&raw<=0)){toast('Enter a valid working weight');return;}
+  const noKg=equipment===Equipment.BODYWEIGHT||equipment===Equipment.CARDIO;
+  const raw=noKg?0:Number($('#f-replace-weight')?.value);
+  if(!Number.isFinite(raw)||raw<0||(!noKg&&raw<=0)){toast('Enter a valid working weight');return;}
   let user=c.user;
   if(!user){
     user={id:uuid(),displayName:c.name,createdLanguage:languageCode(state),canonicalExerciseId:c.canonical?.id||null,equipment,dumbbellLoad:c.canonical?.dumbbellLoad||c.legacy?.dumbbellLoad||DumbbellLoad.SINGLE,exerciseType:c.canonical?.exerciseType||c.legacy?.type||ExerciseType.MODERATE_COMPOUND,trackingMode:trackingModeFor(equipment),legacyExerciseKey:c.key,archived:false};
@@ -1222,7 +1229,7 @@ async function confirmReplacement(){
   }
   const old=e.name;
   Object.assign(e,{name:user.displayName,userExerciseId:user.id,canonicalExerciseId:user.canonicalExerciseId||null,programmeExerciseId:uuid(),templateExerciseId:null,exerciseKey:c.key,equipment:user.equipment,dumbbellLoad:user.dumbbellLoad,exerciseType:user.exerciseType,trackingMode:user.trackingMode||trackingModeFor(equipment),plannedWeightKg:raw,startedAt:null,endedAt:null,status:'PENDING',rampStartedAt:null,rampEndedAt:null,rampSkipped:false,removeWeights:equipment===Equipment.BARBELL,rampMode:'AUTO',supersetGroupId:null});
-  e.rampPlanJson=JSON.stringify(recommendRamp(raw,e.targetReps,e.exerciseType,e.exerciseKey,e.name,e.equipment,state.app_state.maxRampUpSets));
+  e.rampPlanJson=equipment===Equipment.CARDIO?'[]':JSON.stringify(recommendRamp(raw,e.targetReps,e.exerciseType,e.exerciseKey,e.name,e.equipment,state.app_state.maxRampUpSets));
   for(const set of pending)if(set.status==='PENDING'){set.plannedWeightKg=raw;set.actualWeightKg=null;}
   const rt=runtime();if(rt&&rt.phase!=='REST')rt.workingWeight=raw;
   window.__gpReplacement=null;closeDialog();await persist();render();toast(`${old} → ${c.name}`);

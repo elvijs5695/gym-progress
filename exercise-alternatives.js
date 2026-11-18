@@ -40,6 +40,33 @@ export const ALTERNATIVE_RELATIONS=Object.freeze({
   'sumo_deadlift|deadlift':'CLOSE',
   'sumo_deadlift|romanian_deadlift':'CLOSE',
 });
+// The bundled map is a last-resort first-install/offline fallback. Once a valid
+// reference snapshot arrives, Supabase is authoritative; removing a relationship
+// centrally must remove it from suggestions too.
+import {CANONICAL_BY_KEY} from './exercise-catalogue.js';
+let publishedRelations=null;
+export function installPublishedRelations(rows){
+  if(!Array.isArray(rows)||rows.length<30)throw new Error('Incomplete exercise-substitution catalogue');
+  const next=new Map();
+  for(const row of rows){
+    if(!['EQUIVALENT','CLOSE'].includes(row?.relationship))continue;
+    const sources=[row.sourceKey,row.sourceLegacyKey].filter(Boolean);
+    const targets=[row.targetKey,row.targetLegacyKey].filter(Boolean);
+    for(const source of sources)for(const target of targets){
+      if(source!==target)next.set(`${source}|${target}`,{relationship:row.relationship,priority:Number(row.priority||100)});
+    }
+  }
+  if(next.size<30)throw new Error('Invalid exercise-substitution catalogue');
+  publishedRelations=next;
+}
 export function alternativeRelation(sourceKey,targetKey){
-  return ALTERNATIVE_RELATIONS[`${sourceKey}|${targetKey}`]||null;
+  if(!sourceKey||!targetKey)return null;
+  if(publishedRelations)return publishedRelations.get(`${sourceKey}|${targetKey}`)?.relationship||null;
+  const source=CANONICAL_BY_KEY.get(sourceKey)?.legacyExerciseKey||sourceKey;
+  const target=CANONICAL_BY_KEY.get(targetKey)?.legacyExerciseKey||targetKey;
+  return ALTERNATIVE_RELATIONS[`${source}|${target}`]||null;
+}
+export function alternativePriority(sourceKey,targetKey){
+  if(!sourceKey||!targetKey)return 100;
+  return publishedRelations?.get(`${sourceKey}|${targetKey}`)?.priority??100;
 }

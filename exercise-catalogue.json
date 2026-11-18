@@ -1,6 +1,6 @@
 {
   "schema": "gym-progress-exercise-catalogue-v1",
-  "version": 1,
+  "version": 2,
   "families": [
     {
       "id": "8b6b620e-babd-52db-95ec-adfa7e0966ac",
@@ -217,6 +217,62 @@
       "nameLv": "Vertikāla vilkšana",
       "status": "ACTIVE",
       "supersededBy": null
+    },
+    {
+      "id": "7b6c6469-2ca5-54da-a7db-8ef9bff16ea6",
+      "key": "CARDIO_RUN",
+      "nameEn": "Running",
+      "nameLv": "Skriešana",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "40bf436f-f13f-564c-b4d1-7aaeb1d1ad26",
+      "key": "CARDIO_CYCLE",
+      "nameEn": "Cycling",
+      "nameLv": "Riteņbraukšana",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "12a59804-e6fb-58a8-9364-4b7a499941ad",
+      "key": "CARDIO_ROW",
+      "nameEn": "Rowing",
+      "nameLv": "Airēšana",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "eef926a5-e9d8-5b99-b81c-398bd8528ed2",
+      "key": "CARDIO_WALK",
+      "nameEn": "Walking and hiking",
+      "nameLv": "Iešana un pārgājieni",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "31ee5d45-476a-5457-92b6-dac83064cbd7",
+      "key": "CARDIO_MACHINE",
+      "nameEn": "Cardio machines",
+      "nameLv": "Kardio trenažieri",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "dc3df7d7-21a9-5af9-b5ab-5a30eb4c3915",
+      "key": "CARDIO_SWIM",
+      "nameEn": "Swimming",
+      "nameLv": "Peldēšana",
+      "status": "ACTIVE",
+      "supersededBy": null
+    },
+    {
+      "id": "cdae8f1b-223c-5532-ada3-676b1d45af12",
+      "key": "CARDIO_OTHER",
+      "nameEn": "Other cardio",
+      "nameLv": "Citi kardio vingrinājumi",
+      "status": "ACTIVE",
+      "supersededBy": null
     }
   ],
   "exercises": [
@@ -236,7 +292,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "0fe74365-8201-5cb1-8553-8cc7b7ea5d5d",
@@ -256,7 +313,8 @@
       ],
       "legacyExerciseKey": "biceps_curl",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6f5af293-a8fe-5467-95fe-9c3bd4dcc696",
@@ -274,7 +332,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9701e4eb-f6f0-571f-87f6-cdeef82e864b",
@@ -292,7 +351,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9936ec8c-ced2-54b1-b88a-7e4a3fbae64e",
@@ -312,7 +372,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "42c40d0a-af1c-5237-92df-73fbc9b328e3",
@@ -330,7 +391,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "39592293-44ee-5d7f-981d-ec473cdc52f7",
@@ -348,7 +410,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "0c403cc1-0812-5cb8-b37f-1ecebb6aec35",
@@ -366,7 +429,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7476155d-498c-5599-bab6-a7f5c057f59e",
@@ -384,7 +448,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7982ac33-5672-586b-ae36-5d60bdce9fee",
@@ -402,7 +467,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "45e7b652-6c91-5845-a3a1-c21bf04f3f03",
@@ -420,7 +486,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "016d9f6f-4f70-5d87-9b3b-821884a02ed6",
@@ -438,7 +505,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b3b202e9-d5e3-524d-8bd5-2a63b0a2d5cc",
@@ -456,7 +524,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9da894a3-3e06-5330-87bf-3d7263cdb3ea",
@@ -474,7 +543,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "955915f8-b61f-5965-bd14-0c65f80468ef",
@@ -492,7 +562,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "8f8665ac-2f34-581b-bc11-ded533bf4164",
@@ -510,7 +581,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "75754b47-439d-5f07-8ba0-1797a5739cde",
@@ -528,7 +600,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "804dd98e-f4c9-56db-a8b5-82cd2a400f66",
@@ -548,7 +621,8 @@
       ],
       "legacyExerciseKey": "calf_raise",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "2caf571e-f271-5549-a58d-c2f9f9e24577",
@@ -568,7 +642,8 @@
       ],
       "legacyExerciseKey": "cable_fly",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d7faaeaa-472c-5b59-96d6-a25e0d03cc5b",
@@ -586,7 +661,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "095b5679-9531-57f1-b199-9de9be392173",
@@ -604,7 +680,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "152ddc87-3ff9-589e-8fff-f6ea83e88dd2",
@@ -622,7 +699,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4b372531-bf88-57b1-bac2-9e47d7bfdf5c",
@@ -640,7 +718,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7de55f84-0116-5aa2-a0fb-b69b6415b14d",
@@ -660,7 +739,8 @@
       ],
       "legacyExerciseKey": "pec_deck",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "02c5673b-7053-5673-9a6b-bd26c6dff38e",
@@ -682,7 +762,8 @@
       ],
       "legacyExerciseKey": "barbell_bench_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "99d5a235-23ac-5ae5-a33c-3fb61040d10a",
@@ -700,7 +781,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7c6ae2e4-1d21-5f71-92b3-ffe0f95b5d05",
@@ -718,7 +800,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6eb0078d-c5c9-5e94-a73b-a6b25dde02c6",
@@ -736,7 +819,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "69f14424-1b9f-5a8a-bc32-10abd9cacf67",
@@ -754,7 +838,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "040691bf-9655-561b-b821-ec776915bd47",
@@ -772,7 +857,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "18b10f80-d8e1-54dd-8e8a-8c4bffe2c095",
@@ -792,7 +878,8 @@
       ],
       "legacyExerciseKey": "dumbbell_bench_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4126badf-a673-53ad-8170-3c1a7887f9d6",
@@ -810,7 +897,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "429b7b56-5b81-59c7-87d4-84374936b313",
@@ -830,7 +918,8 @@
       ],
       "legacyExerciseKey": "incline_barbell_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "65f855e8-2f50-53c4-9bd4-455e476a17a4",
@@ -851,7 +940,8 @@
       ],
       "legacyExerciseKey": "incline_dumbbell_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e490866d-22a0-52f9-ab4e-cc45b3694651",
@@ -869,7 +959,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5d744338-af8c-5218-995d-f30de6231bcb",
@@ -889,7 +980,8 @@
       ],
       "legacyExerciseKey": "chest_press_machine",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "946d41b9-c497-5846-81b5-01ec142e7d11",
@@ -909,7 +1001,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d0e57a61-066b-560e-9dd6-fa05a23bf086",
@@ -929,7 +1022,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "169384cd-0237-5716-8c36-4ee9120cfa5d",
@@ -947,7 +1041,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "69a358e2-8416-510d-b2f3-e41d84736369",
@@ -965,7 +1060,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "08fe392a-c212-5b48-8dae-68bbb95109ed",
@@ -983,7 +1079,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6d8bcae9-292a-5594-84eb-bafd249ccff8",
@@ -1001,7 +1098,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "fc56d474-b488-5fe6-b8e8-6008740c5bbf",
@@ -1019,7 +1117,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4b08180c-ae6b-591b-a7a7-d63dca574683",
@@ -1037,7 +1136,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "68d186fc-4f4f-5a97-938b-57a2ab87b5f8",
@@ -1055,7 +1155,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "8bab2337-0c39-5a92-b8cb-5374aaf18466",
@@ -1073,7 +1174,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5b4a20ac-eee5-5530-9f18-1474a67002af",
@@ -1091,7 +1193,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "30526449-e1c6-5c73-91dc-aaefa6a2aa41",
@@ -1109,7 +1212,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "0e8b1de3-7d5b-50cf-94dd-9b5572c87f1c",
@@ -1127,7 +1231,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "43fabed1-cd53-5f6f-a9b7-90fee9494f98",
@@ -1145,7 +1250,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "77097ae7-341f-57f9-888c-17e8fea3bcea",
@@ -1163,7 +1269,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e627b067-92ff-5649-95d3-abeb4f121a7b",
@@ -1181,7 +1288,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "520b1475-cbbb-5abd-b6ff-3c2b50106c5e",
@@ -1199,7 +1307,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d205e061-c608-5b0b-bea5-83dcd8c5b7e0",
@@ -1217,7 +1326,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3d7de761-9303-5d45-a174-93dcdff10014",
@@ -1235,7 +1345,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a9e5dfa3-25be-5101-b078-75ed9295769b",
@@ -1253,7 +1364,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5d730829-e368-5221-ad0f-0656a1598701",
@@ -1271,7 +1383,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7e666713-830f-5c55-bf17-14850180d28c",
@@ -1289,7 +1402,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e1f831cd-3b3e-5cf7-a93e-8c478c3f1783",
@@ -1307,7 +1421,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a5cdb356-f8cd-506d-aa9b-690990f46667",
@@ -1325,7 +1440,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "89fb80dd-3e78-5ec3-b717-ef72c840d850",
@@ -1343,7 +1459,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "48b9f5fe-70dc-5baf-aa1e-795735b493d4",
@@ -1361,7 +1478,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4a2b7daa-9dca-5764-b68d-b0cff91858ee",
@@ -1379,7 +1497,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "bda28baa-80a7-5134-9308-e1100cd70eaa",
@@ -1400,7 +1519,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a2795086-66ea-5a77-b204-60f9b420138c",
@@ -1418,7 +1538,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5cfc40c8-848a-5435-bf52-3be5aad87388",
@@ -1439,7 +1560,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "776c6e72-c862-5e83-b183-3a5823216398",
@@ -1457,7 +1579,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "c0199444-7935-58cd-a146-4c3129ec7f94",
@@ -1475,7 +1598,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "hip_thrust",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "face23ab-7dd5-5cec-8f2f-12ff7c91e879",
@@ -1493,7 +1617,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "1b1fe2ea-1296-5798-8288-f81103d36061",
@@ -1511,7 +1636,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7c68808c-e735-5107-ba18-ebc10c94dbf2",
@@ -1529,7 +1655,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a7d9c48d-dd63-57ac-bb2d-175957fb5142",
@@ -1547,7 +1674,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "085db413-25e6-51b9-bbe3-d68eda469038",
@@ -1565,7 +1693,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ea25df9b-9ba6-5bf0-9c72-85f6cd69c6cf",
@@ -1583,7 +1712,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ae6c51e0-672b-5552-b663-82292d6effd7",
@@ -1601,7 +1731,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "026791e8-16f2-5e61-b87a-0da6f4ee5fed",
@@ -1622,7 +1753,8 @@
       ],
       "legacyExerciseKey": "romanian_deadlift",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9f092c6e-76cc-5a86-998d-67b09989a0ec",
@@ -1643,7 +1775,8 @@
       ],
       "legacyExerciseKey": "deadlift",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e53eb0a5-b4ab-5e9b-b6d1-a90eab027a4a",
@@ -1663,7 +1796,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "afdbf50f-c6dc-5bf3-ae81-bc19ec062ce0",
@@ -1681,7 +1815,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "32bf9ab6-ace5-5531-be85-30c3a3389c51",
@@ -1699,7 +1834,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "87775449-77ba-56ae-a065-a2de4626910a",
@@ -1717,7 +1853,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "2474e032-590f-51f4-81ba-673df1177486",
@@ -1735,7 +1872,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "sumo_deadlift",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "02ccb567-fd5e-5256-8d2b-22bcbe9b0d8e",
@@ -1755,7 +1893,8 @@
       ],
       "legacyExerciseKey": "barbell_row",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6877de05-5af9-5e3c-a8fa-228aa3d1fe56",
@@ -1775,7 +1914,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5d07f0de-3ccd-5b44-9ec7-efa65a3b7fd8",
@@ -1793,7 +1933,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9c6c77f4-d837-5a18-8670-de0dddc7865d",
@@ -1811,7 +1952,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3706bc2f-c44e-5237-987a-7abbc571f4a1",
@@ -1829,7 +1971,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9d4bcda3-efba-5725-8e1c-c8ac1145538d",
@@ -1847,7 +1990,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "67414791-1700-5d80-a3f8-94961cf8d5ba",
@@ -1865,7 +2009,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3a0b3da9-1f72-558c-bc06-3f10579df5bb",
@@ -1883,7 +2028,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d1eaf9f4-1a52-5fff-bed6-3787d626eda5",
@@ -1901,7 +2047,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d8228ba3-7aba-5a61-ba9f-707a9c8c435e",
@@ -1921,7 +2068,8 @@
       ],
       "legacyExerciseKey": "seated_cable_row",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "210a4f01-e10f-590c-a317-78e78a9b5eea",
@@ -1939,7 +2087,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e32827b3-eb64-59a2-b3af-2d4537678640",
@@ -1957,7 +2106,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3af6609d-c7e0-5f66-be6a-2461871b5a7d",
@@ -1975,7 +2125,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "94639cd0-bcaa-514e-9417-a502c52c4aa5",
@@ -1993,7 +2144,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "leg_extension",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "1fd01e86-6e7b-5983-ba30-9bd92ccc9e85",
@@ -2011,7 +2163,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3f1afd35-4458-51ba-8d9e-53b54dff61db",
@@ -2029,7 +2182,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "82b94194-4a83-5b82-bee2-e7bf830cd80b",
@@ -2050,7 +2204,8 @@
       ],
       "legacyExerciseKey": "leg_curl",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "938614d1-6eae-5376-9ee4-0bb2af488e6a",
@@ -2068,7 +2223,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "cab587f7-6d65-5ae2-abd4-bcfc50153aa4",
@@ -2086,7 +2242,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "51c6465d-0f73-5bb8-8107-811ce500c2cf",
@@ -2104,7 +2261,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "814d482f-be41-5d0a-989b-bb41b91e25a9",
@@ -2122,7 +2280,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4f2007a7-b340-5876-91c9-8b68852cb651",
@@ -2140,7 +2299,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "fb56b417-d49d-5735-8786-2398a7b5d0a8",
@@ -2158,7 +2318,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "leg_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3e60fb75-d993-5570-bfd8-39bbf84403f5",
@@ -2176,7 +2337,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ee46166f-a8ed-58d5-9fa6-b2e583ac0ef6",
@@ -2194,7 +2356,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "89de1558-c8ec-51fd-9383-22c4520504ab",
@@ -2212,7 +2375,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "fd04e337-e467-5f4e-8bb5-a442b5237421",
@@ -2230,7 +2394,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "92337aad-8ea7-5435-8687-9b1b6e42b2f5",
@@ -2248,7 +2413,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "c550aaaf-ca20-5ab0-8378-7f36f215c25b",
@@ -2266,7 +2432,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "8c375925-3987-5255-8923-5cfbff60d090",
@@ -2284,7 +2451,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b463147d-682e-5f48-b0b7-41c02974f72b",
@@ -2304,7 +2472,8 @@
       ],
       "legacyExerciseKey": "split_squat",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "78c8a937-6807-59e6-90a0-ba54a763c7a2",
@@ -2322,7 +2491,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ce7266ba-2ddd-579c-b2b3-5034eddd5c54",
@@ -2340,7 +2510,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a0d014c2-ccb7-54c2-9c40-0983e5518436",
@@ -2358,7 +2529,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "2de21213-3d5e-5f0e-9d7b-bb07468b5839",
@@ -2376,7 +2548,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "f7446c45-4953-5008-be89-18daa7acd1cf",
@@ -2394,7 +2567,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "45d951f7-3a13-549d-919d-dc13c9a2d6bd",
@@ -2412,7 +2586,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6f916caf-09ef-519c-ab69-412a93c85459",
@@ -2430,7 +2605,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "bbf3aafb-6103-5b7f-9647-18dd39e1a674",
@@ -2448,7 +2624,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a88eb66c-04bd-5481-a55d-7ecceaac1f4e",
@@ -2466,7 +2643,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "31c8ba72-f4b8-5e45-8b22-a0f504302834",
@@ -2484,7 +2662,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e57637b0-45ec-5077-a734-582c2d5b0a30",
@@ -2502,7 +2681,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "6e3b6911-e8cc-587c-abc3-91bf623bc023",
@@ -2520,7 +2700,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "db029e37-906b-5d5a-90c8-30c30f207d7f",
@@ -2538,7 +2719,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "13fff92c-7fab-532e-befb-adbd4e77741f",
@@ -2556,7 +2738,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "de8dfcdc-2c18-50f6-bfb5-53fcb80e685d",
@@ -2574,7 +2757,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "04f1c2ab-6635-5b95-8008-e7422620b6df",
@@ -2592,7 +2776,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "c3eed389-198b-5043-a4d2-440c812c8ac7",
@@ -2610,7 +2795,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d24c7268-f5a8-5ae4-b01a-aef62d297f97",
@@ -2628,7 +2814,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b1acf806-4ecf-59c6-8a51-9972d17fb186",
@@ -2646,7 +2833,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "8325d64e-4035-5dd2-935d-31db83176f64",
@@ -2664,7 +2852,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e40dfb3c-dcf8-5e3d-9dbd-be55c8ffeafc",
@@ -2682,7 +2871,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "0de67e67-da11-50e0-b61f-5e8677bdb363",
@@ -2700,7 +2890,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "af4edd85-b7f9-5387-9523-8493e00c8292",
@@ -2718,7 +2909,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "024f4871-d9a8-5646-beb6-060d8adb55ec",
@@ -2739,7 +2931,8 @@
       ],
       "legacyExerciseKey": "lateral_raise",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "bb9141d3-761b-5708-b1f1-037b11029c5f",
@@ -2757,7 +2950,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "75f53c1c-9ebe-5565-aa2f-d7079dc43170",
@@ -2775,7 +2969,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5c241c5f-1d2f-50d1-aff4-f4c3157f08c0",
@@ -2793,7 +2988,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "cfebf3db-e55d-5e52-9ff0-44e69a954129",
@@ -2811,7 +3007,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "54d0796e-522c-5456-93ca-0b3a488a3b11",
@@ -2829,7 +3026,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "1fe2a0bd-900f-5b56-b3dd-8d6e35605a04",
@@ -2847,7 +3045,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "28f133c7-b7c6-5e15-b95a-9efbd7d0ac87",
@@ -2865,7 +3064,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d5ab442a-2d9f-5101-b950-176f540f2b8f",
@@ -2887,7 +3087,8 @@
       ],
       "legacyExerciseKey": "overhead_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "8b1238e8-a2fd-51f8-887b-6186148778ec",
@@ -2907,7 +3108,8 @@
       ],
       "legacyExerciseKey": "dumbbell_shoulder_press",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "a7bc4181-8a1e-581e-9f13-60251efe9d33",
@@ -2925,7 +3127,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e3772f8c-71bf-5657-b4a5-f2f53dd9622d",
@@ -2943,7 +3146,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "shoulder_press_machine",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "09f25d5d-230f-5814-aa59-03db46529458",
@@ -2961,7 +3165,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "808da4c6-c6d5-563f-8a64-98e91ba0fd5d",
@@ -2979,7 +3184,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "1037ff6f-c18a-5895-bdef-d469fb9df89c",
@@ -2997,7 +3203,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "849b1a2b-4817-5e80-a8bc-1d0df6983979",
@@ -3015,7 +3222,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ed28b744-a291-55d7-a3c8-328422448cfa",
@@ -3033,7 +3241,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e8a77122-10a0-51c5-8009-a72796f5cb21",
@@ -3051,7 +3260,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4fdfeb9c-d314-5147-bb47-32285d0fe447",
@@ -3069,7 +3279,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "38e7db6c-d9b2-512a-9ff8-b395dd3e4851",
@@ -3087,7 +3298,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4fadd56d-dae3-561a-8295-f6e7b2edd9b4",
@@ -3105,7 +3317,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "23e01f1e-c645-5cd6-abba-3a41cd31bb33",
@@ -3123,7 +3336,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ff495c08-79df-51ec-adb5-142a6c01af0c",
@@ -3145,7 +3359,8 @@
       ],
       "legacyExerciseKey": "back_squat",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "4d073b7b-1558-50e7-bf6b-52963d19dddb",
@@ -3165,7 +3380,8 @@
       ],
       "legacyExerciseKey": "front_squat",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "05bcac78-66ee-5895-8eac-7d31157ccbc5",
@@ -3183,7 +3399,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "95999f86-e30e-53f3-a2ef-268fe61de856",
@@ -3201,7 +3418,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "dfff03e2-8db7-55f8-8fa3-33a7078df447",
@@ -3219,7 +3437,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b20a89d7-d6ec-5dad-9010-2eebffe7fd38",
@@ -3237,7 +3456,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "d680a338-cc70-5f75-ae43-5277c690e1f1",
@@ -3255,7 +3475,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": "hack_squat",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ebd5322e-8460-504c-9432-61579253f4fb",
@@ -3275,7 +3496,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ab82c4f5-881c-5f2e-8ac6-45297c1d37a2",
@@ -3293,7 +3515,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7b34f9e2-d671-5e33-bd49-393d677b045f",
@@ -3311,7 +3534,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7d610945-504b-59a1-b5c3-78140d8909e9",
@@ -3329,7 +3553,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "f44c6e57-d066-510f-86d6-4353cebcd374",
@@ -3347,7 +3572,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "64cc4948-bbd4-598b-8feb-e5be03ffb371",
@@ -3368,7 +3594,8 @@
       ],
       "legacyExerciseKey": "triceps_pushdown",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ebad7648-9815-5210-bfa3-9de0a272e686",
@@ -3386,7 +3613,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "add1ee0c-df1e-584c-a929-48397fb22e07",
@@ -3404,7 +3632,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "93ee363d-7281-5d6f-9ce5-db3b3f74cf94",
@@ -3422,7 +3651,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "7b5c1ddb-7149-5dc5-a0f4-5d974becfd94",
@@ -3440,7 +3670,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b4918e70-41ac-505e-ba96-130085f5bb46",
@@ -3460,7 +3691,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "3870ebd1-99b4-5475-ab06-7604b6d722c3",
@@ -3478,7 +3710,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "539df053-bf6e-56b7-89f9-4228133ff169",
@@ -3496,7 +3729,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "23467cbf-34cd-5503-bd7f-098b5d55812f",
@@ -3514,7 +3748,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "c0cc5a36-6b75-596c-aba3-078219808932",
@@ -3532,7 +3767,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "eb4c7047-d66f-5338-b32b-8748978643b0",
@@ -3552,7 +3788,8 @@
       ],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "77ebc498-8057-5052-8619-74bbdf61b338",
@@ -3570,7 +3807,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "b50c875a-d269-5e6e-9303-c6826da8f8d7",
@@ -3590,7 +3828,8 @@
       ],
       "legacyExerciseKey": "lat_pulldown",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "ed8301a4-ff87-5e15-adae-d0d12277c5cc",
@@ -3608,7 +3847,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "1ed42271-288f-562a-aef9-ac52db94863d",
@@ -3626,7 +3866,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "5483014a-2c75-54c8-837f-f195e0f4e16b",
@@ -3646,7 +3887,8 @@
       ],
       "legacyExerciseKey": "pull_up",
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "9b39822c-4e10-5f1d-9f4d-9813acbcd41e",
@@ -3664,7 +3906,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "aca85e4d-274a-59a7-b795-1c394f6b7b07",
@@ -3682,7 +3925,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "f036b87f-6898-5b9e-8fef-acb20b580060",
@@ -3700,7 +3944,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "e135a48f-1efe-5eeb-b491-bc16581211d6",
@@ -3718,7 +3963,8 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
     },
     {
       "id": "603ca1fe-e7be-5920-bbd7-8b0596579831",
@@ -3736,7 +3982,300 @@
       "aliasesEn": [],
       "legacyExerciseKey": null,
       "status": "ACTIVE",
-      "supersededBy": null
+      "supersededBy": null,
+      "category": "STRENGTH"
+    },
+    {
+      "id": "f4ed03c8-f99e-5ea5-97fe-d335963384bc",
+      "key": "running",
+      "familyId": "7b6c6469-2ca5-54da-a7db-8ef9bff16ea6",
+      "familyKey": "CARDIO_RUN",
+      "nameEn": "Running / Treadmill",
+      "nameLv": "Skriešana / skrejceliņš",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Run",
+        "Treadmill"
+      ],
+      "legacyExerciseKey": "running",
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "034dd92b-8842-596d-b457-9ec8b07ce4b1",
+      "key": "outdoor_running",
+      "familyId": "7b6c6469-2ca5-54da-a7db-8ef9bff16ea6",
+      "familyKey": "CARDIO_RUN",
+      "nameEn": "Outdoor Running",
+      "nameLv": "Skriešana ārā",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Jogging"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "56b62c8d-67a8-53f6-8d94-0d8db4c9003c",
+      "key": "cycling",
+      "familyId": "40bf436f-f13f-564c-b4d1-7aaeb1d1ad26",
+      "familyKey": "CARDIO_CYCLE",
+      "nameEn": "Cycling / Stationary Bike",
+      "nameLv": "Riteņbraukšana / veloergometrs",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Cycle",
+        "Spin Bike"
+      ],
+      "legacyExerciseKey": "cycling",
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "72d32fc6-55f9-548a-a560-3d603233a5c1",
+      "key": "outdoor_cycling",
+      "familyId": "40bf436f-f13f-564c-b4d1-7aaeb1d1ad26",
+      "familyKey": "CARDIO_CYCLE",
+      "nameEn": "Outdoor Cycling",
+      "nameLv": "Riteņbraukšana ārā",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Road Cycling"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "fc3f9236-94df-571b-84a3-8b4723bf2c2b",
+      "key": "rowing_cardio",
+      "familyId": "12a59804-e6fb-58a8-9364-4b7a499941ad",
+      "familyKey": "CARDIO_ROW",
+      "nameEn": "Rowing Ergometer",
+      "nameLv": "Airēšanas ergometrs",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Indoor Rowing"
+      ],
+      "legacyExerciseKey": "rowing_cardio",
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "19ddca72-f87c-533d-97ed-b9f10855cd68",
+      "key": "elliptical_cardio",
+      "familyId": "31ee5d45-476a-5457-92b6-dac83064cbd7",
+      "familyKey": "CARDIO_MACHINE",
+      "nameEn": "Elliptical Trainer",
+      "nameLv": "Eliptiskais trenažieris",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [],
+      "legacyExerciseKey": "elliptical_cardio",
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "e819002c-76bb-579b-965c-20581d23149e",
+      "key": "walking",
+      "familyId": "eef926a5-e9d8-5b99-b81c-398bd8528ed2",
+      "familyKey": "CARDIO_WALK",
+      "nameEn": "Walking / Incline Treadmill",
+      "nameLv": "Iešana / slīps skrejceliņš",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Walking"
+      ],
+      "legacyExerciseKey": "walking",
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "ef8aa547-00f1-5e01-a9cb-81e6808c6e26",
+      "key": "outdoor_walking",
+      "familyId": "eef926a5-e9d8-5b99-b81c-398bd8528ed2",
+      "familyKey": "CARDIO_WALK",
+      "nameEn": "Outdoor Walking",
+      "nameLv": "Iešana ārā",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Walking Outdoors"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "a6d224c3-3184-53e4-a0f7-1b98ca6f156d",
+      "key": "stair_climber",
+      "familyId": "31ee5d45-476a-5457-92b6-dac83064cbd7",
+      "familyKey": "CARDIO_MACHINE",
+      "nameEn": "Stair Climber",
+      "nameLv": "Kāpņu trenažieris",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Stairmaster"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "db54ffec-3ecb-563b-9a71-0d72f9746c7d",
+      "key": "swimming",
+      "familyId": "dc3df7d7-21a9-5af9-b5ab-5a30eb4c3915",
+      "familyKey": "CARDIO_SWIM",
+      "nameEn": "Swimming",
+      "nameLv": "Peldēšana",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Pool Swimming"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "96fbbd83-12bf-5529-af13-8677da513ba9",
+      "key": "ski_erg",
+      "familyId": "12a59804-e6fb-58a8-9364-4b7a499941ad",
+      "familyKey": "CARDIO_ROW",
+      "nameEn": "SkiErg",
+      "nameLv": "Slēpošanas ergometrs",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Ski Ergometer"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "60a2f0e8-37f5-5086-bb9c-885f52000775",
+      "key": "jump_rope",
+      "familyId": "cdae8f1b-223c-5532-ada3-676b1d45af12",
+      "familyKey": "CARDIO_OTHER",
+      "nameEn": "Jump Rope",
+      "nameLv": "Lēkšana ar lecamauklu",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Skipping Rope"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "621d5eb7-3a53-5e65-92fb-761830dd3af6",
+      "key": "air_bike",
+      "familyId": "40bf436f-f13f-564c-b4d1-7aaeb1d1ad26",
+      "familyKey": "CARDIO_CYCLE",
+      "nameEn": "Air Bike",
+      "nameLv": "Gaisa velotrenažieris",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [
+        "Assault Bike"
+      ],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
+    },
+    {
+      "id": "466d0c48-51b3-597a-b059-0e1a9367d623",
+      "key": "hiking",
+      "familyId": "eef926a5-e9d8-5b99-b81c-398bd8528ed2",
+      "familyKey": "CARDIO_WALK",
+      "nameEn": "Hiking",
+      "nameLv": "Pārgājiens",
+      "equipment": "CARDIO",
+      "dumbbellLoad": "SINGLE",
+      "exerciseType": "MODERATE_COMPOUND",
+      "loadSemantics": "NO_LOAD",
+      "friendE1rmEligible": false,
+      "comparisonMetric": null,
+      "aliasesEn": [],
+      "legacyExerciseKey": null,
+      "status": "ACTIVE",
+      "supersededBy": null,
+      "category": "CARDIO"
     }
   ]
 }
