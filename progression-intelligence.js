@@ -24,7 +24,7 @@ function recommendationDecision(e,recommendation){
   return 'NOT_APPLICABLE';
 }
 function performanceScore(state,e){
-  const sets=exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE');if(!sets.length)return null;
+  const sets=exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE');if(!sets.length||e.trackingMode===TrackingMode.CARDIO)return null;
   if(e.trackingMode===TrackingMode.TIME_ONLY){
     const actual=sets.reduce((sum,s)=>sum+Math.max(0,Number(s.actualDurationSeconds||0)),0);
     const target=sets.reduce((sum,s)=>sum+Math.max(1,Number(s.targetDurationSeconds||e.targetSeconds||60)),0);
@@ -89,7 +89,7 @@ function declinedVsPrior(state,e,session){
   const a=performanceScore(state,e),b=performanceScore(state,prev.e);return Number.isFinite(a)&&Number.isFinite(b)&&a<b-TREND_DEADBAND;
 }
 function workoutObjectiveScore(state,session){
-  const exs=sessionExercises(state,session.id).filter(e=>exerciseSets(state,e.id).some(s=>s.status==='COMPLETE'));if(!exs.length)return{score:0,reasons:[],fatigueLike:false};
+  const exs=sessionExercises(state,session.id).filter(e=>e.trackingMode!==TrackingMode.CARDIO&&exerciseSets(state,e.id).some(s=>s.status==='COMPLETE'));if(!exs.length)return{score:0,reasons:[],fatigueLike:false};
   const recs=exs.map(e=>immediateRecommendation(state,e)),reduceCount=recs.filter(x=>x==='REDUCE').length,misses=exs.filter(e=>materialMiss(state,e)).length,declines=exs.filter(e=>declinedVsPrior(state,e,session)).length;
   const withinReductions=exs.filter(e=>exerciseSets(state,e.id).some(s=>s.autoregulated===true&&Number(s.actualWeightKg||0)<Number(s.plannedWeightKg||0))).length;
   let score=0;const reasons=[];

@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.7.3'||!app.includes("APP_VERSION='1.7.3'")||!sw.includes('gym-progress-pwa-v1.7.3')||!read('index.html').includes('app.js?v=1.7.3')||!read('index.html').includes('styles.css?v=1.7.3'))errors.push('v1.7.3 version/cache markers are inconsistent');
+if(pkg.version!=='1.7.4'||!app.includes("APP_VERSION='1.7.4'")||!sw.includes('gym-progress-pwa-v1.7.4')||!read('index.html').includes('app.js?v=1.7.4')||!read('index.html').includes('styles.css?v=1.7.4'))errors.push('v1.7.4 version/cache markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -16,7 +16,7 @@ if(!app.includes('compareWithFriends')||!app.includes('comparisonPointsForSessio
 if(!app.includes('comparisonPointsForSelectedHistory')||!app.includes('syncComparisonHistory')||!read('social-api.js').includes('social_replace_exercise_comparison_points'))errors.push('retroactive comparison-history sync missing');
 if(!app.includes('TrackingMode.TIME_ONLY')||!app.includes("rt.phase='TIMED_SET'"))errors.push('timed exercise flow missing');
 if(!app.includes('supersetGroupId')||!app.includes('joinSuperset')||!app.includes('splitSuperset')||!app.includes('superset-pulse-grid')||!app.includes('SUPERSET_ENTRY')||!app.includes('saveSupersetSet')||!app.includes('supersetPairSetInfo'))errors.push('paired superset programme/workout flow missing');
-if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('barbellPlateFriendlyRamp'))errors.push('max/plate-friendly ramp logic missing');
+if(!app.includes('maxRampUpSets')||!read('exercise-library.js').includes('practicalBarbellRampLoad'))errors.push('max/plate-friendly ramp logic missing');
 if(!app.includes('disableRampPermanently')||!app.includes('renderNextInfo'))errors.push('ramp permanent-disable or Next panel missing');
 if(!app.includes("kind==='warning30'")||!app.includes("kind==='countdown'"))errors.push('updated audio cue patterns missing');
 if(!app.includes('renderTrackerCard')||!app.includes('setTrackerAmount')||!app.includes('checkTrackerReminders'))errors.push('Tracker functionality incomplete');
@@ -59,7 +59,7 @@ if(!app.includes('function exerciseFormChangeLink()')||app.includes("exerciseFor
 
 if(!app.includes('trackerRenderedDate=trackerTodayKey()')||!app.includes('trackerDateNow!==trackerRenderedDate'))errors.push('local-midnight Tracker rollover missing');
 if(!app.includes('trackerVisualBucket')||!app.includes('/10);if(bucket!==trackerVisualBucket')||!app.includes('refreshTrackerTimeVisuals'))errors.push('Tracker clock marker does not refresh on a 10-minute cadence');
-if(!app.includes('initialWeightKg:resolvedEquipment===Equipment.BODYWEIGHT?0:rawWeight')||!app.includes('id="f-weight" type="number" min="0" step="any"'))errors.push('programme manual weights are still rounded/snapped');
+if(!app.includes('initialWeightKg:[Equipment.BODYWEIGHT,Equipment.CARDIO].includes(resolvedEquipment)?0:rawWeight')||!app.includes('id="f-weight" type="number" min="0" step="any"'))errors.push('programme manual weights are still rounded/snapped');
 if(app.includes('workout-expand-chevron ${expanded'))errors.push('Home rotation expansion chevrons remain');
 
 if(!app.includes('renderFriendComparisonChart')||!app.includes('orderedIds=[me,friendId')||!app.includes('pts.length>=2')||!app.includes('pts.length===1?5.5:4')||!app.includes('niceChartAxis'))errors.push('one-chart combined-domain/single-point friend comparison missing');

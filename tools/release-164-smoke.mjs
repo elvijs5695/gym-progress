@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {recommendRamp, Equipment, ExerciseType} from '../exercise-library.js';
+import {alternativeRelation} from '../exercise-alternatives.js';
+import {exerciseMetrics,sessionMetrics} from '../metrics.js';
+const ramp=(w,e=Equipment.BARBELL,t=ExerciseType.HEAVY_COMPOUND)=>recommendRamp(w,5,t,'deadlift','Deadlift',e,3).map(x=>x.weightKg);
+assert.deepEqual(ramp(97.5),[50,70,90]);
+assert.deepEqual(ramp(120),[60,80,100]);
+assert.deepEqual(ramp(170),[90,120,140]);
+assert.ok(ramp(122.5,Equipment.MACHINE).every(x=>Number.isInteger(x*2)));
+assert.equal(alternativeRelation('barbell_bench_press','dumbbell_bench_press'),'EQUIVALENT');
+assert.equal(alternativeRelation('barbell_bench_press','back_squat'),null);
+const state={app_state:{},workout_sessions:[{id:100,workoutName:'Test',startedAt:1000,status:'COMPLETE'}],session_exercises:[{id:1,sessionId:100,position:0,equipment:Equipment.BARBELL,dumbbellLoad:'SINGLE',trackingMode:'WEIGHT_REPS'}, {id:2,sessionId:100,position:1,equipment:Equipment.CARDIO,dumbbellLoad:'SINGLE',trackingMode:'CARDIO'}],performed_sets:[{id:1,sessionExerciseId:1,setNumber:1,status:'COMPLETE',actualWeightKg:28.75,actualReps:10,rir:2}, {id:2,sessionExerciseId:2,setNumber:1,status:'COMPLETE',actualWeightKg:0,actualReps:0,actualDurationSeconds:1800,distanceKm:5,averageHeartRateBpm:144,averagePowerWatts:180,sessionRpe:7}]};
+const lift=exerciseMetrics(state,state.session_exercises[0]);assert.equal(lift.volume,287.5);
+const cardio=exerciseMetrics(state,state.session_exercises[1]);assert.equal(cardio.volume,0);assert.equal(cardio.totalDistanceKm,5);assert.equal(cardio.totalDurationSeconds,1800);assert.equal(cardio.cardioLoad,210);
+const session=sessionMetrics(state,state.workout_sessions[0]);assert.equal(session.volume,287.5);assert.equal(session.progressPercent,null);
+console.log('PASS: barbell warm-ups, half-kg machines, equivalence links, cardio isolation, exact weights, totals.');

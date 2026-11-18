@@ -1,3 +1,5 @@
+Latest release notes: **1.6.4 Android / 1.7.4 PWA** — see [RELEASE_NOTES_1.6.4_1.7.4.md](RELEASE_NOTES_1.6.4_1.7.4.md) for full details.
+
 # Gym Progress PWA v1.7.3 — 2026-10-22
 
 ## Major improvements

@@ -22,8 +22,21 @@ const appLocale=()=>typeof document!=='undefined'&&document.documentElement?.lan
 export function dateOnly(ms){return new Intl.DateTimeFormat(appLocale(),{day:'numeric',month:'short',year:'numeric'}).format(new Date(ms));}
 export function dateTime(ms){return new Intl.DateTimeFormat(appLocale(),{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(ms));}
 export function iso(ms){return ms==null?null:new Date(ms).toISOString();}
-export function exerciseSets(state,exerciseId){return state.performed_sets.filter(s=>s.sessionExerciseId===exerciseId).sort((a,b)=>a.setNumber-b.setNumber);}
-export function sessionExercises(state,sessionId){return state.session_exercises.filter(e=>e.sessionId===sessionId).sort((a,b)=>a.position-b.position);}
+// Build indexes only when the actual source arrays are replaced. Most local updates
+// mutate one object or append, so cached ordered groups are safe until structural
+// changes; replacement array identity and length invalidate the index.
+const setIndexes=new WeakMap(),exerciseIndexes=new WeakMap();
+function groupedRows(rows,key,order,cache){
+  const old=cache.get(rows);
+  if(old&&old.length===rows.length&&old.first===rows[0]&&old.last===rows.at(-1))return old.groups;
+  const groups=new Map();
+  for(const row of rows){const k=String(row[key]);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(row);}
+  for(const rowsInGroup of groups.values())rowsInGroup.sort((a,b)=>Number(a[order])-Number(b[order]));
+  cache.set(rows,{length:rows.length,first:rows[0],last:rows.at(-1),groups});
+  return groups;
+}
+export function exerciseSets(state,exerciseId){return groupedRows(state.performed_sets,'sessionExerciseId','setNumber',setIndexes).get(String(exerciseId))?.slice().sort((a,b)=>a.setNumber-b.setNumber)||[];}
+export function sessionExercises(state,sessionId){return groupedRows(state.session_exercises,'sessionId','position',exerciseIndexes).get(String(sessionId))?.slice().sort((a,b)=>a.position-b.position)||[];}
 export function exerciseMetrics(state,e){
   const complete=exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE');
   const multiplier=volumeMultiplier(e.equipment,e.dumbbellLoad);
@@ -31,12 +44,14 @@ export function exerciseMetrics(state,e){
   const rirs=complete.map(effectiveRir).filter(v=>v!=null).map(Number);
   const bestE1rm=heaviestHistoricalE1rm(complete);
   const totalDurationSeconds=complete.reduce((sum,s)=>sum+Number(s.actualDurationSeconds||0),0);
+  const totalDistanceKm=complete.reduce((sum,set)=>sum+Math.max(0,Number(set.distanceKm||0)),0);
+  const cardioLoad=complete.reduce((sum,set)=>sum+Number(set.actualDurationSeconds||0)/60*Math.max(0,Number(set.sessionRpe||0)),0);
   const maxWeight=complete.reduce((best,s)=>Math.max(best,Number(s.actualWeightKg)||0),0);
   const maxReps=complete.reduce((best,s)=>Math.max(best,Number(s.actualReps)||0),0);
   const failureCount=complete.filter(s=>s.failure).length;
   const actionableFailureCount=complete.filter(s=>actionableFailure(e,s,state.app_state)).length;
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
-  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,bestE1rm,maxWeight,maxReps,totalDurationSeconds,failureCount,actionableFailureCount};
+  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,bestE1rm,maxWeight,maxReps,totalDurationSeconds,totalDistanceKm,cardioLoad,failureCount,actionableFailureCount};
 }
 export function sessionMetrics(state,session){
   const es=sessionExercises(state,session.id); const em=es.map(e=>exerciseMetrics(state,e));

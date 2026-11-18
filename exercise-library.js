@@ -2,11 +2,16 @@ export const ExerciseType={
   HEAVY_COMPOUND:'HEAVY_COMPOUND',MODERATE_COMPOUND:'MODERATE_COMPOUND',MACHINE_COMPOUND:'MACHINE_COMPOUND',ISOLATION:'ISOLATION'
 };
 export const RampMode={AUTO:'AUTO',ALWAYS:'ALWAYS',NEVER:'NEVER'};
-export const Equipment={BARBELL:'BARBELL',DUMBBELL:'DUMBBELL',MACHINE:'MACHINE',CABLE:'CABLE',BODYWEIGHT:'BODYWEIGHT',OTHER:'OTHER'};
+export const Equipment={BARBELL:'BARBELL',DUMBBELL:'DUMBBELL',MACHINE:'MACHINE',CABLE:'CABLE',BODYWEIGHT:'BODYWEIGHT',CARDIO:'CARDIO',OTHER:'OTHER'};
 export const DumbbellLoad={SINGLE:'SINGLE',PAIR:'PAIR'};
 
 export const EXERCISES=[
-  ['barbell_bench_press','Barbell Bench Press',['Bench Press','Bench','Flat Bench'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
+  ['running','Running / Treadmill', ['Run','Treadmill'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['cycling','Cycling / Stationary Bike',['Cycle','Spin Bike'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['rowing_cardio','Rowing Ergometer',['Indoor Rowing'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['elliptical_cardio','Elliptical Trainer',[],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['walking','Walking / Incline Treadmill',['Walking'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['barbell_bench_press' ,'Barbell Bench Press',['Bench Press','Bench','Flat Bench'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
   ['back_squat','Back Squat',['Squat','Barbell Squat'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
   ['deadlift','Deadlift',['Conventional Deadlift'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
   ['sumo_deadlift','Sumo Deadlift',[],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
@@ -99,43 +104,15 @@ export function progressionIncrement(base,equipment,exerciseKey=null,exerciseTyp
   return exerciseType===ExerciseType.HEAVY_COMPOUND&&base>=100&&comfortable?5:2.5;
 }
 export function suggestedNextWeight(base,equipment,exerciseKey=null,exerciseType=ExerciseType.MODERATE_COMPOUND,minCompletedRir=null,targetRirMax=2){return snapSelectable(Number(base||0)+progressionIncrement(base,equipment,exerciseKey,exerciseType,minCompletedRir,targetRirMax),equipment);}
-function barbellPlateFriendlyRamp(workingWeightKg, raw, maxSets){
-  // The 20 kg empty bar may itself be a ramp set, but a 20 kg working set needs no ramp-up.
-  // Ramp-only plates intentionally use 5/10/15/20 kg plates per side. 2.5 kg may still be used for the final work load.
-  const bar=20, work=Math.max(bar,Number(workingWeightKg)||0), targetCount=Math.max(0,Math.min(Number(maxSets??3),raw.length));
-  if(targetCount===0||work<=bar+1e-6)return [];
-  const firstSpec=raw[0],emptyBar={weightKg:bar,reps:firstSpec[1],restSeconds:firstSpec[2],percentOfWorkingWeight:Math.round(bar/work*100),plateFriendly:true};
-  if(targetCount===1)return [emptyBar];
-  const sideBase=Math.floor(Math.max(0,(work-bar)/2)/5)*5;
-  if(sideBase<5)return [emptyBar];
-  const plates=[5,10,15,20], remainingCount=targetCount-1;
-  const desired=raw.slice(1,targetCount).map(x=>x[0]*work);
-  let best=null;
-  // Search a small plate stack that can stay on the bar: each ramp step adds one plate per side; the final work may add the remaining plate/2.5 kg.
-  const maxLen=Math.min(5,remainingCount+2);
-  const walk=(seq,sum)=>{
-    if(sum>sideBase)return;
-    if(seq.length>=2){
-      const cumulative=[];let x=0;for(const p of seq){x+=p;cumulative.push(bar+2*x);}
-      const ramps=cumulative.filter(v=>v<work-1e-6);
-      if(ramps.length){
-        const chosen=ramps.slice(0,remainingCount);
-        let score=Math.abs(sideBase-sum)*1.2;
-        for(let i=0;i<chosen.length;i++)score+=Math.abs(chosen[i]-(desired[i]??desired.at(-1)));
-        score+=Math.abs(chosen.length-remainingCount)*25;
-        if(!best||score<best.score)best={score,weights:chosen};
-      }
-    }
-    if(seq.length>=maxLen||sum>=sideBase)return;
-    for(const p of plates)walk([...seq,p],sum+p);
-  };
-  walk([],0);
-  const weights=best?.weights||[];
-  return [emptyBar,...weights.slice(0,remainingCount).map((weightKg,i)=>{const spec=raw[Math.min(i+1,raw.length-1)];return{weightKg,reps:spec[1],restSeconds:spec[2],percentOfWorkingWeight:Math.round(weightKg/work*100),plateFriendly:true};})].slice(0,targetCount);
+function practicalBarbellRampLoad(targetKg,workingKg){
+  // Only 10/15/20 kg plates per side, or an empty 20 kg bar. Never change
+  // the user-entered WORKING load, which may legitimately be 97.5 kg.
+  const candidates=[20];for(let kg=40;kg<workingKg-.001;kg+=10)candidates.push(kg);
+  return candidates.filter(n=>n<workingKg-.001).sort((a,b)=>Math.abs(a-targetKg)-Math.abs(b-targetKg)||b-a)[0]??20;
 }
 export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKey=null,exerciseName='',equipment=equipmentFor(exerciseKey,exerciseName),maxSets=3){
   const work=Number(workingWeightKg)||0;if(!(work>0)||maxSets<=0)return[];
-  if(equipment===Equipment.BARBELL&&work<=20.01)return[];
+  if(equipment===Equipment.CARDIO||equipment===Equipment.BODYWEIGHT||equipment===Equipment.BARBELL&&work<=20.01)return[];
   let raw;
   if(exerciseType===ExerciseType.HEAVY_COMPOUND){raw=targetReps<=5?[[.50,6,60],[.70,4,75],[.85,2,90],[.92,1,120]]:targetReps<=10?[[.45,8,60],[.65,5,75],[.82,3,90],[.90,1,120]]:[[.50,8,60],[.70,5,75],[.85,2,90]];}
   else if(exerciseType===ExerciseType.MODERATE_COMPOUND)raw=[[.50,6,60],[.70,4,75],[.85,2,90]];
@@ -143,7 +120,7 @@ export function recommendRamp(workingWeightKg,targetReps,exerciseType,exerciseKe
   else if(exerciseType===ExerciseType.ISOLATION)raw=[[.60,8,45],[.80,4,60]];
   else raw=[[.50,6,60],[.75,3,75],[.90,1,90]];
   const limit=Math.max(0,Math.min(6,Number(maxSets??3))),seen=new Set();
-  const rampSnap=n=>equipment===Equipment.BARBELL?snap(n,2.5):equipment===Equipment.DUMBBELL?snap(n,.5):(equipment===Equipment.MACHINE||equipment===Equipment.CABLE)?snap(n,2.5):equipment===Equipment.BODYWEIGHT?0:snap(n,.25);
-  return raw.slice(0,limit).map(([pct,reps,rest])=>{let weight=rampSnap(work*pct);if(equipment===Equipment.BARBELL)weight=Math.max(20,weight);return{weightKg:weight,reps,restSeconds:rest,percentOfWorkingWeight:Math.round(weight/work*100)};})
+  const rampSnap=n=>equipment===Equipment.BARBELL?practicalBarbellRampLoad(n,work):equipment===Equipment.BODYWEIGHT||equipment===Equipment.CARDIO?0:snap(n,.5);
+  return raw.slice(0,limit).map(([pct,reps,rest])=>{const target=equipment===Equipment.BARBELL&&work<110&&pct>=.82?.90:pct;let weight=rampSnap(work*target);if(equipment===Equipment.BARBELL)weight=Math.max(20,weight);return{weightKg:weight,reps,restSeconds:rest,percentOfWorkingWeight:Math.round(weight/work*100)};})
     .filter(x=>x.weightKg>0&&x.weightKg<work-.001).filter(x=>{if(seen.has(x.weightKg))return false;seen.add(x.weightKg);return true;});
 }

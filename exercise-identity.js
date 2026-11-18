@@ -2,14 +2,14 @@ import {CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName} from './exercise-catalog
 import {REVIEWED_MIGRATION} from './exercise-migration-map.js';
 import {Equipment,DumbbellLoad,ExerciseType,bestMatch} from './exercise-library.js';
 
-export const TrackingMode={WEIGHT_REPS:'WEIGHT_REPS',BODYWEIGHT_REPS:'BODYWEIGHT_REPS',TIME_ONLY:'TIME_ONLY'};
+export const TrackingMode={WEIGHT_REPS:'WEIGHT_REPS',BODYWEIGHT_REPS:'BODYWEIGHT_REPS',TIME_ONLY:'TIME_ONLY',CARDIO:'CARDIO'};
 export const E1RM_FORMULA_VERSION='EPLEY_HEAVIEST_V2';
 
 export function uuid(){
   if(globalThis.crypto?.randomUUID)return globalThis.crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16);});
 }
-export function trackingModeFor(equipment){return equipment===Equipment.BODYWEIGHT?TrackingMode.BODYWEIGHT_REPS:TrackingMode.WEIGHT_REPS;}
+export function trackingModeFor(equipment){return equipment===Equipment.CARDIO?TrackingMode.CARDIO:equipment===Equipment.BODYWEIGHT?TrackingMode.BODYWEIGHT_REPS:TrackingMode.WEIGHT_REPS;}
 export function canonicalExerciseById(id){return id?CANONICAL_BY_ID.get(id)||null:null;}
 export function canonicalExerciseByKey(key){return key?CANONICAL_BY_KEY.get(key)||null:null;}
 export function canonicalDisplayName(canonical,lang='en'){return canonicalName(canonical,lang);}
@@ -97,9 +97,9 @@ export function ensureExerciseIdentityState(state){
   for(const set of state.performed_sets||[]){set.targetDurationSeconds=Math.max(0,Number(set.targetDurationSeconds||0));set.actualDurationSeconds=set.actualDurationSeconds==null?null:Math.max(0,Number(set.actualDurationSeconds));}
   for(const u of state.user_exercises){
     if(!u.canonicalExerciseId&&u.legacyExerciseKey){const c=canonicalExerciseByKey(u.legacyExerciseKey)||[...CANONICAL_BY_ID.values()].find(x=>x.legacyExerciseKey===u.legacyExerciseKey)||null;if(c){u.canonicalExerciseId=c.id;u.equipment=c.equipment||u.equipment;u.dumbbellLoad=c.dumbbellLoad||u.dumbbellLoad;u.exerciseType=c.exerciseType||u.exerciseType;}}
-    u.archived=u.archived===true;u.createdLanguage=u.createdLanguage==='lv'?'lv':'en';const allowed=u.equipment===Equipment.BODYWEIGHT?[TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]:[Equipment.BARBELL,Equipment.DUMBBELL,Equipment.MACHINE,Equipment.CABLE].includes(u.equipment)?[TrackingMode.WEIGHT_REPS,TrackingMode.TIME_ONLY]:[TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY];u.trackingMode=allowed.includes(u.trackingMode)?u.trackingMode:trackingModeFor(u.equipment);u.candidateCanonicalExerciseId=u.candidateCanonicalExerciseId||null;
+    u.archived=u.archived===true;u.createdLanguage=u.createdLanguage==='lv'?'lv':'en';const allowed=u.equipment===Equipment.CARDIO?[TrackingMode.CARDIO]:u.equipment===Equipment.BODYWEIGHT?[TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]:[Equipment.BARBELL,Equipment.DUMBBELL,Equipment.MACHINE,Equipment.CABLE].includes(u.equipment)?[TrackingMode.WEIGHT_REPS,TrackingMode.TIME_ONLY]:[TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY];u.trackingMode=allowed.includes(u.trackingMode)?u.trackingMode:trackingModeFor(u.equipment);u.candidateCanonicalExerciseId=u.candidateCanonicalExerciseId||null;
   }
-  for(const t of state.template_exercises||[]){const u=existingUserExercise(state,t.userExerciseId);if(u?.canonicalExerciseId&&!t.canonicalExerciseId)t.canonicalExerciseId=u.canonicalExerciseId;const allowed=t.equipment===Equipment.BODYWEIGHT?[TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]:[Equipment.BARBELL,Equipment.DUMBBELL,Equipment.MACHINE,Equipment.CABLE].includes(t.equipment)?[TrackingMode.WEIGHT_REPS,TrackingMode.TIME_ONLY]:[TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY];t.trackingMode=allowed.includes(t.trackingMode)?t.trackingMode:trackingModeFor(t.equipment);if(t.equipment===Equipment.BODYWEIGHT)t.initialWeightKg=0;}
+  for(const t of state.template_exercises||[]){const u=existingUserExercise(state,t.userExerciseId);if(u?.canonicalExerciseId&&!t.canonicalExerciseId)t.canonicalExerciseId=u.canonicalExerciseId;const allowed=t.equipment===Equipment.CARDIO?[TrackingMode.CARDIO]:t.equipment===Equipment.BODYWEIGHT?[TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY]:[Equipment.BARBELL,Equipment.DUMBBELL,Equipment.MACHINE,Equipment.CABLE].includes(t.equipment)?[TrackingMode.WEIGHT_REPS,TrackingMode.TIME_ONLY]:[TrackingMode.WEIGHT_REPS,TrackingMode.BODYWEIGHT_REPS,TrackingMode.TIME_ONLY];t.trackingMode=allowed.includes(t.trackingMode)?t.trackingMode:trackingModeFor(t.equipment);if(t.equipment===Equipment.BODYWEIGHT||t.equipment===Equipment.CARDIO)t.initialWeightKg=0;}
   return state;
 }
 export function getUserExercise(state,id){return (state.user_exercises||[]).find(x=>x.id===id)||null;}
