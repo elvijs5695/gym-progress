@@ -752,3 +752,20 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .progress-metrics{scroll-behavior:auto;overscroll-behavior-x:contain}
 
 .log-cardio-section{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.log-metric-section-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:2px 0 4px}
+
+/* v1.7.10: restore colour-coded workout history cards and timeline parity.
+   Colour is a presentation category, not a synthetic cardio/strength score. */
+.log-session-card{
+  --log-effort-colour:var(--gray);
+  background:color-mix(in srgb,var(--log-effort-colour) 13%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--log-effort-colour) 43%,var(--line));
+  border-left:4px solid var(--log-effort-colour);
+  transition:background-color .18s ease,border-color .18s ease;
+}
+.log-session-card:active{background:color-mix(in srgb,var(--log-effort-colour) 20%,var(--surface))}
+/* Keep the session's colour after the temporary timeline-highlight pulse. */
+@keyframes timelineTarget{
+  0%{background:#203341;transform:scale(.992)}
+  18%{background:#1b2d39;transform:scale(1)}
+  100%{background:color-mix(in srgb,var(--log-effort-colour) 13%,var(--surface));transform:scale(1)}
+}

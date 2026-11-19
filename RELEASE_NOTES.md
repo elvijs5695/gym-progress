@@ -1,27 +1,28 @@
-# Gym Progress 1.6.7 (Android) / 1.7.7 (PWA)
+# Gym Progress — hotfix 1.6.10 (Android) / 1.7.10 (PWA)
 
-## Priority 1 — Reliable workout flow and matching UI
-- PRE-EXERCISE choice appears before the first and each subsequent exercise. Later / Replace / Skip no longer occupy the active-set screen; a Change exercise action allows returning before a set is saved.
-- REST and NEXT EXERCISE/NEXT SET are separate cards. Management choices apply to an upcoming exercise only, never to another set of the current exercise. Changing the upcoming exercise retains the rest countdown and timestamps.
-- PWA Set Complete now advances immediately without waiting on Web Audio. Added automated transition tests for Set Complete → RIR → Save set, including exact weight persistence.
-- PWA replacement picker uses non-overlapping, wrapping layout, and both clients require a valid working weight before confirming a weighted replacement. Transient errors clear automatically.
+**Baseline:** Android 1.6.9 / PWA 1.7.9. This hotfix is separate from the experimental application v2 redesign.
 
-## Priority 2 — Cardio logging and presentation
-- Cardio timer counts elapsed time on Android and PWA; green target-duration bar fills from 0% to 100% and then remains full while the activity can continue.
-- Cardio training load (duration × session RPE) is the first cardio log metric, not a claim of fitness progress. Mixed sessions display distinct cardio load and strength volume.
-- Optional distance, HR, power and RPE accept N/A/blank and persist as missing, never zero. RPE guidance sits below input.
-- Cardio never displays meaningless max kg/max repetitions. Completed cardio activities can appear in sharing selections and Friends, using the additive Supabase social duration constraint.
-- Exercise Progress remains separate by exercise and modality; no combined strength/cardio score.
+## Corrected
 
-## Priority 3 — Notifications and smaller fixes
-- Android workout notification is explicitly removed on stop. Stale Tracker notifications dismiss on Tracker adjustment/reaching the scheduled pace, and reminders expire at day change.
-- PWA replacement actions share a secondary colour and are centred/distributed evenly.
+1. **PWA launch failure when using Latvian:** `i18n.js` accessed the regular-expression variable `m` before its `let` declaration, triggering `Cannot access 'm' before initialization`. The declaration is now at the start of the translation function, before any dynamic patterns. A real app-entry-module first-paint regression now runs for saved Latvian, saved English and fresh English installs. `t()` also exercises previously failing dynamic Latvian strings.
+2. **Logs card colours:** Completed session cards use a readable, subtle effort-coloured background and border, on Android and PWA. No replacement of existing recorded effort or data.
+3. **Timeline circles:** They use the same effort classification and colour as their corresponding session card. Strength-only sessions use strength difficulty; cardio-only sessions derive the colour from the recorded, duration-weighted cardio RPE. Mixed sessions are **strength-first**, falling back to cardio only when strength effort cannot be classified. Aborted sessions use the aborted colour, and sessions with no effort data remain neutral.
+4. **Compact Effort label:** The category remains visible without repeating the numeric cardio RPE. Examples: `Hard`; `Strength: Challenging · Cardio: Hard`; `Strength: Comfortable · Cardio: effort not recorded`. Detailed cardio metrics, exercise history, Progress and training load retain the recorded numeric RPE. This is a display-only change.
+5. **PWA cache identifiers:** Updated the entry module and stylesheet cache-busting version and the service-worker cache name to `1.7.10`, so a deployed hotfix is not silently served from the old release cache.
 
-## Migration
-- No Room schema change; Android stays at v19. No change to training_sync_records.
-- **To publish cardio to Friends**, run `SUPABASE_SOCIAL_CARDIO_SHARE_1.6.7_1.7.7.sql` in Supabase SQL Editor after the existing social schema is installed. The 1.6.5 corrected exercise catalogue SQL is still required if not yet installed.
-- Old records remain intact; no destructive local migration.
+## Data preservation and deployment
 
-## Test limitations
-- PWA source validation, Node VM state-transition tests and ZIP checks passed. Full live-browser manual testing was unavailable.
-- Android source validator passed; **a full Gradle assembleDebug was not run** because the environment lacks the Android SDK/Gradle build setup. Android Studio device build and hands-on UI test are required.
+- No database or SQL changes, no sync format changes and no migration are introduced by this hotfix.
+- **PWA:** Deploy the **entire** `GymProgress-PWA-v1.7.10` folder, keeping all existing exercise assets, `sw.js`, and `celebrations/`. Relaunch/reload the installed app after deployment to activate the new service worker. **Do not clear site storage or IndexedDB.**
+- **Android:** Source release versionName `1.6.10` / versionCode `16010`. Compile in Android Studio and install *over* 1.6.9 without uninstalling it. **Do not clear app data.**
+- Take a Full backup before rollout; verify logs and sync after the update on a test profile first.
+
+## Verification performed
+
+**PWA:** `npm run check` passes all static and prior-release regressions; three app-initialisation tests execute the actual `app.js` module and verify first paint. New direct tests exercise Logs HTML, card colours, timeline Canvas fill colours, mixed/cardio-only classification and EN/LV effort labels. The saved Latvian regression would reproduce the original `m` error on the unpatched translation function.
+
+**Android:** `python tools/validate_source.py` passes (55 Kotlin source files and release invariants); isolated `CardioEffort.kt` compiles via `kotlinc` and passes cardio-only, mixed, missing-RPE and aborted-session tests. The Compose Logs source was also reviewed for its card colour and border usage.
+
+**Limitations:** No complete Gradle/Android APK build or Android emulator test was available. Interactive Chromium navigation to a local PWA origin was blocked by the execution environment, so a live-device/browser acceptance pass is still required. Tests do not prove every scenario on users' real databases.
+
+See `REGRESSION_CHECKLIST_1.6.10_1.7.10.md` for user acceptance tests.

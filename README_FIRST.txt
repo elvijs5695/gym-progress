@@ -1,5 +1,3 @@
-GYM PROGRESS PWA 1.7.7 / ANDROID 1.6.7
-
-Open RELEASE_NOTES_1.6.7_1.7.7.md and DATABASE_UPDATE_INSTRUCTIONS_1.6.7_1.7.7.md.
-Never clear app data when upgrading.
-For sharing cardio in Friends, first run the additive Supabase SQL constraint update supplied with this release.
+Gym Progress hotfix: Android 1.6.10 / PWA 1.7.10
+Read RELEASE_NOTES_1.6.10_1.7.10.md and REGRESSION_CHECKLIST_1.6.10_1.7.10.md.
+DO NOT clear application or PWA browser data. No new SQL migration for this release.

@@ -120,6 +120,9 @@ export function languageCode(state){return state?.app_state?.languageCode==='lv'
 export function localeFor(lang){return lang==='lv'?'lv-LV':'en-GB';}
 export function t(raw,lang='en'){
   raw=String(raw??'');if(lang!=='lv'||!raw)return raw;
+  // Declare before all dynamic translation patterns. Accessing this binding
+  // before the declaration crashed startup for Latvian users in v1.7.9.
+  let m;
   if(LV[raw]!=null)return LV[raw];
   if((m=/^Duration (\d{1,2}:\d{2}(?::\d{2})?)$/.exec(raw)))return `Ilgums ${m[1]}`;
   if((m=/^Strength: (.+) · Cardio: (.+)$/.exec(raw)))return `Spēks: ${t(m[1],lang)} · Kardio: ${t(m[2],lang)}`;
@@ -128,7 +131,6 @@ export function t(raw,lang='en'){
   if((m=/^(.+) · cardio RPE (\d+(?:\.\d+)?)$/.exec(raw)))return `${t(m[1],lang)} · kardio RPE ${m[2]}`;
   if((m=/^Cardio time (.+)$/.exec(raw)))return `Kardio ilgums ${m[1]}`;
 
-  let m;
   if((m=/^(\d+) exercises?$/.exec(raw)))return `${m[1]} ${Number(m[1])===1?'vingrinājums':'vingrinājumi'}`;
   if((m=/^(\d+) days?$/.exec(raw)))return `${m[1]} ${Number(m[1])===1?'diena':'dienas'}`;
   if((m=/^(\d+) weeks?$/.exec(raw)))return `${m[1]} ${Number(m[1])===1?'nedēļa':'nedēļas'}`;

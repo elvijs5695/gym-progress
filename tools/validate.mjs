@@ -7,7 +7,7 @@ const errors=[];
 const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{const f=path.join(dir,e.name);if(e.name==='node_modules')return[];return e.isDirectory()?walk(f):[f];});
 const files=walk(root),read=r=>fs.readFileSync(path.join(root,r),'utf8');
 const app=read('app.js'),css=read('styles.css'),sw=read('sw.js'),pkg=JSON.parse(read('package.json'));
-if(pkg.version!=='1.7.9'||!app.includes("APP_VERSION='1.7.9'")||!sw.includes('gym-progress-pwa-v1.7.9')||!read('index.html').includes('app.js?v=1.7.9')||!read('index.html').includes('styles.css?v=1.7.9'))errors.push('v1.7.9 version/cache markers are inconsistent');
+if(pkg.version!=='1.7.10'||!app.includes("APP_VERSION='1.7.10'")||!sw.includes('gym-progress-pwa-v1.7.10')||!read('index.html').includes('app.js?v=1.7.10')||!read('index.html').includes('styles.css?v=1.7.10'))errors.push('v1.7.10 version/cache markers are inconsistent');
 for(const rel of ['progression-intelligence.js','sync-foundation.js','exercise-identity.js','exercise-catalogue.js','exercise-catalogue.json','exercise-migration-map.js','exercise-migration-map.json','performance-rules.json','performance-rule-cases.json','supabase/SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql','supabase/SUPABASE_BACKUP_BEFORE_EXERCISE_MIGRATION.md','supabase/SUPABASE_PRE_MIGRATION_CHECK.sql','supabase/SUPABASE_POST_MIGRATION_VERIFY.sql']) if(!fs.existsSync(path.join(root,rel)))errors.push(`missing release asset: ${rel}`);
 if(!app.includes("value:`u:${id}`")||!app.includes("value:`p:${e.programmeExerciseId}`"))errors.push('Progress does not use stable user/programme exercise IDs');
 if(!app.includes("if(!(ses?.status==='COMPLETE'||(ses?.status==='ABORTED'&&fullyCompleted)))continue"))errors.push('aborted fully-completed exercises are not included in Progress');
@@ -175,5 +175,12 @@ for(const name of ['validate-178.mjs','validate-179.mjs']) {
   const check=spawnSync(process.execPath,[path.join(root,'tools',name)],{encoding:'utf8'});
   if(check.status!==0)errors.push(`${name} failed: ${(check.stderr||check.stdout).trim()}`);
 }
+// v1.7.10 hotfix guards: real first paint (both languages), log markup and canvas colours.
+for(const mode of ['fresh-en','saved-en','saved-lv']){
+  const check=spawnSync(process.execPath,[path.join(root,'tools','smoke-startup.mjs'),mode],{encoding:'utf8'});
+  if(check.status!==0)errors.push(`PWA ${mode} startup failed: ${(check.stderr||check.stdout).trim()}`);
+}
+const hotfix=spawnSync(process.execPath,[path.join(root,'tools','validate-hotfix.mjs')],{encoding:'utf8'});
+if(hotfix.status!==0)errors.push(`v1.7.10 Logs colour/effort regression failed: ${(hotfix.stderr||hotfix.stdout).trim()}`);
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}console.log(`OK: ${files.length} PWA files checked`);
 

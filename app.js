@@ -1,26 +1,26 @@
-import {loadState,saveState,wipeState} from './db.js?v=1.7.9';
-import {alternativeRelation,alternativePriority} from './exercise-alternatives.js?v=1.7.9';
-import {restoreCachedReferenceData,refreshReferenceData} from './exercise-reference-cache.js?v=1.7.9';
-import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.7.9';
-import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.7.9';
-import {cardioEffortFromRpe,workoutCardioEffort,preferredCardioMetric,compareCardioAtMatchedEffort} from './cardio-analytics.js?v=1.7.9';
-import {evaluateAutoregulation} from './autoregulation.js?v=1.7.9';
-import {manualHtml} from './manual.js?v=1.7.9';
-import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.7.9';
-import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.7.9';
-import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.7.9';
-import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.7.9';
-import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.7.9';
-import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.7.9';
-import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm,heaviestQualifyingE1rm} from './exercise-identity.js?v=1.7.9';
-import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.7.9';
-import {ensureSyncFoundation} from './sync-foundation.js?v=1.7.9';
-import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.7.9';
+import {loadState,saveState,wipeState} from './db.js?v=1.7.10';
+import {alternativeRelation,alternativePriority} from './exercise-alternatives.js?v=1.7.10';
+import {restoreCachedReferenceData,refreshReferenceData} from './exercise-reference-cache.js?v=1.7.10';
+import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight} from './exercise-library.js?v=1.7.10';
+import {COLORS,roundQuarter,formatKg,formatKgFixed,formatKgRounded,formatDuration,dateOnly,dateTime,iso,exerciseSets,sessionExercises,exerciseMetrics,sessionMetrics,previousIdenticalSession,difficultyLevel,sessionDifficultyLevel,exerciseProgressPercent,phaseDuration} from './metrics.js?v=1.7.10';
+import {cardioEffortFromRpe,workoutCardioEffort,preferredCardioMetric,compareCardioAtMatchedEffort} from './cardio-analytics.js?v=1.7.10';
+import {evaluateAutoregulation} from './autoregulation.js?v=1.7.10';
+import {manualHtml} from './manual.js?v=1.7.10';
+import {languageCode,localeFor,t,localizeDom} from './i18n.js?v=1.7.10';
+import {StarterGoal,StarterExperience,buildStarterProgramme,missingStarterWeightKeys} from './starter-programme.js?v=1.7.10';
+import {evaluateFutureAdjustment} from './future-adjustment.js?v=1.7.10';
+import {loadPerformanceRules,progressionSetQualifies} from './performance-rules.js?v=1.7.10';
+import {socialConfigured,socialSignedIn,socialUser,sendEmailOtp,verifyEmailOtp,signOutSocial,getMyProfile,setDisplayName,findFriend,sendFriendRequest,listFriends,listIncomingRequests,listNotifications,acceptFriendRequest,rejectFriendRequest,removeFriend,getFeed,getTimeline,hasUnseen,markSeen,publishEvents,deleteEvent,publishComparisonPoints,replaceComparisonPoints,listCommonComparableExercises,getExerciseComparison,eraseMyCloudTraining,deleteMyAccount} from './social-api.js?v=1.7.10';
+import {CANONICAL_EXERCISES,CANONICAL_BY_ID,CANONICAL_BY_KEY,canonicalName,canonicalSuggestions} from './exercise-catalogue.js?v=1.7.10';
+import {TrackingMode,E1RM_FORMULA_VERSION,uuid,trackingModeFor,ensureExerciseIdentityState,getUserExercise,displayNameForSessionExercise,activeUserExercises,isFriendComparableUserExercise,canonicalExerciseById,canonicalExerciseByKey,qualifyingE1rm,heaviestQualifyingE1rm} from './exercise-identity.js?v=1.7.10';
+import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progression-intelligence.js?v=1.7.10';
+import {ensureSyncFoundation} from './sync-foundation.js?v=1.7.10';
+import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel} from './training-sync.js?v=1.7.10';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='1.7.9';
+const APP_VERSION='1.7.10';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -322,6 +322,7 @@ async function checkMotivationReminders(){const a=state?.app_state;if(!a?.motiva
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
+  {version:'1.7.10',key:'startup-and-log-colours',importance:10,en:'Fixed a Latvian-language startup crash. Workout log cards and timeline circles show effort colours again; mixed sessions use strength effort for colour, cardio-only sessions use cardio effort. Numeric cardio RPE remains in the detailed metrics, not the compact Effort label.',lv:'Novērsta lietotnes palaišanas kļūda latviešu valodā. Treniņu žurnāla kartītēm un laika skalas punktiem atjaunotas piepūles krāsas; jauktiem treniņiem krāsu nosaka spēka treniņa piepūle, bet kardio treniņiem — kardio piepūle. Skaitliskais kardio RPE paliek detalizētajos rādītājos, nevis īsajā piepūles tekstā.'},
   {version:'1.7.9',key:'cardio-polish',importance:6,en:'Cardio RPE is a 1–10 selector. N/A fields show a dash, the activity timer freezes immediately, cardio substitutions stay cardio, Logs show clear effort and full-width metrics, and Progress retains metric scrolling. Twelve celebration photographs are bundled.',lv:'Kardio RPE ir izvēlne (1–10), N/A laukos redzama svītra, aktivitātes taimeris apstājas uzreiz, aizstāšana piedāvā tikai kardio, žurnālā skaidri redzama piepūle un rādītāji, progresa izvēlne saglabā ritinājuma pozīciju. Komplektā ir 12 svinību foto.'},
   {version:'1.7.9',key:'workout-flow-stability',en:'Exercise decisions and rest transitions are aligned between Android and PWA. The first set now has a working Back action, and active exercises allow skipping the entire exercise.',lv:'Vingrinājumu izvēle un atpūtas pārejas saskaņotas Android un PWA. Pirmajā piegājienā pieejama Atpakaļ darbība, un aktīvā vingrinājumā var izlaist visu vingrinājumu.'},
   {version:'1.7.9',key:'cardio-freeze-and-logs',en:'Cardio time freezes during data entry; N/A has a visible selection state. Cardio duration is the default Progress metric, and mixed workout Logs show both disciplines with duration-weighted heart rate when recorded.',lv:'Kardio laiks datu ievades laikā tiek apturēts; N/A izvēle ir skaidri redzama. Progresa sākotnējais rādītājs ir ilgums; jauktajos treniņos parādīti abu veidu dati un svērtais vidējais pulss, ja tas reģistrēts.'},
@@ -667,7 +668,7 @@ function renderFrequencyTimeline(){return `<section class="timeline-card"><div c
 function defaultTimelineWindow(sessions,atMs=now()){const DAY=86400000,DEFAULT_DAYS=30;const sorted=[...sessions].sort((a,b)=>a.startedAt-b.startedAt);const earliest=Number(sorted[0]?.startedAt??atMs),latest=Number(sorted.at(-1)?.startedAt??atMs);const historyDays=Math.max((atMs-earliest)/DAY,1/1440);const shortHistory=historyDays<DEFAULT_DAYS;return{earliest,latest,historyDays,shortHistory,days:shortHistory?historyDays:DEFAULT_DAYS,endMs:shortHistory?atMs:Math.max(atMs,latest+DAY/12)}}
 function bindWorkoutTimeline(){const canvas=$('#workout-timeline');if(!canvas)return;const sessions=state.workout_sessions.filter(s=>s.status==='COMPLETE'||s.status==='ABORTED').sort((a,b)=>a.startedAt-b.startedAt);if(!sessions.length)return;const DAY=86400000,initial=defaultTimelineWindow(sessions),latest=initial.latest,earliest=initial.earliest,initialDays=initial.days,minDays=Math.min(7,initialDays);if(ui.timelineEndMs==null){ui.timelineDays=initialDays;ui.timelineEndMs=initial.endMs;}const pointers=new Map();let lastSingleX=null,lastDistance=null,downPoint=null,dragged=false,hitDots=[];
   const clampWindow=()=>{ui.timelineDays=Math.max(minDays,Math.min(3650,ui.timelineDays));const span=ui.timelineDays*DAY,maxEnd=Math.max(now(),latest+DAY/12),minEnd=earliest+span;ui.timelineEndMs=minEnd>maxEnd?maxEnd:Math.max(minEnd,Math.min(maxEnd,ui.timelineEndMs));};
-  const draw=()=>{clampWindow();const cssW=Math.max(1,canvas.clientWidth),cssH=76,dpr=window.devicePixelRatio||1;canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);const start=ui.timelineEndMs-ui.timelineDays*DAY,y=38;ctx.strokeStyle='rgba(180,180,190,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(2,y);ctx.lineTo(cssW-2,y);ctx.stroke();hitDots=[];for(const ss of sessions){if(ss.startedAt<start||ss.startedAt>ui.timelineEndMs)continue;const rawX=((ss.startedAt-start)/(ui.timelineEndMs-start))*cssW,x=Math.max(5,Math.min(cssW-5,rawX)),sm=sessionMetrics(state,ss),sd=workoutLogEffort(ss,sm);ctx.fillStyle=sd.color;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();hitDots.push({x,y,sessionId:ss.id});}$('#timeline-start').textContent=shortTimelineDate(start);$('#timeline-end').textContent=shortTimelineDate(ui.timelineEndMs);$('#timeline-span').textContent=t(timelineSpanLabel(ui.timelineDays),languageCode(state));canvas.classList.toggle('dots-clickable',ui.timelineDays<=7.05);};
+  const draw=()=>{clampWindow();const cssW=Math.max(1,canvas.clientWidth),cssH=76,dpr=window.devicePixelRatio||1;canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);const start=ui.timelineEndMs-ui.timelineDays*DAY,y=38;ctx.strokeStyle='rgba(180,180,190,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(2,y);ctx.lineTo(cssW-2,y);ctx.stroke();hitDots=[];for(const ss of sessions){if(ss.startedAt<start||ss.startedAt>ui.timelineEndMs)continue;const rawX=((ss.startedAt-start)/(ui.timelineEndMs-start))*cssW,x=Math.max(5,Math.min(cssW-5,rawX)),sm=sessionMetrics(state,ss),sd=workoutLogEffort(ss,sm);ctx.fillStyle=sd.color;ctx.beginPath();ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(10,10,11,.85)';ctx.lineWidth=1;ctx.stroke();hitDots.push({x,y,sessionId:ss.id});}$('#timeline-start').textContent=shortTimelineDate(start);$('#timeline-end').textContent=shortTimelineDate(ui.timelineEndMs);$('#timeline-span').textContent=t(timelineSpanLabel(ui.timelineDays),languageCode(state));canvas.classList.toggle('dots-clickable',ui.timelineDays<=7.05);};
   const pan=(dx)=>{ui.timelineEndMs-=(dx/Math.max(1,canvas.clientWidth))*ui.timelineDays*DAY;draw();};
   const zoom=(factor,focusX)=>{const oldDays=ui.timelineDays,oldSpan=oldDays*DAY,oldStart=ui.timelineEndMs-oldSpan,frac=Math.max(0,Math.min(1,focusX/Math.max(1,canvas.clientWidth))),focus=oldStart+oldSpan*frac,newDays=Math.max(minDays,Math.min(3650,oldDays/factor)),newSpan=newDays*DAY;ui.timelineDays=newDays;ui.timelineEndMs=focus+newSpan*(1-frac);draw();};
   const activateNearest=(clientX,clientY)=>{if(ui.timelineDays>7.05)return;const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,y=clientY-rect.top;let best=null;for(const d of hitDots){const dist=Math.hypot(d.x-x,d.y-y);if(dist<=14&&(!best||dist<best.dist))best={...d,dist};}if(!best)return;const card=document.getElementById(`log-session-${best.sessionId}`);if(!card)return;card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.remove('timeline-target');void card.offsetWidth;card.classList.add('timeline-target');setTimeout(()=>card.classList.remove('timeline-target'),1900);};
@@ -961,13 +962,20 @@ function sessionCardioSummary(session){
   }
   return {duration,distance,meanHr:hrSeconds?hrWeighted/hrSeconds:null,meanRpe:rpeSeconds?rpeWeighted/rpeSeconds:null};
 }
+/** Keep lifting RIR and cardio RPE separate. Mixed workout colours are based on
+ * strength effort; only fall back to cardio when strength effort is unavailable. */
+const CARDIO_TO_LOG_DIFFICULTY={easy:'comfortable',moderate:'challenging',hard:'hard',veryhard:'very-hard',unknown:'unknown'};
 function workoutLogEffort(session,sm){
   const cardio=workoutCardioEffort(state,session);
   if(session.status==='ABORTED')return {key:'aborted',label:S('Aborted','Pārtraukts'),color:COLORS.deepred};
-  if(cardio.mode==='cardio')return {key:'cardio-'+cardio.effort.key,label:`${t(cardio.effort.label,languageCode(state))}${cardio.effort.rpe!=null?' · RPE '+cardio.effort.rpe.toFixed(1):''}`,color:cardio.effort.color};
+  // The compact Effort line shows categories only. Numeric RPE stays in detailed cardio metrics.
+  if(cardio.mode==='cardio')return {key:'cardio-'+cardio.effort.key,label:t(cardio.effort.label,languageCode(state)),color:cardio.effort.color};
   if(cardio.mode==='mixed'){
-    const strength=sessionDifficultyLevel(sm,state.app_state,session.status),measured=cardio.effort.rpe!=null;
-    return {key:'mixed',label:`${S('Strength','Spēks')}: ${t(strength.label,languageCode(state))} · ${S('Cardio','Kardio')}: ${measured?`${t(cardio.effort.label,languageCode(state))} (RPE ${cardio.effort.rpe.toFixed(1)})`:S('effort not recorded','piepūle nav norādīta')}`,color:COLORS.gray};
+    const strength=sessionDifficultyLevel(sm,state.app_state,session.status);
+    const cardioKey=CARDIO_TO_LOG_DIFFICULTY[cardio.effort.key]||'unknown';
+    const dominant=strength.key==='unknown'&&cardioKey!=='unknown'?{key:cardioKey,color:cardio.effort.color}:strength;
+    const cardioLabel=cardio.effort.rpe!=null?t(cardio.effort.label,languageCode(state)):S('effort not recorded','piepūle nav norādīta');
+    return {key:dominant.key,label:`${S('Strength','Spēks')}: ${t(strength.label,languageCode(state))} · ${S('Cardio','Kardio')}: ${cardioLabel}`,color:dominant.color};
   }
   return sessionDifficultyLevel(sm,state.app_state,session.status);
 }
@@ -991,7 +999,7 @@ function renderLogs(){
       if(cardio.mode==='strength')strengthStats+=logMetric(S('Volume progress','Apjoma progress'),fmtPct(m.progressPercent));
       const cardioMetrics=hasCardio?(cardio.mode==='mixed'?cardioLogFields(cardioStats):'')+logMetric(S('Cardio training load','Kardio treniņslodze'),formatCardioSessionLoad(s))+(cardio.mode==='cardio'&&cardioStats.meanRpe!=null?logMetric('RPE',cardioStats.meanRpe.toFixed(1)):'')+(cardio.mode==='cardio'&&cardioStats.meanHr!=null?logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioStats.meanHr)} bpm`):''):'';
       const cardioSection=hasCardio?`<div class="log-cardio-section">${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div>`:''}<div class="metric-grid log-metric-grid">${cardioMetrics}</div></div>`:'';
-      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card" onclick="gp.nav('session',${s.id})"><div class="log-date">${dateOnly(s.startedAt)}</div><div class="log-name">${esc(s.workoutName)}</div><div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}<div class="row between log-effort-row"><span class="small">${esc(S('Effort','Piepūle'))}</span><span class="difficulty ${diff.key}">${esc(diff.label)}</span></div></div>`;
+      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card" style="--log-effort-colour:${esc(diff.color)}" onclick="gp.nav('session',${s.id})"><div class="log-date">${dateOnly(s.startedAt)}</div><div class="log-name">${esc(s.workoutName)}</div><div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}<div class="row between log-effort-row"><span class="small">${esc(S('Effort','Piepūle'))}</span><span class="difficulty ${diff.key}">${esc(diff.label)}</span></div></div>`;
     });
     if(sessions.length>(ui.logLimit||40))c+=`<button class="secondary full" onclick="gp.moreLogs()" style="margin-top:14px">${esc(S('Show more workouts','Rādīt vairāk treniņu'))} (${sessions.length-(ui.logLimit||40)})</button>`;
   }
