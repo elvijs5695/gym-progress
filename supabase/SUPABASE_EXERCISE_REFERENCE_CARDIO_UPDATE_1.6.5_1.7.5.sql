@@ -1,6 +1,10 @@
 -- Gym Progress v1.6.5 / PWA v1.7.5: reference catalogue and substitutions
 -- Run ONCE in Supabase SQL editor after the original SUPABASE_EXERCISE_CATALOGUE_AND_COMPARISON.sql.
 -- Additive, re-runnable, and non-destructive. Does not touch training_sync_records or private history.
+-- FIXED migration: parent exercise rows inserted and verified before translations / aliases.
+-- Use this entire file as a single query in Supabase SQL Editor; do not highlight and run individual lines.
+-- If anything fails, the BEGIN/COMMIT transaction rolls back.
+-- The original migration is preserved below, with reordered parent/child seeding and key-based child links.
 BEGIN;
 ALTER TABLE public.canonical_exercises ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'STRENGTH';
 ALTER TABLE public.canonical_exercises ADD COLUMN IF NOT EXISTS legacy_exercise_key text;
@@ -44,62 +48,104 @@ INSERT INTO public.exercise_families(id,key,status) VALUES ('eef926a5-e9d8-5b99-
 INSERT INTO public.exercise_families(id,key,status) VALUES ('31ee5d45-476a-5457-92b6-dac83064cbd7'::uuid,'CARDIO_MACHINE','ACTIVE') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key, status='ACTIVE', updated_at=now();
 INSERT INTO public.exercise_families(id,key,status) VALUES ('dc3df7d7-21a9-5af9-b5ab-5a30eb4c3915'::uuid,'CARDIO_SWIM','ACTIVE') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key, status='ACTIVE', updated_at=now();
 INSERT INTO public.exercise_families(id,key,status) VALUES ('cdae8f1b-223c-5532-ada3-676b1d45af12'::uuid,'CARDIO_OTHER','ACTIVE') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key, status='ACTIVE', updated_at=now();
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'running','7b6c6469-2ca5-54da-a7db-8ef9bff16ea6'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','running') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'en','Running / Treadmill') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'lv','Skriešana / skrejceliņš') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'en','Run') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'en','Treadmill') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('034dd92b-8842-596d-b457-9ec8b07ce4b1'::uuid,'outdoor_running','7b6c6469-2ca5-54da-a7db-8ef9bff16ea6'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('034dd92b-8842-596d-b457-9ec8b07ce4b1'::uuid,'en','Outdoor Running') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('034dd92b-8842-596d-b457-9ec8b07ce4b1'::uuid,'lv','Skriešana ārā') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('034dd92b-8842-596d-b457-9ec8b07ce4b1'::uuid,'en','Jogging') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'cycling','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','cycling') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'en','Cycling / Stationary Bike') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'lv','Riteņbraukšana / veloergometrs') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'en','Cycle') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'en','Spin Bike') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('72d32fc6-55f9-548a-a560-3d603233a5c1'::uuid,'outdoor_cycling','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('72d32fc6-55f9-548a-a560-3d603233a5c1'::uuid,'en','Outdoor Cycling') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('72d32fc6-55f9-548a-a560-3d603233a5c1'::uuid,'lv','Riteņbraukšana ārā') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('72d32fc6-55f9-548a-a560-3d603233a5c1'::uuid,'en','Road Cycling') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('fc3f9236-94df-571b-84a3-8b4723bf2c2b'::uuid,'rowing_cardio','12a59804-e6fb-58a8-9364-4b7a499941ad'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','rowing_cardio') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('fc3f9236-94df-571b-84a3-8b4723bf2c2b'::uuid,'en','Rowing Ergometer') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('fc3f9236-94df-571b-84a3-8b4723bf2c2b'::uuid,'lv','Airēšanas ergometrs') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('fc3f9236-94df-571b-84a3-8b4723bf2c2b'::uuid,'en','Indoor Rowing') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('19ddca72-f87c-533d-97ed-b9f10855cd68'::uuid,'elliptical_cardio','31ee5d45-476a-5457-92b6-dac83064cbd7'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','elliptical_cardio') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('19ddca72-f87c-533d-97ed-b9f10855cd68'::uuid,'en','Elliptical Trainer') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('19ddca72-f87c-533d-97ed-b9f10855cd68'::uuid,'lv','Eliptiskais trenažieris') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('e819002c-76bb-579b-965c-20581d23149e'::uuid,'walking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','walking') ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('e819002c-76bb-579b-965c-20581d23149e'::uuid,'en','Walking / Incline Treadmill') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('e819002c-76bb-579b-965c-20581d23149e'::uuid,'lv','Iešana / slīps skrejceliņš') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('e819002c-76bb-579b-965c-20581d23149e'::uuid,'en','Walking') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('ef8aa547-00f1-5e01-a9cb-81e6808c6e26'::uuid,'outdoor_walking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('ef8aa547-00f1-5e01-a9cb-81e6808c6e26'::uuid,'en','Outdoor Walking') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('ef8aa547-00f1-5e01-a9cb-81e6808c6e26'::uuid,'lv','Iešana ārā') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('ef8aa547-00f1-5e01-a9cb-81e6808c6e26'::uuid,'en','Walking Outdoors') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('a6d224c3-3184-53e4-a0f7-1b98ca6f156d'::uuid,'stair_climber','31ee5d45-476a-5457-92b6-dac83064cbd7'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('a6d224c3-3184-53e4-a0f7-1b98ca6f156d'::uuid,'en','Stair Climber') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('a6d224c3-3184-53e4-a0f7-1b98ca6f156d'::uuid,'lv','Kāpņu trenažieris') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('a6d224c3-3184-53e4-a0f7-1b98ca6f156d'::uuid,'en','Stairmaster') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('db54ffec-3ecb-563b-9a71-0d72f9746c7d'::uuid,'swimming','dc3df7d7-21a9-5af9-b5ab-5a30eb4c3915'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('db54ffec-3ecb-563b-9a71-0d72f9746c7d'::uuid,'en','Swimming') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('db54ffec-3ecb-563b-9a71-0d72f9746c7d'::uuid,'lv','Peldēšana') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('db54ffec-3ecb-563b-9a71-0d72f9746c7d'::uuid,'en','Pool Swimming') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('96fbbd83-12bf-5529-af13-8677da513ba9'::uuid,'ski_erg','12a59804-e6fb-58a8-9364-4b7a499941ad'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('96fbbd83-12bf-5529-af13-8677da513ba9'::uuid,'en','SkiErg') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('96fbbd83-12bf-5529-af13-8677da513ba9'::uuid,'lv','Slēpošanas ergometrs') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('96fbbd83-12bf-5529-af13-8677da513ba9'::uuid,'en','Ski Ergometer') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('60a2f0e8-37f5-5086-bb9c-885f52000775'::uuid,'jump_rope','cdae8f1b-223c-5532-ada3-676b1d45af12'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('60a2f0e8-37f5-5086-bb9c-885f52000775'::uuid,'en','Jump Rope') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('60a2f0e8-37f5-5086-bb9c-885f52000775'::uuid,'lv','Lēkšana ar lecamauklu') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('60a2f0e8-37f5-5086-bb9c-885f52000775'::uuid,'en','Skipping Rope') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('621d5eb7-3a53-5e65-92fb-761830dd3af6'::uuid,'air_bike','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('621d5eb7-3a53-5e65-92fb-761830dd3af6'::uuid,'en','Air Bike') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('621d5eb7-3a53-5e65-92fb-761830dd3af6'::uuid,'lv','Gaisa velotrenažieris') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) VALUES ('621d5eb7-3a53-5e65-92fb-761830dd3af6'::uuid,'en','Assault Bike') ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
-INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('466d0c48-51b3-597a-b059-0e1a9367d623'::uuid,'hiking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('466d0c48-51b3-597a-b059-0e1a9367d623'::uuid,'en','Hiking') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
-INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) VALUES ('466d0c48-51b3-597a-b059-0e1a9367d623'::uuid,'lv','Pārgājiens') ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+
+-- Phase 1: all cardio exercise parent rows, upserted by stable exercise key.
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('f4ed03c8-f99e-5ea5-97fe-d335963384bc'::uuid,'running','7b6c6469-2ca5-54da-a7db-8ef9bff16ea6'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','running') ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('034dd92b-8842-596d-b457-9ec8b07ce4b1'::uuid,'outdoor_running','7b6c6469-2ca5-54da-a7db-8ef9bff16ea6'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('56b62c8d-67a8-53f6-8d94-0d8db4c9003c'::uuid,'cycling','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','cycling') ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('72d32fc6-55f9-548a-a560-3d603233a5c1'::uuid,'outdoor_cycling','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('fc3f9236-94df-571b-84a3-8b4723bf2c2b'::uuid,'rowing_cardio','12a59804-e6fb-58a8-9364-4b7a499941ad'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','rowing_cardio') ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('19ddca72-f87c-533d-97ed-b9f10855cd68'::uuid,'elliptical_cardio','31ee5d45-476a-5457-92b6-dac83064cbd7'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','elliptical_cardio') ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('e819002c-76bb-579b-965c-20581d23149e'::uuid,'walking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO','walking') ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('ef8aa547-00f1-5e01-a9cb-81e6808c6e26'::uuid,'outdoor_walking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('a6d224c3-3184-53e4-a0f7-1b98ca6f156d'::uuid,'stair_climber','31ee5d45-476a-5457-92b6-dac83064cbd7'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('db54ffec-3ecb-563b-9a71-0d72f9746c7d'::uuid,'swimming','dc3df7d7-21a9-5af9-b5ab-5a30eb4c3915'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('96fbbd83-12bf-5529-af13-8677da513ba9'::uuid,'ski_erg','12a59804-e6fb-58a8-9364-4b7a499941ad'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('60a2f0e8-37f5-5086-bb9c-885f52000775'::uuid,'jump_rope','cdae8f1b-223c-5532-ada3-676b1d45af12'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('621d5eb7-3a53-5e65-92fb-761830dd3af6'::uuid,'air_bike','40bf436f-f13f-564c-b4d1-7aaeb1d1ad26'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+INSERT INTO public.canonical_exercises(id,key,family_id,equipment,dumbbell_load,exercise_type,load_semantics,comparison_eligible,comparison_metric,status,category,legacy_exercise_key) VALUES ('466d0c48-51b3-597a-b059-0e1a9367d623'::uuid,'hiking','eef926a5-e9d8-5b99-b81c-398bd8528ed2'::uuid,'CARDIO','SINGLE','MODERATE_COMPOUND','NO_LOAD',false,NULL,'ACTIVE','CARDIO',NULL) ON CONFLICT(key) DO UPDATE SET key=EXCLUDED.key,family_id=EXCLUDED.family_id,equipment='CARDIO',category='CARDIO',status='ACTIVE',legacy_exercise_key=EXCLUDED.legacy_exercise_key,updated_at=now();
+
+-- Fail clearly rather than allowing orphaned translations if an exercise insert was skipped.
+DO $catalogue_check$
+DECLARE
+    missing_keys text;
+BEGIN
+    SELECT string_agg(wanted.key, ', ' ORDER BY wanted.key)
+    INTO missing_keys
+    FROM unnest(ARRAY['running','outdoor_running','cycling','outdoor_cycling','rowing_cardio','elliptical_cardio','walking','outdoor_walking','stair_climber','swimming','ski_erg','jump_rope','air_bike','hiking']::text[]) AS wanted(key)
+    LEFT JOIN public.canonical_exercises AS e ON e.key = wanted.key
+    WHERE e.id IS NULL OR e.category <> 'CARDIO';
+    IF missing_keys IS NOT NULL THEN
+        RAISE EXCEPTION 'Cardio catalogue is incomplete before translations. Missing or incorrectly categorised: %', missing_keys;
+    END IF;
+END
+$catalogue_check$;
+
+-- Phase 2: translations and aliases, resolved from the actual parent ID by exercise key.
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Running / Treadmill' FROM public.canonical_exercises AS e WHERE e.key='running' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Skriešana / skrejceliņš' FROM public.canonical_exercises AS e WHERE e.key='running' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Run' FROM public.canonical_exercises AS e WHERE e.key='running' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Treadmill' FROM public.canonical_exercises AS e WHERE e.key='running' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Outdoor Running' FROM public.canonical_exercises AS e WHERE e.key='outdoor_running' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Skriešana ārā' FROM public.canonical_exercises AS e WHERE e.key='outdoor_running' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Jogging' FROM public.canonical_exercises AS e WHERE e.key='outdoor_running' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Cycling / Stationary Bike' FROM public.canonical_exercises AS e WHERE e.key='cycling' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Riteņbraukšana / veloergometrs' FROM public.canonical_exercises AS e WHERE e.key='cycling' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Cycle' FROM public.canonical_exercises AS e WHERE e.key='cycling' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Spin Bike' FROM public.canonical_exercises AS e WHERE e.key='cycling' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Outdoor Cycling' FROM public.canonical_exercises AS e WHERE e.key='outdoor_cycling' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Riteņbraukšana ārā' FROM public.canonical_exercises AS e WHERE e.key='outdoor_cycling' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Road Cycling' FROM public.canonical_exercises AS e WHERE e.key='outdoor_cycling' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Rowing Ergometer' FROM public.canonical_exercises AS e WHERE e.key='rowing_cardio' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Airēšanas ergometrs' FROM public.canonical_exercises AS e WHERE e.key='rowing_cardio' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Indoor Rowing' FROM public.canonical_exercises AS e WHERE e.key='rowing_cardio' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Elliptical Trainer' FROM public.canonical_exercises AS e WHERE e.key='elliptical_cardio' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Eliptiskais trenažieris' FROM public.canonical_exercises AS e WHERE e.key='elliptical_cardio' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Walking / Incline Treadmill' FROM public.canonical_exercises AS e WHERE e.key='walking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Iešana / slīps skrejceliņš' FROM public.canonical_exercises AS e WHERE e.key='walking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Walking' FROM public.canonical_exercises AS e WHERE e.key='walking' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Outdoor Walking' FROM public.canonical_exercises AS e WHERE e.key='outdoor_walking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Iešana ārā' FROM public.canonical_exercises AS e WHERE e.key='outdoor_walking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Walking Outdoors' FROM public.canonical_exercises AS e WHERE e.key='outdoor_walking' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Stair Climber' FROM public.canonical_exercises AS e WHERE e.key='stair_climber' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Kāpņu trenažieris' FROM public.canonical_exercises AS e WHERE e.key='stair_climber' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Stairmaster' FROM public.canonical_exercises AS e WHERE e.key='stair_climber' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Swimming' FROM public.canonical_exercises AS e WHERE e.key='swimming' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Peldēšana' FROM public.canonical_exercises AS e WHERE e.key='swimming' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Pool Swimming' FROM public.canonical_exercises AS e WHERE e.key='swimming' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','SkiErg' FROM public.canonical_exercises AS e WHERE e.key='ski_erg' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Slēpošanas ergometrs' FROM public.canonical_exercises AS e WHERE e.key='ski_erg' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Ski Ergometer' FROM public.canonical_exercises AS e WHERE e.key='ski_erg' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Jump Rope' FROM public.canonical_exercises AS e WHERE e.key='jump_rope' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Lēkšana ar lecamauklu' FROM public.canonical_exercises AS e WHERE e.key='jump_rope' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Skipping Rope' FROM public.canonical_exercises AS e WHERE e.key='jump_rope' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Air Bike' FROM public.canonical_exercises AS e WHERE e.key='air_bike' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Gaisa velotrenažieris' FROM public.canonical_exercises AS e WHERE e.key='air_bike' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_aliases(exercise_id,language_code,alias) SELECT e.id,'en','Assault Bike' FROM public.canonical_exercises AS e WHERE e.key='air_bike' ON CONFLICT(exercise_id,language_code,alias) DO NOTHING;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'en','Hiking' FROM public.canonical_exercises AS e WHERE e.key='hiking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+INSERT INTO public.canonical_exercise_translations(exercise_id,language_code,name) SELECT e.id,'lv','Pārgājiens' FROM public.canonical_exercises AS e WHERE e.key='hiking' ON CONFLICT(exercise_id,language_code) DO UPDATE SET name=EXCLUDED.name;
+
+-- Verify both language rows were inserted for each cardio exercise.
+DO $translation_check$
+DECLARE missing_keys text;
+BEGIN
+    SELECT string_agg(e.key, ', ' ORDER BY e.key)
+    INTO missing_keys
+    FROM public.canonical_exercises e
+    WHERE e.key = ANY(ARRAY['running','outdoor_running','cycling','outdoor_cycling','rowing_cardio','elliptical_cardio','walking','outdoor_walking','stair_climber','swimming','ski_erg','jump_rope','air_bike','hiking']::text[])
+      AND (NOT EXISTS (
+              SELECT 1 FROM public.canonical_exercise_translations t
+              WHERE t.exercise_id=e.id AND t.language_code='en'
+           ) OR NOT EXISTS (
+              SELECT 1 FROM public.canonical_exercise_translations t
+              WHERE t.exercise_id=e.id AND t.language_code='lv'
+           ));
+    IF missing_keys IS NOT NULL THEN
+        RAISE EXCEPTION 'Cardio translations incomplete: %', missing_keys;
+    END IF;
+END
+$translation_check$;
+
 CREATE TABLE IF NOT EXISTS public.canonical_exercise_substitutions (
   source_exercise_id uuid NOT NULL REFERENCES public.canonical_exercises(id) ON DELETE CASCADE,
   alternative_exercise_id uuid NOT NULL REFERENCES public.canonical_exercises(id) ON DELETE CASCADE,
@@ -167,6 +213,76 @@ INSERT INTO public.canonical_exercise_substitutions(source_exercise_id,alternati
 INSERT INTO public.canonical_exercise_substitutions(source_exercise_id,alternative_exercise_id,relationship,priority) SELECT s.id,t.id,'CLOSE',50 FROM public.canonical_exercises s JOIN public.canonical_exercises t ON t.key='conventional_deadlift' WHERE s.key='sumo_deadlift' ON CONFLICT(source_exercise_id,alternative_exercise_id) DO UPDATE SET relationship=EXCLUDED.relationship,priority=EXCLUDED.priority,status='ACTIVE',updated_at=now();
 INSERT INTO public.canonical_exercise_substitutions(source_exercise_id,alternative_exercise_id,relationship,priority) SELECT s.id,t.id,'CLOSE',55 FROM public.canonical_exercises s JOIN public.canonical_exercises t ON t.key='hiking' WHERE s.key='walking' ON CONFLICT(source_exercise_id,alternative_exercise_id) DO UPDATE SET relationship=EXCLUDED.relationship,priority=EXCLUDED.priority,status='ACTIVE',updated_at=now();
 INSERT INTO public.canonical_exercise_substitutions(source_exercise_id,alternative_exercise_id,relationship,priority) SELECT s.id,t.id,'CLOSE',55 FROM public.canonical_exercises s JOIN public.canonical_exercises t ON t.key='outdoor_walking' WHERE s.key='walking' ON CONFLICT(source_exercise_id,alternative_exercise_id) DO UPDATE SET relationship=EXCLUDED.relationship,priority=EXCLUDED.priority,status='ACTIVE',updated_at=now();
+-- Detect missing explicit links before the RPC becomes available.
+DO $relation_check$
+DECLARE missing_pairs text;
+BEGIN
+    WITH expected(source_key,target_key) AS (
+      VALUES
+      ('air_bike','cycling'),
+      ('barbell_back_squat','barbell_front_squat'),
+      ('barbell_back_squat','hack_squat'),
+      ('barbell_back_squat','leg_press'),
+      ('barbell_bench_press','dumbbell_bench_press'),
+      ('barbell_bench_press','machine_chest_press'),
+      ('barbell_front_squat','barbell_back_squat'),
+      ('barbell_front_squat','hack_squat'),
+      ('barbell_front_squat','leg_press'),
+      ('barbell_overhead_press','dumbbell_shoulder_press'),
+      ('barbell_overhead_press','machine_shoulder_press'),
+      ('barbell_romanian_deadlift','conventional_deadlift'),
+      ('barbell_romanian_deadlift','sumo_deadlift'),
+      ('barbell_row','seated_cable_row'),
+      ('cable_fly','pec_deck'),
+      ('conventional_deadlift','barbell_romanian_deadlift'),
+      ('conventional_deadlift','sumo_deadlift'),
+      ('cycling','air_bike'),
+      ('cycling','outdoor_cycling'),
+      ('dumbbell_bench_press','barbell_bench_press'),
+      ('dumbbell_bench_press','machine_chest_press'),
+      ('dumbbell_shoulder_press','barbell_overhead_press'),
+      ('dumbbell_shoulder_press','machine_shoulder_press'),
+      ('hack_squat','barbell_back_squat'),
+      ('hack_squat','barbell_front_squat'),
+      ('hack_squat','leg_press'),
+      ('hiking','walking'),
+      ('incline_barbell_bench_press','incline_dumbbell_bench_press'),
+      ('incline_dumbbell_bench_press','incline_barbell_bench_press'),
+      ('lat_pulldown','pull_up'),
+      ('leg_press','barbell_back_squat'),
+      ('leg_press','barbell_front_squat'),
+      ('leg_press','hack_squat'),
+      ('machine_chest_press','barbell_bench_press'),
+      ('machine_chest_press','dumbbell_bench_press'),
+      ('machine_shoulder_press','barbell_overhead_press'),
+      ('machine_shoulder_press','dumbbell_shoulder_press'),
+      ('outdoor_cycling','cycling'),
+      ('outdoor_running','running'),
+      ('outdoor_walking','walking'),
+      ('pec_deck','cable_fly'),
+      ('pull_up','lat_pulldown'),
+      ('rowing_cardio','ski_erg'),
+      ('running','outdoor_running'),
+      ('seated_cable_row','barbell_row'),
+      ('ski_erg','rowing_cardio'),
+      ('sumo_deadlift','barbell_romanian_deadlift'),
+      ('sumo_deadlift','conventional_deadlift'),
+      ('walking','hiking'),
+      ('walking','outdoor_walking')
+    )
+    SELECT string_agg(expected.source_key || ' -> ' || expected.target_key, '; ' ORDER BY expected.source_key, expected.target_key)
+    INTO missing_pairs
+    FROM expected
+    LEFT JOIN public.canonical_exercises src ON src.key=expected.source_key
+    LEFT JOIN public.canonical_exercises dst ON dst.key=expected.target_key
+    LEFT JOIN public.canonical_exercise_substitutions r
+      ON r.source_exercise_id=src.id AND r.alternative_exercise_id=dst.id AND r.status='ACTIVE'
+    WHERE r.source_exercise_id IS NULL;
+    IF missing_pairs IS NOT NULL THEN
+        RAISE EXCEPTION 'Substitutions incomplete: %', missing_pairs;
+    END IF;
+END
+$relation_check$;
 -- One public read-only response: both clients receive the same canonical identities and relations.
 CREATE OR REPLACE FUNCTION public.gym_exercise_reference_snapshot()
 RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $ref$

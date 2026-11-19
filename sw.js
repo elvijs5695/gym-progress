@@ -1,9 +1,10 @@
-const CACHE_NAME = 'gym-progress-pwa-v1.7.5';
+const CACHE_NAME = 'gym-progress-pwa-v1.7.6';
 const APP_SHELL = [
   "./.nojekyll",
   "./VERSION.txt",
   "./app.js",
   "./autoregulation.js",
+  "./cardio-analytics.js",
   "./db.js",
   "./exercise-library.js",
   "./exercise-alternatives.js",

@@ -1,25 +1,25 @@
 export const ExerciseType={
-  HEAVY_COMPOUND:'HEAVY_COMPOUND',MODERATE_COMPOUND:'MODERATE_COMPOUND',MACHINE_COMPOUND:'MACHINE_COMPOUND',ISOLATION:'ISOLATION'
+  HEAVY_COMPOUND:'HEAVY_COMPOUND',MODERATE_COMPOUND:'MODERATE_COMPOUND',MACHINE_COMPOUND:'MACHINE_COMPOUND',ISOLATION:'ISOLATION',CARDIO:'CARDIO'
 };
 export const RampMode={AUTO:'AUTO',ALWAYS:'ALWAYS',NEVER:'NEVER'};
 export const Equipment={BARBELL:'BARBELL',DUMBBELL:'DUMBBELL',MACHINE:'MACHINE',CABLE:'CABLE',BODYWEIGHT:'BODYWEIGHT',CARDIO:'CARDIO',OTHER:'OTHER'};
 export const DumbbellLoad={SINGLE:'SINGLE',PAIR:'PAIR'};
 
 export const EXERCISES=[
-  ['running','Running / Treadmill', ['Run','Treadmill'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['cycling','Cycling / Stationary Bike',['Cycle','Spin Bike'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['rowing_cardio','Rowing Ergometer',['Indoor Rowing'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['elliptical_cardio','Elliptical Trainer',[],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['walking','Walking / Incline Treadmill',['Walking'],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['outdoor_running','Outdoor Running',["Jogging"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['outdoor_cycling','Outdoor Cycling',["Road Cycling"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['outdoor_walking','Outdoor Walking',["Walking Outdoors"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['stair_climber','Stair Climber',["Stairmaster"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['swimming','Swimming',["Pool Swimming"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['ski_erg','SkiErg',["Ski Ergometer"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['jump_rope','Jump Rope',["Skipping Rope"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['air_bike','Air Bike',["Assault Bike"],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
-  ['hiking','Hiking',[],ExerciseType.MODERATE_COMPOUND,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['running','Running / Treadmill', ['Run','Treadmill'],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['cycling','Cycling / Stationary Bike',['Cycle','Spin Bike'],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['rowing_cardio','Rowing Ergometer',['Indoor Rowing'],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['elliptical_cardio','Elliptical Trainer',[],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['walking','Walking / Incline Treadmill',['Walking'],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['outdoor_running','Outdoor Running',["Jogging"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['outdoor_cycling','Outdoor Cycling',["Road Cycling"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['outdoor_walking','Outdoor Walking',["Walking Outdoors"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['stair_climber','Stair Climber',["Stairmaster"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['swimming','Swimming',["Pool Swimming"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['ski_erg','SkiErg',["Ski Ergometer"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['jump_rope','Jump Rope',["Skipping Rope"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['air_bike','Air Bike',["Assault Bike"],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
+  ['hiking','Hiking',[],ExerciseType.CARDIO,false,false,Equipment.CARDIO,DumbbellLoad.SINGLE],
   ['barbell_bench_press' ,'Barbell Bench Press',['Bench Press','Bench','Flat Bench'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
   ['back_squat','Back Squat',['Squat','Barbell Squat'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],
   ['deadlift','Deadlift',['Conventional Deadlift'],ExerciseType.HEAVY_COMPOUND,true,true,Equipment.BARBELL,DumbbellLoad.SINGLE],

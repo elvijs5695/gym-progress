@@ -692,3 +692,18 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 @keyframes sync-spin{to{transform:rotate(360deg)}}
 
 .postpone-exercise-link{margin:8px auto 4px;text-align:center;color:var(--accent,#4f7cff);font-size:.92rem;line-height:1.35;cursor:pointer;max-width:32rem;padding:6px 10px}.postpone-exercise-link:hover{text-decoration:underline}.postpone-exercise-link:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:8px}
+
+/* Cardio effort is classified from recorded RPE, never from raw heart rate. */
+.difficulty.cardio-easy{color:var(--green)}
+.difficulty.cardio-moderate{color:var(--yellow)}
+.difficulty.cardio-hard{color:var(--orange)}
+.difficulty.cardio-veryhard{color:var(--red)}
+.difficulty.cardio-unknown,.difficulty.mixed{color:var(--gray)}
+#f-cardio-options{padding:8px 0 4px}
+#f-cardio-options input{width:100%}
+
+/* Workout management controls: balanced, centred, secondary blue/grey, never primary Complete. */
+.exercise-secondary-actions{width:min(100%,560px);margin:16px auto 4px;padding:0 8px;display:flex;justify-content:center;align-items:stretch;gap:10px}
+.exercise-secondary-actions .exercise-management{flex:1 1 0;min-width:0;max-width:175px;padding:10px 8px;min-height:42px;border:1px solid color-mix(in srgb,var(--accent2) 45%,var(--line));background:color-mix(in srgb,var(--accent2) 12%,var(--surface2));color:var(--accent2);font-weight:700;text-align:center;border-radius:12px}
+.exercise-secondary-actions .exercise-management:active{background:color-mix(in srgb,var(--accent2) 23%,var(--surface2))}
+@media(max-width:375px){.exercise-secondary-actions{gap:6px;padding:0 3px}.exercise-secondary-actions .exercise-management{font-size:13px;padding:9px 4px}}
