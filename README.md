@@ -1,3 +1,7 @@
+# CURRENT RELEASE: Android 1.6.7 / PWA 1.7.7
+
+See RELEASE_NOTES_1.6.7_1.7.7.md, UI_PARITY_CONTRACT_1.6.7_1.7.7.md and DATABASE_UPDATE_INSTRUCTIONS_1.6.7_1.7.7.md.
+
 # Gym Progress PWA v1.7.6
 
 Paired release: **Android 1.6.6 / PWA 1.7.6**.
