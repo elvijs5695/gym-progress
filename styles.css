@@ -724,3 +724,11 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .cardio-optional-field{display:flex;gap:8px;min-width:0}.cardio-optional-field input{min-width:0;flex:1}
 .cardio-optional-field button{flex:0 0 auto;width:55px}.cardio-na-selected{outline:2px solid var(--accent2)}
 .log-cardio-load{margin-bottom:14px}
+
+/* 1.7.8: exercise decisions are deliberately secondary to rest control. */
+.exercise-secondary-actions .exercise-management{background:var(--surface2);border-color:var(--line);color:var(--text);opacity:.84;font-weight:600}
+.rest-skip-primary{background:var(--accent2)!important;color:var(--surface)!important;border:0!important;font-weight:800}
+.active-secondary-action-row{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.active-secondary-action-row button{flex:1 1 28%;min-width:96px}
+.cardio-optional-field.is-na input{background:var(--surface2);color:var(--muted);font-style:italic;opacity:1}
+.cardio-optional-field .cardio-na-selected{background:var(--accent2)!important;color:var(--surface)!important;outline:none!important;font-weight:800}
