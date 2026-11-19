@@ -70,6 +70,50 @@ const LV={
 'Set up starter programme':'Iestatīt sākuma programmu','Starter programme':'Sākuma programma','Adds three editable workout days. Your existing programme is kept.':'Pievieno trīs rediģējamas treniņu dienas. Esošā programma tiek saglabāta.',
 'Change':'Mainīt','Type to choose a different catalogue exercise.':'Raksti, lai izvēlētos citu kataloga vingrinājumu.','Not linked. This exercise stays local.':'Nav saistīts. Šis vingrinājums paliek lokāls.','Available only for comparable barbell and dumbbell catalogue exercises.':'Pieejams tikai salīdzināmiem stieņa un hanteļu kataloga vingrinājumiem.','A catalogue link gives this exercise a stable identity across languages and enables friend comparison when the movement is comparable. Linking also applies to existing history without changing your workout records.':'Kataloga saite piešķir vingrinājumam stabilu identitāti dažādās valodās un ļauj salīdzināt ar draugiem, ja kustība ir salīdzināma. Saite attiecas arī uz esošo vēsturi, nemainot treniņu ierakstus.','Superset created':'Supersets izveidots','Superset separated':'Supersets atdalīts','Superset set skipped':'Superseta piegājiens izlaists','Superset skipped':'Supersets izlaists','SUPERSET COMPLETE':'SUPERSETS PABEIGTS','SAVE SUPERSET':'SAGLABĀT SUPERSETU','Skip superset set':'Izlaist superseta piegājienu','Skip superset':'Izlaist superset'
 
+,
+// v1.7.9 — cardio, logs, progress, replacement, and dynamic-view language coverage
+'Cardio':'Kardio','CARDIO':'KARDIO','Strength':'Spēks','Strength volume':'Spēka apjoms','strength':'spēks',
+'Cardio time':'Kardio ilgums','Cardio training load':'Kardio treniņslodze','Cardio load':'Kardio slodze',
+'Avg cardio HR':'Vidējais kardio pulss','Average HR':'Vidējais pulss','Average HR (bpm)':'Vidējais pulss (sit./min)',
+'Average heart rate':'Vidējais pulss','Average power':'Vidējā jauda','Average power (W)':'Vidējā jauda (W)',
+'Distance':'Distance','Distance (km)':'Distance (km)','Pace':'Temps','Power':'Jauda','Heart rate':'Pulss',
+'Cardio activity':'Kardio aktivitāte','Activity':'Aktivitāte','Activity not completed':'Aktivitāte nav pabeigta',
+'Record cardio activity':'Reģistrēt kardio aktivitāti','Save activity':'Saglabāt aktivitāti',
+'Select RPE':'Izvēlies RPE','Training load':'Treniņslodze','RPE':'RPE','effort not recorded':'piepūle nav norādīta',
+'Effort not recorded':'Piepūle nav norādīta','Cardio effort not recorded':'Kardio piepūle nav norādīta',
+'No recorded workouts yet.':'Vēl nav saglabātu treniņu.','Show more workouts':'Rādīt vairāk treniņu',
+'Skip rest':'Izlaist atpūtu','Skip activity':'Izlaist aktivitāti','Save activity':'Saglabāt aktivitāti',
+'START CARDIO':'SĀKT KARDIO','FINISH CARDIO':'PABEIGT KARDIO','DONE':'PABEIGTS',
+'TIMED SET':'LAIKA PIEGĀJIENS','START CARDIO':'SĀKT KARDIO','TARGET':'MĒRĶIS',
+'Replace exercise':'Aizstāt vingrinājumu','No close alternatives':'Nav piemērotu analogu',
+'Equivalent':'Līdzvērtīgs','Close alternative':'Līdzīgs vingrinājums',
+'Manual choice · equivalence unverified':'Manuāla izvēle · līdzvērtība nav apstiprināta',
+'Other programme day':'Citā programmas dienā','Use for this workout':'Izmantot šim treniņam',
+'Volume progress':'Apjoma progress','Duration × session RPE · training demand, not fitness':'Ilgums × aktivitātes RPE · treniņa slodze, nevis fiziskā sagatavotība',
+'Avg heart rate':'Vidējais pulss','Average pace':'Vidējais temps',
+'Record cardio':'Reģistrēt kardio','Duration:':'Ilgums:','optional':'nav obligāts',
+'Discard last recorded set?':'Dzēst pēdējo saglabāto piegājienu?',
+'Going back will remove the last recorded set, including its saved weight, repetitions and RIR. This cannot be recovered unless you enter it again.':'Atgriežoties tiks dzēsts pēdējais saglabātais piegājiens, tostarp svars, atkārtojumi un RIR. Datus varēs atjaunot tikai ievadot tos atkārtoti.',
+'Discard set and go back':'Dzēst piegājienu un atgriezties',
+'Distance must be 0 km or more.':'Distancei jābūt vismaz 0 km.',
+'Average heart rate must be 30–240 bpm.':'Vidējam pulsam jābūt 30–240 sit./min.',
+'Average power must be 1–2500 W.':'Vidējai jaudai jābūt 1–2500 W.',
+'RPE must be selected from 1–10.':'RPE jāizvēlas no 1 līdz 10.',
+'New workout':'Jauns treniņš','Begin exercise':'Sākt vingrinājumu',
+'BACK':'ATPAKAĻ','WORKOUT COMPLETE':'TRENIŅŠ PABEIGTS',
+'Heart rate':'Pulss','1 month':'1 mēnesis','3 months':'3 mēneši',
+'6 months':'6 mēneši','1 year':'1 gads','5 years':'5 gadi',
+'Volume':'Apjoms','Estimated 1RM':'Aprēķinātais 1RM',
+'Skipped workout':'Izlaists treniņš','Cardio stats':'Kardio rādītāji',
+'No activity recorded':'Nav saglabātu aktivitāšu','Matched-effort comparison':'Salīdzinājums pie līdzīgas piepūles',
+'Cardio Progress is specific to this exercise, never mixed with lifting e1RM or volume. Duration × RPE measures training load, not fitness.':'Kardio progress attiecas tikai uz šo vingrinājumu un netiek sajaukts ar spēka vingrinājumu e1RM vai apjomu. Ilgums × RPE raksturo treniņa slodzi, nevis fizisko sagatavotību.',
+'No data in this period.':'Šajā periodā nav datu.','Load':'Slodze','Heart rate':'Pulss','No completed values in this range.':'Šajā periodā nav pabeigtu ierakstu.',
+'Target':'Mērķis','Finish whenever you are done':'Pabeidz, kad esi gatavs',
+'Hard':'Smags','Very hard':'Ļoti smags','Easy':'Viegls','Moderate':'Mērens',
+'Next exercise':'Nākamais vingrinājums','Next set':'Nākamais piegājiens',
+'Save session':'Saglabāt treniņu','Delete this workout':'Dzēst šo treniņu',
+'Strength and cardio':'Spēks un kardio','Training demand':'Treniņa slodze',
+
 };
 
 export function languageCode(state){return state?.app_state?.languageCode==='lv'?'lv':'en';}
@@ -77,6 +121,13 @@ export function localeFor(lang){return lang==='lv'?'lv-LV':'en-GB';}
 export function t(raw,lang='en'){
   raw=String(raw??'');if(lang!=='lv'||!raw)return raw;
   if(LV[raw]!=null)return LV[raw];
+  if((m=/^Duration (\d{1,2}:\d{2}(?::\d{2})?)$/.exec(raw)))return `Ilgums ${m[1]}`;
+  if((m=/^Strength: (.+) · Cardio: (.+)$/.exec(raw)))return `Spēks: ${t(m[1],lang)} · Kardio: ${t(m[2],lang)}`;
+  if((m=/^Target (.+) · finish whenever you are done$/.exec(raw)))return `Mērķis ${m[1]} · pabeidz, kad esi gatavs`;
+  if((m=/^RPE (\d+(?:\.\d+)?)$/.exec(raw)))return `RPE ${m[1]}`;
+  if((m=/^(.+) · cardio RPE (\d+(?:\.\d+)?)$/.exec(raw)))return `${t(m[1],lang)} · kardio RPE ${m[2]}`;
+  if((m=/^Cardio time (.+)$/.exec(raw)))return `Kardio ilgums ${m[1]}`;
+
   let m;
   if((m=/^(\d+) exercises?$/.exec(raw)))return `${m[1]} ${Number(m[1])===1?'vingrinājums':'vingrinājumi'}`;
   if((m=/^(\d+) days?$/.exec(raw)))return `${m[1]} ${Number(m[1])===1?'diena':'dienas'}`;

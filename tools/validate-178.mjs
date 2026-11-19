@@ -17,10 +17,10 @@ assert.equal(sum.duration,2400);assert.equal(sum.distance,2);assert.equal(sum.me
 // Cardio N/A is a legible input value, and it is a true null when saved.
 const button={classList:{toggle:()=>{}},setAttribute:()=>{},textContent:''};
 const row={classList:{toggle:()=>{}}};
-const field={disabled:false,type:'number',value:'250',nextElementSibling:button,closest:()=>row};
+const field={disabled:false,type:'number',tagName:'INPUT',value:'250',nextElementSibling:button,closest:()=>row};
 const na=ctx({document:{getElementById:()=>field}});
 vm.runInContext(between('function toggleCardioNA(id){','function cancelCardioSet(){'),na);
-na.toggleCardioNA('cardio-power');assert.equal(field.disabled,true);assert.equal(field.type,'text');assert.equal(field.value,'N/A');assert.equal(button.textContent,'✓ N/A');
+na.toggleCardioNA('cardio-power');assert.equal(field.disabled,true);assert.equal(field.type,'text');assert.equal(field.value,'-');assert.equal(button.textContent,'N/A');
 na.toggleCardioNA('cardio-power');assert.equal(field.disabled,false);assert.equal(field.type,'number');assert.equal(field.value,'');
 // Set Complete's first set must go back without modifying the actual log, not call undoLastSet.
 const setRt={phase:'ENTRY',entry:{weight:28.75},rest:{startedAt:1000,endsAt:10000}};let persisted=0,rendered=0;

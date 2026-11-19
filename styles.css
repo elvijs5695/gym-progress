@@ -732,3 +732,23 @@ body:has(#dialog-root .dialog-backdrop) #status-root{
 .active-secondary-action-row button{flex:1 1 28%;min-width:96px}
 .cardio-optional-field.is-na input{background:var(--surface2);color:var(--muted);font-style:italic;opacity:1}
 .cardio-optional-field .cardio-na-selected{background:var(--accent2)!important;color:var(--surface)!important;outline:none!important;font-weight:800}
+
+/* 1.7.9: responsive card-level cardio metrics and consistent optional inputs */
+.log-metric-grid{margin:12px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+@media(min-width:570px){.log-metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.log-metric-grid .metric-label{height:auto;min-height:27px;display:block;line-height:1.2}
+.log-metric-grid .metric-value{white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.log-effort-row{margin-top:12px;align-items:flex-start}.log-effort-row .difficulty{text-align:right;max-width:78%;line-height:1.4}
+.session-exercise-card{margin-top:12px}.log-exercise-heading{min-width:0;flex:1}.session-exercise-card .difficulty{flex:0 0 auto;text-align:right;max-width:42%}
+.cardio-activity-log{width:100%;border-top:1px solid var(--line);padding-top:12px;margin-bottom:0}
+.session-overview-grid{margin:12px 0}.log-strength-sets{margin-top:10px}
+.cardio-optional-field select{flex:1;min-width:0;width:100%;font-size:16px}
+.cardio-optional-field button{width:55px;min-width:55px}
+.cardio-optional-field.is-na input,.cardio-optional-field.is-na select{color:var(--muted);font-style:normal;opacity:1}
+.cardio-rpe-explanation{grid-column:1/-1;line-height:1.5;margin-top:3px}
+.cardio-validation-error{color:var(--red);font-size:13px;line-height:1.4;margin-top:9px}
+.cardio-validation-error:empty{display:none}
+.cardio-optional-field .invalid{border-color:var(--red)}
+.progress-metrics{scroll-behavior:auto;overscroll-behavior-x:contain}
+
+.log-cardio-section{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.log-metric-section-title{font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:2px 0 4px}
