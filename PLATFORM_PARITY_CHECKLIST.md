@@ -60,3 +60,12 @@ Potential adapter areas include permissions, installation, native notifications/
 - Log: date regular + day bold on line one; coloured strength/cardio grades left on line two; neutral headings above data.
 - Cardio metrics evenly spaced one-row; localised short `Training load` label.
 - Add friend in Friends list card header even at friend count zero, no top-bar action.
+
+### v2.0.4 cross-platform acceptance (PWA now; Android parity pending)
+
+- [ ] Log cards: effort is final element; mixed Strength retains volume, volume progress and four equally sized Cardio metrics
+- [ ] Compact header matches standard section height, with two ellipsised text lines at 320/360/390 px and four visible 40 px actions
+- [ ] Rest audio: one short warning at 30 seconds, one beep each at 3/2/1, and a longer start cue at zero (background suspension must not queue tones)
+- [ ] Notice dialogs: green 2 px outline and contrasting grey background in light, dark and system dark settings
+- [ ] Existing users who acknowledged 1.x receive cumulative 2.x What's New after account sync; acknowledgement persists and does not repeat on reload
+- [ ] Android must reuse exactly the same components, cue rules, colours, labels, and release change history; no independent UI fork

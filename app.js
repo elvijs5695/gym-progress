@@ -31,13 +31,14 @@ import {ensureSyncFoundation} from './sync-foundation.js';
 import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel,listTrainingSyncConflicts,resolveTrainingSyncConflict,resetAfterCloudErasure} from './training-sync.js';
 
 import {deliverPwaNotification} from './notification-delivery.js';
+import {advanceRestAudioCue} from './rest-audio-cues.js';
 import {buildProgressExerciseOptions} from './progress-options.js';
 import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sourceForProgressMetric} from './progress-analytics.js';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.0.3';
+const APP_VERSION='2.0.4';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -301,6 +302,7 @@ async function checkMotivationReminders(){const a=state?.app_state;if(!a?.motiva
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
+ {version:'2.0.4',key:'workout-log-sounds-notices',importance:5,en:'Workout Log cards now show every strength progress metric and four equally sized cardio metrics, with effort below the data. Compact workout controls, clearer notices and precise rest cues are restored.',lv:'Treniņu žurnālā atjaunots spēka apjoma progress un četri vienādi kardio rādītāji, piepūles novērtējums ir apakšā. Atjaunota kompakta treniņa galvene, pārskatāmi paziņojumi un precīzi atpūtas signāli.'},
  {version:'2.0.3',key:'workout-log-header',importance:3,en:'Clear two-line workout log headings, compact evenly spaced cardio metrics, stable active-workout controls and Add friend in its card.',lv:'Skaidras divrindu žurnāla galvenes, vienmērīgi kardio rādītāji, stabila treniņa vadība un Drauga pievienošana kartītē.'},
  {version:'2.0.2',key:'ui-density-consistency',importance:3,en:'Clear green-to-red effort colours, stable section header, explicitly spaced workout status and one-row cardio statistics.',lv:'Skaidri piepūles toņi no zaļā līdz sarkanam, nemainīga galvenes augstuma josla, precīzas atstarpes un kardio rādītāji vienā rindā.'},
  {version:'2.0.1',key:'sync-on-login',importance:5,en:'Signing in now restores cloud training data before the Home programme prompt.',lv:'Pēc pieslēgšanās mākoņa treniņu dati tiek ielādēti pirms sākuma programmas piedāvājuma.'},
@@ -313,15 +315,39 @@ const UPDATE_FEATURES=[
  {version:'2.0.0',key:'v2-language',importance:2,en:'Catalogue names follow your language; personal names stay yours. Latvian text, decimal numbers and controls are consistent.',lv:'Kataloga nosaukumi atbilst izvēlētajai valodai; personīgie nosaukumi tiek saglabāti. Vienoti tulkojumi, decimālatdalītāji un vadīklas.'},
  {version:'2.0.0',key:'v2-foundation',importance:1,en:'Shared calculation rules, account-separated storage and safer synchronisation protect your training history.',lv:'Vienoti aprēķinu noteikumi, atdalīti kontu dati un drošāka sinhronizācija aizsargā treniņu vēsturi.'}
 ];
-function updatePreviousVersion(){try{return localStorage.getItem(LAST_SEEN_APP_VERSION_KEY)||localStorage.getItem(UPDATE_ANNOUNCEMENT_KEY)||'1.3.0';}catch{return'1.3.0';}}
-function showUpdateAnnouncementIfNeeded(){
-  const previous=updatePreviousVersion();if(compareVersions(previous,APP_VERSION)>=0)return;
-  const selected=[],seen=new Set();for(const item of UPDATE_FEATURES){if(compareVersions(item.version,previous)>0&&compareVersions(item.version,APP_VERSION)<=0&&!seen.has(item.key)){seen.add(item.key);selected.push(item);}}
-  if(!selected.length){try{localStorage.setItem(LAST_SEEN_APP_VERSION_KEY,APP_VERSION);localStorage.setItem(UPDATE_ANNOUNCEMENT_KEY,APP_VERSION);}catch{}return;}
-  const ordered=selected.slice().sort((a,b)=>Number(b.importance||1)-Number(a.importance||1)||compareVersions(b.version,a.version));const lv=languageCode(state)==='lv',title=lv?'Kas jauns':'What’s new',intro=lv?`Jaunumi kopš ${previous}`:`New since ${previous}`,items=ordered.slice(0,5).map(x=>lv?x.lv:x.en);
-  openDialog(`<div class="update-brief"><div class="small">GYM PROGRESS · ${esc(APP_VERSION)}</div><h2>${esc(title)}</h2><div class="update-brief-intro">${esc(intro)}</div><ul>${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="dialog-actions"><button onclick="gp.dismissUpdateAnnouncement()">${esc(lv?'Sapratu':'Got it')}</button></div></div>`);
+function updatePreviousVersion(){
+ try{return localStorage.getItem(LAST_SEEN_APP_VERSION_KEY)||localStorage.getItem(UPDATE_ANNOUNCEMENT_KEY)||'1.x';}catch{return '1.x';}
 }
-function dismissUpdateAnnouncement(){try{localStorage.setItem(LAST_SEEN_APP_VERSION_KEY,APP_VERSION);localStorage.setItem(UPDATE_ANNOUNCEMENT_KEY,APP_VERSION);}catch{}closeDialog();if(socialSignedIn())setTimeout(()=>void maybeOfferTrainingSyncAfterUpdate(),100);else if(!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed)setTimeout(()=>showEmptyStarterPrompt(),60);}
+// v1.x used the same acknowledgement keys. Do not equate an update check or
+// automatic service-worker installation with having READ a release note.
+function showUpdateAnnouncementIfNeeded(){
+ if(!state||runtime()||document.querySelector('#dialog-root .dialog-backdrop'))return false;
+ if(socialSignedIn()&&accountBootstrapStatus!=='ready')return false;
+ const previous=updatePreviousVersion();if(compareVersions(previous,APP_VERSION)>=0)return false;
+ const selected=[],seen=new Set();for(const item of UPDATE_FEATURES){
+   if(compareVersions(item.version,previous)>0&&compareVersions(item.version,APP_VERSION)<=0&&!seen.has(item.key)){
+     seen.add(item.key);selected.push(item);
+   }
+ }
+ if(!selected.length)return false;
+ const legacyUpgrade=compareVersions(previous,'2.0.0')<0;
+ const ordered=selected.slice().sort((a,b)=>Number(b.importance||1)-Number(a.importance||1)||compareVersions(b.version,a.version));
+ // A legacy user must see both the v2 foundations and the most significant
+ // corrections. Longer cumulative upgrades get more lines, not a new page.
+ const relevant=legacyUpgrade?ordered.slice(0,9):ordered.slice(0,6);
+ const lv=languageCode(state)==='lv',title=lv?'Kas jauns':'What’s new';
+ const intro=lv?`Jaunumi kopš ${previous}`:`New since ${previous}`;
+ openDialog(`<div class="update-brief"><div class="small">GYM PROGRESS · ${esc(APP_VERSION)}</div><h2>${esc(title)}</h2><div class="update-brief-intro">${esc(intro)}</div><ul>${relevant.map(x=>`<li>${esc(lv?x.lv:x.en)}</li>`).join('')}</ul><div class="dialog-actions"><button onclick="gp.dismissUpdateAnnouncement()">${esc(lv?'Sapratu':'Got it')}</button></div></div>`,{notice:true});
+ return true;
+}
+function dismissUpdateAnnouncement(){
+ try{localStorage.setItem(LAST_SEEN_APP_VERSION_KEY,APP_VERSION);localStorage.setItem(UPDATE_ANNOUNCEMENT_KEY,APP_VERSION);}catch{}
+ closeDialog();
+ // The initial account sync already runs automatically; do not offer a second,
+ // unnecessary synchronisation review after acknowledging release notes.
+ if(route.name==='home'&&(!socialSignedIn()||accountBootstrapStatus==='ready')&&!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed)
+   setTimeout(()=>{if(!document.querySelector('.dialog-backdrop')&&route.name==='home')showEmptyStarterPrompt();},70);
+}
 
 function expandChevron(extraClass=''){return `<span class="app-expand-chevron ${extraClass}" aria-hidden="true"><svg viewBox="0 0 24 14" focusable="false"><path d="M3 3l9 8 9-8"/></svg></span>`;}
 function navChevron(){return expandChevron('nav-chevron');}
@@ -414,7 +440,15 @@ function render(){
   if(route.name==='friends')requestAnimationFrame(bindFriendsTimeline);
   if(route.name==='programme'||route.name==='workout')requestAnimationFrame(bindProgrammeReorder);
   if(window.__gpShareDraft)renderShareSummary();
-  if(route.name==='home'&&(!socialSignedIn()||accountBootstrapStatus==='ready')&&!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed){setTimeout(()=>{if(!document.querySelector('.dialog-backdrop'))showEmptyStarterPrompt();},0);}
+  if(route.name==='home'&&(!socialSignedIn()||accountBootstrapStatus==='ready')&&!runtime()){
+    // First show the accumulated release announcement, after the initial
+    // account sync and before any starter-programme empty-state prompt.
+    setTimeout(()=>{
+      if(route.name!=='home'||runtime()||document.querySelector('#dialog-root .dialog-backdrop')||(socialSignedIn()&&accountBootstrapStatus!=='ready'))return;
+      if(showUpdateAnnouncementIfNeeded())return;
+      if(!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed)showEmptyStarterPrompt();
+    },80);
+  }
   renderStatus();
   endMetricsRender();
   if(serviceRegistration?.waiting) scheduleAutomaticUpdate();
@@ -924,10 +958,10 @@ function effortLabelHtml(effort){
 /** Log summary: modality names are neutral; only the effort grade carries colour.
  * This is distinct from effortLabelHtml(), which is also used in detail views. */
 function logSummaryEffortHtml(effort,mode){
+  // A single-modality card needs only its coloured grade. Modality labels are
+  // useful only when both strength and cardio ratings are present.
   const parts=Array.isArray(effort.components)&&effort.components.length?effort.components:[{
-    key:effort.key,
-    title:mode==='cardio'?S('Cardio','Kardio'):mode==='strength'?S('Strength','Spēks'):null,
-    value:effort.label
+    key:effort.key,title:null,value:effort.label
   }];
   return parts.map((part,index)=>{
     const title=part.title?`<span class="log-effort-title">${esc(part.title)}:</span> `:'';
@@ -935,11 +969,15 @@ function logSummaryEffortHtml(effort,mode){
   }).join('');
 }
 function logMetric(label,value){return `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">${esc(value)}</div></div>`;}
-function cardioLogFields(cardio){
-  const fields=[logMetric(S('Cardio time','Kardio ilgums'),formatDuration(cardio.duration*1000))];
-  if(cardio.meanRpe!=null)fields.push(logMetric('RPE',formatNumber(cardio.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})));
-  if(cardio.meanHr!=null)fields.push(logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardio.meanHr)} ${S('bpm','sit./min')}`));
-  return fields.join('');
+function cardioLogFields(cardio,session){
+  // Exactly four cells in either modality: unavailable values remain explicit
+  // rather than making the grid change shape or width between sessions.
+  return [
+    logMetric(S('Cardio time','Kardio ilgums'),formatDuration(cardio.duration*1000)),
+    logMetric('RPE',cardio.meanRpe==null?'—':formatNumber(cardio.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})),
+    logMetric(S('Avg cardio HR','Vidējais kardio pulss'),cardio.meanHr==null?'—':`${Math.round(cardio.meanHr)} ${S('bpm','sit./min')}`),
+    logMetric(S('Training load','Treniņslodze'),formatCardioSessionLoad(session))
+  ].join('');
 }
 function renderLogs(){
   const sessions=state.workout_sessions.filter(s=>s.status==='COMPLETE'||s.status==='ABORTED').sort((a,b)=>b.startedAt-a.startedAt);let c='';
@@ -950,16 +988,20 @@ function renderLogs(){
       const m=sessionMetrics(state,s),diff=workoutLogEffort(s,m),cardio=workoutCardioEffort(state,s),cardioStats=sessionCardioSummary(s),dur=(s.endedAt||s.startedAt)-s.startedAt;
       const strength=cardio.mode==='strength'||cardio.mode==='mixed',hasCardio=cardio.mode==='cardio'||cardio.mode==='mixed';
       let strengthStats=logMetric(S('Duration','Ilgums'),formatDuration(dur));
-      if(strength)strengthStats+=logMetric(S('Strength volume','Spēka apjoms'),formatKgRounded(m.volume));
-      if(cardio.mode==='strength')strengthStats+=logMetric(S('Volume progress','Apjoma progress'),fmtPct(m.progressPercent));
-      const cardioMetrics=hasCardio?(cardio.mode==='mixed'?cardioLogFields(cardioStats):'')+logMetric(S('Training load','Treniņslodze'),formatCardioSessionLoad(s))+(cardio.mode==='cardio'&&cardioStats.meanRpe!=null?logMetric('RPE',formatNumber(cardioStats.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})):'')+(cardio.mode==='cardio'&&cardioStats.meanHr!=null?logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioStats.meanHr)} ${S('bpm','sit./min')}`):''):'';
-      const cardioSection=hasCardio?`<div class="log-cardio-section">${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div>`:''}<div class="metric-grid log-metric-grid cardio-metrics-row" tabindex="0" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioMetrics}</div></div>`:'';
-      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card effort-surface" data-effort="${esc(diff.key)}" onclick="gp.nav('session',${s.id})"><div class="log-heading"><span class="log-date">${dateOnly(s.startedAt)}</span><span class="log-heading-separator" aria-hidden="true">·</span><span class="log-name">${esc(s.workoutName)}</span></div><div class="log-effort-line" aria-label="${esc(S('Effort','Piepūle')+': '+translateUI(diff.label,languageCode(state)))}">${logSummaryEffortHtml(diff,cardio.mode)}</div>${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Strength','Spēks'))}</div>`:''}<div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}</div>`;
+      if(strength){
+        strengthStats+=logMetric(S('Strength volume','Spēka apjoms'),formatKgRounded(m.volume));
+        strengthStats+=logMetric(S('Volume progress','Apjoma progress'),fmtPct(m.progressPercent));
+      }
+      const cardioSection=hasCardio?`<div class="log-cardio-section">${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div>`:''}<div class="metric-grid log-metric-grid cardio-metrics-row" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioLogFields(cardioStats,s)}</div></div>`:'';
+      const heading=`<div class="log-heading"><span class="log-date">${dateOnly(s.startedAt)}</span><span class="log-heading-separator" aria-hidden="true">·</span><span class="log-name">${esc(s.workoutName)}</span></div>`;
+      const effort=`<div class="log-effort-line log-effort-footer" aria-label="${esc(S('Effort','Piepūle')+': '+translateUI(diff.label,languageCode(state)))}">${logSummaryEffortHtml(diff,cardio.mode)}</div>`;
+      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card effort-surface" data-effort="${esc(diff.key)}" onclick="gp.nav('session',${s.id})">${heading}${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Strength','Spēks'))}</div>`:''}<div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}${effort}</div>`;
     });
     if(sessions.length>(ui.logLimit||40))c+=`<button class="secondary full" onclick="gp.moreLogs()" style="margin-top:14px">${esc(S('Show more workouts','Rādīt vairāk treniņu'))} (${sessions.length-(ui.logLimit||40)})</button>`;
   }
   return shell(c);
 }
+
 function moreLogs(){ui.logLimit=(ui.logLimit||40)+40;render();}
 function cardioActivityLogHtml(e){
   const completed=exerciseSets(state,e.id).filter(x=>x.status==='COMPLETE');
@@ -1106,16 +1148,19 @@ function renderActive(){
   const control=(kind,action,label,enabled=true)=>`<button class="icon-btn workout-history-control" onclick="${action}" aria-label="${esc(label)}" title="${esc(label)}" ${enabled?'':'disabled'}>${workoutControlIcon(kind)}</button>`;
   const fullStageLabel=[header.stage,header.current].filter(Boolean).join(' · ');
   const top=`<div class="topbar active-workout-topbar">
-    <div class="active-workout-mainline">
-      <span class="active-workout-name" title="${esc(s.workoutName)}">${esc(s.workoutName)}</span>
-      <span class="small live-session-time active-workout-timer" data-start="${s.startedAt}">${formatDuration(syncedElapsed(s.startedAt))}</span>
+    <div class="active-workout-context">
+      <div class="active-workout-mainline">
+        <strong class="active-workout-name" title="${esc(s.workoutName)}">${esc(s.workoutName)}</strong>
+        <span class="active-header-divider" aria-hidden="true"> · </span>
+        <span class="small live-session-time active-workout-timer" data-start="${s.startedAt}">${formatDuration(syncedElapsed(s.startedAt))}</span>
+      </div>
+      <div class="active-workout-subline" title="${esc(fullStageLabel)}">
+        ${header.stage?`<strong class="active-header-stage">${esc(header.stage)}</strong>`:''}
+        ${header.stage&&header.current?'<span class="active-header-divider" aria-hidden="true"> · </span>':''}
+        <span class="active-header-current">${esc(header.current||'')}</span>
+      </div>
     </div>
     <div class="workout-history-controls">${control('undo','gp.undoLastSet()',S('Undo last set','Atsaukt pēdējo piegājienu'),canUndo)}${control('redo','gp.redoLastSet()',S('Redo last set','Atjaunot pēdējo piegājienu'),canRedo)}${control('home',"gp.nav('home')",S('Home','Sākums'))}${control('close','gp.requestAbort()',S('End workout early','Pabeigt treniņu agrāk'),!finalPhase)}</div>
-    <div class="active-workout-subline" title="${esc(fullStageLabel)}">
-      ${header.stage?`<span class="active-header-stage">${esc(header.stage)}</span>`:''}
-      ${header.stage&&header.current?'<span class="active-header-divider" aria-hidden="true"> · </span>':''}
-      <span class="active-header-current">${esc(header.current||'')}</span>
-    </div>
   </div><div class="workout-progress-track" aria-hidden="true"><div class="workout-progress-fill" style="width:${progress}%"></div></div>`;
   let c='';
   if(rt.phase==='PRE_EXERCISE')c=nextExerciseDecisionCard();
@@ -1627,11 +1672,8 @@ async function tick(){
   if(rt.phase==='REST'&&!rt.rest){if(activeView&&!dialogOpen)await afterRest();return;}
   if((rt.phase==='REST'||rt.phase==='ENTRY'||rt.phase==='SUPERSET_ENTRY')&&rt.rest){
     const rem=rt.rest.endsAt-now();let changed=false;
-    if(rem<=30000&&rem>29000&&!rt.rest.warned30){rt.rest.warned30=true;beepPattern('warning30');changed=true;}
-    if(rem<=3000&&rem>2000&&!rt.rest.count3){rt.rest.count3=true;beepPattern('countdown');changed=true;}
-    if(rem<=2000&&rem>1000&&!rt.rest.count2){rt.rest.count2=true;beepPattern('countdown');changed=true;}
-    if(rem<=1000&&rem>0&&!rt.rest.count1){rt.rest.count1=true;beepPattern('countdown');changed=true;}
-    if(rem<=0&&!rt.rest.beeped0){rt.rest.beeped0=true;beepPattern('ready');changed=true;}
+    const cue=advanceRestAudioCue(rt.rest,rem);
+    if(cue.changed){changed=true;if(cue.sound)beepPattern(cue.sound);}
     if(changed)await persist();
     if(rem<=0&&rt.phase==='REST'&&activeView&&!dialogOpen){finalizeRest();await afterRest();return;}
     if(!dialogOpen)updateLiveClocks();return;
@@ -1653,7 +1695,7 @@ async function tick(){
 }
 async function enableAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')await audioCtx.resume();}catch{}}
 function beepTone(at,freq=720,duration=.16,gain=.22){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(freq,at);g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(gain,at+.015);g.gain.exponentialRampToValueAtTime(.0001,at+duration);o.connect(g);g.connect(audioCtx.destination);o.start(at);o.stop(at+duration+.02);}
-function beepPattern(kind='reminder'){if(state?.app_state?.soundEnabled===false||!audioCtx)return;const t=audioCtx.currentTime+.01;if(kind==='warning30'){beepTone(t,700,.18,.28);beepTone(t+.25,700,.18,.28);if(navigator.vibrate)navigator.vibrate([100,100,100]);return;}if(kind==='countdown'){beepTone(t,760,.14,.30);if(navigator.vibrate)navigator.vibrate(80);return;}if(kind==='ready'){beepTone(t,900,.34,.34);if(navigator.vibrate)navigator.vibrate(180);return;}beepTone(t,650,.18,.22);if(navigator.vibrate)navigator.vibrate(90);}
+function beepPattern(kind='reminder'){if(state?.app_state?.soundEnabled===false||!audioCtx)return;const t=audioCtx.currentTime+.01;if(kind==='warning30'){beepTone(t,690,.13,.24);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='countdown'){beepTone(t,820,.13,.27);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='ready'){beepTone(t,940,.68,.32);if(navigator.vibrate)navigator.vibrate(240);return;}beepTone(t,650,.18,.22);if(navigator.vibrate)navigator.vibrate(90);}
 function beep(count=1){for(let i=0;i<count;i++)beepPattern('reminder');}
 async function requestWakeLock(){if(!state?.app_state.keepScreenAwake||!('wakeLock'in navigator)||document.hidden)return;try{wakeLock=await navigator.wakeLock.request('screen');}catch{}}
 async function releaseWakeLock(){try{await wakeLock?.release();}catch{}wakeLock=null;}
@@ -1677,11 +1719,11 @@ function downloadDetailedJson(){download(`gym_progress_detailed_${stamp()}.json`
 function eraseExerciseLogs(){confirmDialog(S('Erase workout history?','Dzēst treniņu vēsturi?'),S('Permanently deletes workout history, sets, Progress and derived shared records from the active v2 copy and, when signed in, from the cloud. Programme, settings, Tracker and account stay. Original v1 recovery data and downloaded backups remain.','Neatgriezeniski dzēš treniņu vēsturi, piegājienus, Progresu un atvasinātos kopīgotos ierakstus no aktīvās v2 kopijas un, ja esi pieslēdzies, arī no mākoņa. Programma, iestatījumi, Tracker un konts paliek. Sākotnējie v1 atkopšanas dati un lejupielādētās rezerves kopijas paliek.'),S('ERASE LOGS','DZĒST ŽURNĀLU'),async()=>{try{await eraseScopedData('workout_log');ui.timelineDays=null;ui.timelineEndMs=null;await persist();closeDialog();nav('settings');toast(socialSignedIn()?S('Exercise log data erased locally and in cloud.','Treniņu žurnāla dati izdzēsti lokāli un mākonī.'):S('Exercise log data erased.','Treniņu žurnāla dati izdzēsti.'));}catch(e){toast(`${e?.cloudErased?'':S('Deletion could not be completed','Dzēšanu neizdevās pabeigt')+': '}${e?.message||e}`);}},true);}
 function eraseData(){confirmDialog(S('Erase all training data?','Dzēst visus treniņu datus?'),S('Permanently deletes programme, weights, history, Progress, Tracker and derived shared records from the active v2 copy and, when signed in, from the cloud. Your account and friendships stay. Original v1 recovery data and downloaded backups remain.','Neatgriezeniski dzēš programmu, svarus, vēsturi, Progresu, Tracker un atvasinātos kopīgotos ierakstus no aktīvās v2 kopijas un, ja esi pieslēdzies, arī no mākoņa. Konts un draudzības paliek. Sākotnējie v1 atkopšanas dati un lejupielādētās rezerves kopijas paliek.'),S('Continue','Turpināt'),()=>{closeDialog();setTimeout(()=>confirmDialog(S('FINAL WARNING','PĒDĒJAIS BRĪDINĀJUMS'),S('There is no undo. Cancel now if you need to create a backup first.','To nevar atsaukt. Atcel tagad, ja vispirms nepieciešama rezerves kopija.'),S('ERASE EVERYTHING','DZĒST VISU'),async()=>{try{await eraseScopedData('all');ui.timelineDays=null;ui.timelineEndMs=null;await persist();ui.selectedWorkoutId=null;closeDialog();nav('home');toast(socialSignedIn()?S('All training data erased locally and in cloud.','Visi treniņu dati izdzēsti lokāli un mākonī.'):S('All training data erased.','Visi treniņu dati izdzēsti.'));}catch(e){toast(`${e?.cloudErased?'':S('Deletion could not be completed','Dzēšanu neizdevās pabeigt')+': '}${e?.message||e}`);}},true),30);},true);}
 
-function alertDialog(title,text){title=translateUI(title,languageCode(state));text=translateUI(text,languageCode(state));openDialog(`<h2>${esc(title)}</h2><div class="muted">${esc(text)}</div><div class="dialog-actions"><button onclick="gp.closeDialog()" data-i18n="OK">OK</button></div>`);}
+function alertDialog(title,text){title=translateUI(title,languageCode(state));text=translateUI(text,languageCode(state));openDialog(`<h2>${esc(title)}</h2><div class="muted">${esc(text)}</div><div class="dialog-actions"><button onclick="gp.closeDialog()" data-i18n="OK">OK</button></div>`,{notice:true});}
 function confirmDialog(title,text,confirmLabel,onConfirm,danger=false,onCancel=null){title=translateUI(title,languageCode(state));text=translateUI(text,languageCode(state));window.__gpConfirm=onConfirm;window.__gpCancel=onCancel;openDialog(`<h2>${esc(title)}</h2><div class="muted ${danger?'destructive-warning':''}">${danger?`<strong>${esc(text)}</strong>`:esc(text)}</div><div class="dialog-actions"><button class="secondary" onclick="gp.cancelConfirm()" data-i18n="Cancel">Cancel</button><button class="${danger?'danger':''}" onclick="gp.confirmNow()">${esc(translateUI(confirmLabel,languageCode(state)))}</button></div>`);}
 function formDialog(title,body,confirmLabel,onConfirm,cancelAction='gp.closeDialog()'){window.__gpFormConfirm=onConfirm;openDialog(`<h2>${esc(translateUI(title,languageCode(state)))}</h2>${body}<div class="dialog-actions"><button type="button" class="secondary" onclick="${cancelAction}">Cancel</button><button type="button" onclick="gp.formConfirm()">${esc(translateUI(confirmLabel,languageCode(state)))}</button></div>`);}
 let dialogVersion=0,emailOtpFlow=null;
-function openDialog(inner,{otpFlow=null}={}){dialogVersion++;if(emailOtpFlow!==otpFlow){cancelEmailOtp();emailOtpFlow=otpFlow;}let root=$('#dialog-root');if(!root){root=document.createElement('div');root.id='dialog-root';document.body.append(root);}setHTML(root,'<div class="dialog-backdrop" onclick="if(event.target===this)gp.closeDialog()"><div class="dialog">'+inner+'</div></div>');localizeDom(root,languageCode(state));enhanceDialog(root,{onClose:()=>closeDialog(),language:languageCode(state)});}
+function openDialog(inner,{otpFlow=null,notice=false}={}){dialogVersion++;if(emailOtpFlow!==otpFlow){cancelEmailOtp();emailOtpFlow=otpFlow;}let root=$('#dialog-root');if(!root){root=document.createElement('div');root.id='dialog-root';document.body.append(root);}setHTML(root,'<div class="dialog-backdrop" onclick="if(event.target===this)gp.closeDialog()"><div class="dialog'+(notice?' notice-dialog':'')+'">'+inner+'</div></div>');localizeDom(root,languageCode(state));enhanceDialog(root,{onClose:()=>closeDialog(),language:languageCode(state)});}
 function closeDialog(){dialogVersion++;cancelEmailOtp();emailOtpFlow=null;if(runtime()?.phase==='CARDIO_ENTRY'){void cancelCardioSet();return;}trainingSyncReviewToken++;const skippedExerciseNote=!!window.__gpExerciseNote;window.__gpExerciseNote=null;const r=$('#dialog-root');if(r)setHTML(r,'');window.__gpConfirm=window.__gpCancel=window.__gpFormConfirm=null;if(skippedExerciseNote)continuePostSetQueue();}
 
 

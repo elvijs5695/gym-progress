@@ -1,6 +1,6 @@
 {
-  "version": "2.0.3",
-  "id": "2.0.3-6be33c7cdaf8",
+  "version": "2.0.4",
+  "id": "2.0.4-52a102d4bb9c",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "b1a8defd9768ad476afb1b7c5ff625945fecbfbb81cf4da8175ec36c3e058158",
-      "bytes": 378766
+      "sha256": "ab6ad36bcb1b9371a06b32078fc0b558441df04396efbd8bf76623d3771673dc",
+      "bytes": 380023
     },
     {
       "path": "autoregulation.js",
@@ -239,12 +239,17 @@
     },
     {
       "path": "release-workout.css",
-      "sha256": "5b6eb1d6977f0cfaf0a52fdc69c8ad8fa9cff47bbeba70499cde4e66d8a99288",
-      "bytes": 4367
+      "sha256": "682277135deef88d3061fcbbb8c79a4fb484d78e63f72b772a1438f5f96131e2",
+      "bytes": 4350
+    },
+    {
+      "path": "rest-audio-cues.js",
+      "sha256": "c88a43cd10a3f7cbca9bd78a6df025c0f0c453723f18ac5072103a0df815c1df",
+      "bytes": 1139
     },
     {
       "path": "social-api.js",
-      "sha256": "f594185557fc3375912bfd1da4e0f6930b08133eae533d7649fa0d52c03e8f8b",
+      "sha256": "5b4b2ef15382b7bae28637d6acdd2d0b997da6be1fa7035045c718cf13cceb56",
       "bytes": 15107
     },
     {
@@ -289,8 +294,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "2716263b7fed1628b6e99434c7a16bcea7b73e41c9bd03351ae2a0da5bea86d4",
-      "bytes": 67136
+      "sha256": "e91521d2db4901aaddb0e8c8b66aea4d093b3f29f5de65ba44b3e4887ad820cd",
+      "bytes": 68743
     },
     {
       "path": "vendor/ACORN_LICENSE.txt",

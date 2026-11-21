@@ -40,3 +40,9 @@ A database promotion must have a verified current backup, snapshot/schema/owners
 Every release includes source, a reproducible built PWA, concise what's-new notes, deployment/migration instructions, conversion findings, test receipts and the platform parity checklist. Identify the exact tested build and distinguish simulated, database, browser and real-device checks. A passing automated test is not proof of mobile layout, notification delivery, installation or live authentication.
 
 **Current gate state (2.0.3):** PWA source build and focused Node tests are executed; full suite and live-device visual, notification and update checks remain pending as detailed in `docs/TEST_RESULTS.md`. Android has not been built and is not parity-certified. Update these statuses only from recorded evidence. Never describe a package as deployed, migrated or device-verified unless that outcome was observed.
+
+## v2.0.4 log, countdown, and release announcement invariants
+
+The latest user feedback in `docs/USER_FEEDBACK_HISTORY.md` supersedes previous header and Log effort placement requests. Keep workout Log effort after **all** metrics; retain the Strength Volume progress metric in mixed sessions; show four equally sized Cardio metrics. The active header is the standard fixed height with two ellipsised lines parallel to four controls. Rest audio is one short 30-second warning, short ticks at 3/2/1, and one long completion cue, not a double warning or buffered missed tones. Informational notice dialogs are visually distinct from editable forms.
+
+The cumulative update announcement MUST actually be invoked after account bootstrap/sync using the v1.x last-acknowledged-version key. Do not mark a release read merely because a service worker activated or a page refreshed; acknowledgement is explicit. No production database changes are authorised for these UI fixes.

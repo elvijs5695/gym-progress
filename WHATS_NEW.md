@@ -1,3 +1,12 @@
+# Gym Progress v2.0.4 — What’s new / Kas jauns
+
+- **Log / Žurnāls:** Effort ratings sit at the bottom of workout cards. Mixed sessions restore Strength volume progress and show four equal Cardio metric columns. / Piepūles vērtējumi ir kartīšu apakšā. Apvienotajos treniņos atjaunots spēka apjoma progress un četri vienādi kardio rādītāji.
+- **Active workout / Aktīvs treniņš:** Compact, standard-height two-line header, with four controls and truncated exercise names. / Kompakta divrindu galvene standarta augstumā, četras vadīklas un saīsināti garie nosaukumi.
+- **Audio / Skaņa:** Single short 30-second warning, short 3–2–1 countdown, longer start tone; safe against stacked delayed timer events. / Viens īss brīdinājums 30 sekundes pirms beigām, īsie 3–2–1 signāli un garāks starta signāls.
+- **Notices / Paziņojumi:** Light-grey, green-outlined notice dialogs with an adapted dark appearance. / Gaišpelēki paziņojumu logi ar zaļu apmali, pielāgoti arī tumšajai tēmai.
+- **Release news / Atjauninājumu jaunumi:** Cumulative English/Latvian What’s New appears after initial login sync; last acknowledgement persists. / Pēc sākotnējās sinhronizācijas tiek rādīts apkopots atjauninājuma saturs angliski vai latviski.
+
+No database migration or Android release is included.
 # What’s new — Gym Progress 2.0.3
 
 ## English
