@@ -1,3 +1,4 @@
+import {exportTextFile} from './file-export.js';
 import {setWorkspace} from './db.js';
 import {createBackup} from './data-contract.js';
 import {socialUser} from './social-api.js';
@@ -7,7 +8,7 @@ const status=document.getElementById('recovery-status'),button=document.getEleme
 let lang=document.documentElement.lang==='lv'?'lv':'en';
 try{lang=localStorage.getItem('gym-progress-language-v2')==='lv'?'lv':lang;document.documentElement.dataset.theme=localStorage.getItem('gym-progress-ui-theme-v2')||'system';}catch{}
 const localize=()=>{document.documentElement.lang=lang;document.title='Gym Progress · '+t('Recovery',lang);localizeDom(document.body,lang);};
-const download=(value,name)=>{const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);};
+const download=(value,name)=>exportTextFile(name,JSON.stringify(value,null,2));
 localize();
 try{
  const user=socialUser(),state=await setWorkspace(user?'account:'+user.id:'guest');

@@ -6,6 +6,11 @@
  */
 export async function deliverPwaNotification(title, options = {}, context = {}) {
   try {
+    // Native OS adapter: same message, permission and tag semantics as PWA.
+    // The Android host must return false when OS permission is unavailable.
+    const native = context.androidBridge ?? globalThis.GymProgressAndroid;
+    if (native && typeof native.showNotification === 'function')
+      return native.showNotification(String(title), String(options.body??''), String(options.tag??'')) === true;
     const notificationApi = context.notificationApi ?? globalThis.Notification;
     const serviceWorker = context.serviceWorker ?? globalThis.navigator?.serviceWorker;
     if (!notificationApi || notificationApi.permission !== 'granted') return false;

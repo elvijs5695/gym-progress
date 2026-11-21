@@ -338,3 +338,12 @@ button.progress-entry strong,button.progress-entry .progress-entry-value{color:v
 .cardio-metrics-row .metric-value{font-size:15px;overflow-wrap:anywhere;}
 .comparison-consent-row {margin:12px 0;padding:10px 0;border-bottom:1px solid var(--line);}
 .comparison-consent-card {padding-bottom:16px;}
+
+/* v2.1.1: Add friend is the final action INSIDE the expanded Friends list. */
+.friends-panel-header>.friends-list-toggle{width:100%;flex:1 1 100%;padding-right:12px}
+.friends-add-row{display:flex;justify-content:flex-end;align-items:center;border-top:1px solid var(--line);padding:10px 0 4px}
+.friends-add-action{min-height:40px;width:auto;padding:8px 14px;white-space:nowrap;font-size:12px}
+/* Consent is controlled only in Settings, not in the Friends comparison card. */
+.comparison-settings-card .setting-toggle-row{margin:0;min-width:0}
+.comparison-settings-card .setting-toggle-copy{min-width:0}
+.friend-comparison-body>.note{margin-top:0}
