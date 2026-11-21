@@ -8,7 +8,7 @@ export function roundQuarter(v){return Math.round(Number(v||0)*4)/4;}
 const appLocale=()=>typeof document!=='undefined'&&document.documentElement?.lang==='lv'?'lv-LV':'en-GB';
 export function formatNumber(value,{minimumFractionDigits=0,maximumFractionDigits=2,useGrouping=false,locale=appLocale()}={}){
   if(value==null||value===''||typeof value==='boolean'||!Number.isFinite(Number(value)))return '—';
-  return new Intl.NumberFormat(locale,{minimumFractionDigits,maximumFractionDigits,useGrouping}).format(Number(value));
+  return new Intl.NumberFormat('en-GB',{minimumFractionDigits,maximumFractionDigits,useGrouping}).format(Number(value));
 }
 export function formatKg(v){
   const text=formatNumber(v);
@@ -29,13 +29,17 @@ export function iso(ms){return ms==null?null:new Date(ms).toISOString();}
 // Source arrays are mutable. Validate every member's identity and grouping key;
 // checking only length/endpoints misses replacements and parent reassignment.
 const setIndexes=new WeakMap(),exerciseIndexes=new WeakMap();
+let activeRenderBatch=0,renderSequence=0;
+export function beginMetricsRender(){activeRenderBatch=++renderSequence;}
+export function endMetricsRender(){activeRenderBatch=0;}
 function groupedRows(rows,key,order,cache){
   const old=cache.get(rows);
+  if(old&&activeRenderBatch&&old.batch===activeRenderBatch)return old.groups;
   if(old&&old.members.length===rows.length&&old.members.every((entry,i)=>entry.row===rows[i]&&entry.parent===rows[i][key]&&entry.order===rows[i][order]))return old.groups;
   const groups=new Map();
   for(const row of rows){const k=String(row[key]);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(row);}
   for(const rowsInGroup of groups.values())rowsInGroup.sort((a,b)=>Number(a[order])-Number(b[order]));
-  cache.set(rows,{members:rows.map(row=>({row,parent:row[key],order:row[order]})),groups});
+  cache.set(rows,{batch:activeRenderBatch,members:rows.map(row=>({row,parent:row[key],order:row[order]})),groups});
   return groups;
 }
 export function exerciseSets(state,exerciseId){return exerciseId==null?[]:groupedRows(state.performed_sets||[],'sessionExerciseId','setNumber',setIndexes).get(String(exerciseId))?.slice()||[];}

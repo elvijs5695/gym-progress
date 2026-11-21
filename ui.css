@@ -137,3 +137,43 @@ button.progress-entry .small{font-size:var(--font-caption);font-weight:400}
 .main-header>.account-chip{max-width:min(42vw,180px)}
 .dialog>.muted{font-size:13px;line-height:1.55}
 .progress-entry-meta{margin-top:8px}
+
+/* v2.0.1: explicit home metadata punctuation; no adjacent inline text collisions. */
+.home-workout-meta{column-gap:6px;row-gap:2px}
+.home-workout-meta>.home-meta-separator{display:inline-block;flex:none;white-space:nowrap;margin-inline:1px;color:var(--muted)}
+.home-workout-meta>.status-next-text,.home-workout-meta>.status-accent,.home-workout-meta>.next-session-date{white-space:nowrap}
+/* Effort is conveyed in a single bold label, not in coloured card surfaces. */
+.effort-surface,.log-session-card,.social-event.effort-surface,button.progress-entry.effort-surface{background:var(--surface);border:1px solid var(--line)}
+.effort-surface:active,.log-session-card.effort-surface:active,.log-session-card:active{background:var(--surface2)}
+.difficulty,.log-heading-effort{font-weight:700}
+.log-heading-effort{margin-left:auto;font-size:12px;text-align:right}
+/* Separate full-colour rhythm markers from subtle text colours; no outlines. */
+.friend-timeline-dot{box-shadow:none;border:0}
+.friend-timeline-dot.comfortable,.friend-timeline-dot.cardio-easy{background:var(--rhythm-green)}
+.friend-timeline-dot.challenging,.friend-timeline-dot.cardio-moderate{background:var(--rhythm-yellow)}
+.friend-timeline-dot.hard,.friend-timeline-dot.cardio-hard,.friend-timeline-dot.very-hard,.friend-timeline-dot.cardio-veryhard,.friend-timeline-dot.failure{background:var(--rhythm-red)}
+/* Larger header type within the exact same container height and padding. */
+.topbar-title{font-size:19px;line-height:1.25;font-weight:750;letter-spacing:-.022em}
+.active-cardio-panel{border-width:1px;border-color:var(--line);box-shadow:none}
+.cardio-optional-field{grid-template-columns:minmax(0,1fr) minmax(58px,auto)}
+.cardio-optional-field>button{min-width:58px;white-space:nowrap;padding-inline:10px}
+/* Correct visible exercise names and values on selectable Progress cards. */
+button.progress-entry{color:var(--text)}
+button.progress-entry strong,button.progress-entry .progress-entry-value{color:var(--text)}
+/* Cardio fields reserve an actual readable width for N/A. */
+.cardio-optional-field button{flex:0 0 64px;width:64px;min-width:64px;padding:8px 10px;white-space:nowrap}
+.cardio-optional-field input,.cardio-optional-field select{flex:1 1 0;min-width:0}
+/* Smooth optional sharing comments with no abrupt rerender or focus loss. */
+.share-comment-reveal{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows 240ms ease,opacity 200ms ease,margin-top 240ms ease;margin-top:0;overflow:hidden;pointer-events:none}
+.share-comment-reveal.open{grid-template-rows:1fr;opacity:1;margin-top:8px;pointer-events:auto}
+.share-comment-reveal>.share-comment{min-height:0;overflow:hidden;margin:0}
+@media(prefers-reduced-motion:reduce){.share-comment-reveal{transition:none}}
+
+/* Home exercise count / status: the separator must not stick to the next word or wrap alone. */
+.home-workout-meta>.home-meta-status{display:inline-flex;align-items:baseline;gap:7px;white-space:nowrap;max-width:100%}
+.home-meta-status>.home-meta-separator{flex:none;color:var(--muted);margin:0}
+.home-meta-status>.status-next-text,.home-meta-status>.status-accent,.home-meta-status>.next-session-date{white-space:nowrap}
+
+/* Consistent, sufficiently visible Back icon, without raising the header height. */
+.topbar-back{display:grid;place-items:center;min-width:42px;width:42px;min-height:42px;height:42px;padding:0}
+.topbar-back-icon{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}

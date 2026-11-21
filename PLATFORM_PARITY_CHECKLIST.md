@@ -1,14 +1,14 @@
 # Platform parity and release checklist
 
-Release: **Gym Progress 2.0.0**. Authoritative requirements: `RELEASE_CONTRACT.md`.
+Release: **Gym Progress 2.0.1**. Authoritative requirements: `RELEASE_CONTRACT.md`.
 
 ## Current status
 
 | Gate | Status |
 |---|---|
-| PWA final automated test/build receipt | Passed: `2.0.0-88a2d0d54909`; see TEST_RESULTS.md |
+| PWA final automated test/build receipt | Focused Node tests and source build passed; full suite pending due to unavailable test dependencies; see TEST_RESULTS.md |
 | PWA real-device acceptance | Pending user testing |
-| Live production migration and verification | Not performed by preparation of this package |
+| Existing production v2 schema | Already deployed by user; **no new SQL migration in 2.0.1** |
 | Android package | Not built |
 | Android functional and visual parity | Not tested; not parity-certified |
 
@@ -24,10 +24,10 @@ Record the source revision, build identifier, test command/date and device/brows
 - [ ] **Navigation/history:** Home, all main sections, log drilldown and system Back behave consistently; active drafts survive navigation; Undo/Redo confirmations, exact values and disabled states match.
 - [ ] **Timers/sounds:** rest countdown/ready, cardio target/finish and timed endpoints behave correctly while browsing other app sections. Test each platform's foreground/background/locked-screen limits explicitly.
 - [ ] **Measurements:** shared fixtures and real-data conversion checks cover decimals, null/zero, actual versus planned values, dumbbell conventions, skipped work, strength volume/e1RM and separate cardio measurements.
-- [ ] **Core views:** Home structure, programme grip ordering, Tracker, Own Rhythm, Shared Rhythm, friends, explicit sharing, comparison, progress bars and source-linked Progress entries work on both platforms.
+- [ ] **Core views:** Home structure and properly spaced `6 exercises · next` metadata, programme grip ordering, Tracker, Own Rhythm, Shared Rhythm, friends, explicit sharing, comparison, progress bars and source-linked Progress entries work on both platforms. Check pastel rhythm dots are unclipped, cards neutral and effort labels coloured.
 - [ ] **Visual parity:** compare matching states at equivalent phone widths in light, dark and system themes. Check typography, card borders/tints, spacing, icons, controls, dialogs, navigation, loading/error/empty states, large text and keyboard insets.
 - [ ] **Language/input:** EN and LV cover static/dynamic text, validation, sound/notification labels and accessibility labels. Catalogue names localise; custom names remain intact. Decimal input/display conventions match.
-- [ ] **Recovery/update:** offline launch, pending writes, app update, backup/restore, export, account switching and deletion/recovery boundaries are tested without clearing user data.
+- [ ] **Recovery/update:** idle windows activate automatically when verified, active workouts/unsaved work block updates, and open tabs coordinate safely. Check offline launch, pending writes, backup/restore, account switching and deletion/recovery boundaries without clearing user data.
 - [ ] **Finish:** summary content and sharing are identical; viewport animation is nonblocking and respects reduced motion.
 - [ ] **Acceptance/evidence:** final receipts match the packaged build; real-device findings are recorded; the user accepts PWA before Android release work is represented as complete.
 

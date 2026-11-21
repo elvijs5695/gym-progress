@@ -1,23 +1,19 @@
-# What's new in Gym Progress 2.0.0
+# What’s new — Gym Progress 2.0.1
 
 ## English
 
-- Compact, consistent cards and controls, with light, dark and system themes. Clearer headings, day numbers and spacing; smoother expanding cards.
-- Undo, Redo and Home stay visible during a workout. Rest/unload prompts and comments flow consistently; the finish summary opens immediately with a larger, slower animation.
-- Progress distinguishes programme days and opens the exact source exercise in its workout. Log date and workout title share one line; effort colours carry through Logs, Progress and shared cards.
-- Improved Latvian dialogs, labels and number formatting. Catalogue names follow the chosen language; personal names remain unchanged.
-- Clear sharing selection, outline workout/record icons and better friend-card alignment. A six-exercise starter option complements the compact four-exercise plan.
-- Underneath: shared calculation rules, account-separated storage, safer sync/retries and verified offline release files. Production email-code login returns to the original accounts and database.
+- **Account restoration:** on sign-in, restore Programme, Workout log and Tracker from the account’s cloud workspace before offering a starter programme. A failed initial synchronisation shows a retry instead of pretending the account is empty.
+- **Friends and Progress:** repair Friends comparison when the exercise list is absent; stop unnecessary comparison-history uploads on screen entry. “All days” includes individual recorded exercise occurrences, while programme-day views remain available. Review chronological cycle numbering.
+- **Updates:** a verified new release installs automatically when the app is idle. Active workouts, dialogs, unsaved work and other unconfirmed windows continue to block activation for safety.
+- **UI:** exercise count and “next” now have a separated, non-orphaning dot; slightly stronger title within unchanged header height; neutral workout/log/progress/shared cards with bold effort labels; unclipped pastel rhythm dots in green/yellow/red. Restore early-finish X placement and improve cardio forms, sharing animation and decimal-dot display.
+- **Finishing and logs:** a longer finish effect, clear Strength/Cardio sections on mixed workouts and improved date/name/effort layout. No changes to existing workout records or Supabase schema.
 
-Programme, strength/cardio/timed work, supersets, Tracker, Own Rhythm, Shared Rhythm, friends, sounds, progress bars and data exports remain available. Photo celebration has been removed. Future Android releases must match this app's functionality and visual design.
+## Latviski
 
-## Latviski — kas jauns
+- **Konta datu ielāde:** pēc pieslēgšanās pirms sākuma programmas piedāvāšanas tiek sinhronizēta programma, treniņu žurnāls un Tracker. Ja ielāde neizdodas, ir redzama atkārtošanas iespēja.
+- **Draugi un Progress:** labota draugu salīdzināšanas sadaļa un novērsta nevajadzīga salīdzinājumu pārrakstīšana, atverot ekrānu. “Visas dienas” ietver katru reģistrēto vingrinājuma izpildi.
+- **Atjauninājumi:** ja nav nepabeigtu darbību, pārbaudīts atjauninājums tiek lietots automātiski. Aktīvs treniņš vai nesaglabāti dati neļauj to piemērot.
+- **Saskarne:** atdalīta atstarpe ap punktu starp vingrinājumu skaitu un nākamo treniņu, izteiksmīgāks virsraksts bez augstāka galvenes laukuma, neitrālas kartītes un treknas piepūles atzīmes. Ritma punkti ir pasteļtoņu zaļi/dzelteni/sarkani, bez kontūras un nogriešanas.
+- **Treniņš un žurnāls:** precizēta pabeigšanas poga, kardio ievades lauki, kopīgošanas animācija un garāka finiša animācija; skaitļiem lietots punkts kā decimālatdalītājs. Datubāzes shēmas izmaiņu nav.
 
-- Kompaktas, vienotas kartītes un vadīklas ar gaišo, tumšo un sistēmas tēmu. Skaidrāki virsraksti, dienu numuri un atstarpes; plūstoša kartīšu izvēršana.
-- Treniņa laikā vienmēr redzama atsaukšana, atjaunošana un sākumekrāna poga. Vienota atpūtas, svaru noņemšanas un piezīmju secība; pabeidzot uzreiz atveras kopsavilkums ar lielāku, lēnāku animāciju.
-- Progress atšķir programmas dienas un atver konkrēto vingrinājumu tā treniņā. Žurnālā datums un treniņa nosaukums ir vienā rindā; piepūles krāsas lieto arī progresa un kopīgotajās kartītēs.
-- Precizēti latviešu teksti, dialogi un skaitļu attēlojums. Kataloga nosaukumi atbilst izvēlētajai valodai; personīgie nosaukumi tiek saglabāti.
-- Skaidra kopīgošanas izvēle, kontūru ikonas un pārskatāmākas draugu kartītes. Papildus kompaktajai četru vingrinājumu sākuma programmai pieejama sešu vingrinājumu izvēle.
-- Tehniski: vienoti aprēķini, atdalīti kontu dati, drošāka sinhronizācija un pārbaudīti bezsaistes versijas faili. Atjaunota pieslēgšanās ar e-pasta kodu sākotnējā datubāzē.
-
-Saglabātas programmas, spēka/kardio/laika vingrinājumi, superseti, Tracker, savs un kopīgais ritms, draugi, skaņas, progresa joslas un datu eksports. Fotoattēlu svinēšana noņemta. Turpmākajām Android versijām jāatbilst šīs lietotnes funkcijām un vizuālajam noformējumam.
+**Parity rule:** future PWA and Android packages must match functionally and visually. Android 2.0.1 is not yet built or verified.

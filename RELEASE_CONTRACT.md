@@ -1,6 +1,6 @@
 # Gym Progress release contract
 
-Applies to the production v2 line, beginning with **2.0.0**. This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
+Applies to the production v2 line, beginning with **2.0.0** (updated for **2.0.1**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
 
 ## One app on both platforms
 
@@ -23,7 +23,7 @@ Use the same release version and identifiable source/build revision for a PWA/An
 
 Calculations come from shared production modules and fixtures. Use recorded values, never invented performed values derived from a plan. Preserve decimal precision, null versus zero, per-dumbbell conventions, missing measurements, skipped work and source ownership. Strength volume/e1RM must remain separate from cardio duration, distance, power, heart rate, RPE and training load. New calculation rules need a documented rationale and regression cases.
 
-Use the same compact component system and light/dark/system themes on both platforms: consistent typography roles, spacing, borders, controls, warning messages and selected states. Match layouts at equivalent viewport sizes while respecting safe areas, keyboard insets and accessibility settings. Keep both languages complete, including dynamic dialogs, validation, accessibility labels and notifications. Use consistent locale-aware display numbers and strict input parsing without rounding a manually chosen load. Localise catalogue-provided names by stable identity; preserve user-authored names and their stored values.
+Use the same compact component system and light/dark/system themes on both platforms: consistent typography roles, spacing, borders, controls, warning messages and selected states. Match layouts at equivalent viewport sizes while respecting safe areas, keyboard insets and accessibility settings. Keep both languages complete, including dynamic dialogs, validation, accessibility labels and notifications. Display decimal values with a **dot** in both Latvian and English, per the user’s current preference; accept comma or dot when parsing input without rounding a manually chosen load. Localise catalogue-provided names by stable identity; preserve user-authored names and their stored values.
 
 Keep copy concise and useful. Retain explanations of tracking logic and fitness terms; omit promotional or repeated self-explanatory text. The finish summary is immediately usable; decorative animation respects reduced motion.
 
@@ -33,10 +33,10 @@ Production connects to the original intended Supabase project and uses email-cod
 
 Preserve each original user's Auth UUID and ownership relationships. Keep guest and authenticated local workspaces isolated; guard delayed work against account switches. Public client configuration may contain the intended publishable key. Database passwords, service-role/secret keys, Auth dumps, session tokens and private conversion data must never enter the public repository, app bundle or Pages artifact.
 
-A database promotion must have a verified current backup, snapshot/schema/ownership preflight, write protection against stale clients, transactional failure behaviour, count/value verification and a documented rollback. Preserve Supabase Auth and platform-managed schemas. Stop if the live data differs from the approved conversion snapshot. Do not clear an entire database or browser storage as a troubleshooting shortcut. Package private migration data separately from publishable application files.
+A database promotion must have a verified current backup, snapshot/schema/ownership preflight, write protection against stale clients, transactional failure behaviour, count/value verification and a documented rollback. Preserve Supabase Auth and platform-managed schemas. For future migrations, use an explicitly approved snapshot policy, current backup and verified rollback; do not silently drop source changes. Do not clear an entire database or browser storage as a troubleshooting shortcut. Package private migration data separately from publishable application files.
 
 ## Release evidence and acceptance
 
 Every release includes source, a reproducible built PWA, concise what's-new notes, deployment/migration instructions, conversion findings, test receipts and the platform parity checklist. Identify the exact tested build and distinguish simulated, database, browser and real-device checks. A passing automated test is not proof of mobile layout, notification delivery, installation or live authentication.
 
-**Current gate state:** PWA automated verification passed for build `2.0.0-88a2d0d54909`; real-device acceptance is pending. Android has not been built and is not parity-certified. Update these statuses only from recorded evidence. Never describe a package as deployed, migrated or device-verified unless that outcome was observed.
+**Current gate state (2.0.1):** PWA package build and focused Node tests have been executed; full suite and live-device acceptance are pending as detailed in `docs/TEST_RESULTS.md`. Android has not been built and is not parity-certified. Update these statuses only from recorded evidence. Never describe a package as deployed, migrated or device-verified unless that outcome was observed.
