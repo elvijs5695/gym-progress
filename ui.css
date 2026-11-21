@@ -322,3 +322,19 @@ button.progress-entry strong,button.progress-entry .progress-entry-value{color:v
     box-shadow:0 16px 42px rgba(0,0,0,.46);
   }
 }
+
+/* Gym Progress 2.1.0: exactly four equal Cardio metrics across the card width. */
+.log-session-card .metric-grid.log-metric-grid.cardio-metrics-row,
+.metric-grid.log-metric-grid.cardio-metrics-row {
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-auto-flow:row!important;
+ width:100%!important;
+ gap:6px!important;
+ overflow:visible!important;
+}
+.cardio-metrics-row>.metric {min-width:0!important;width:auto!important;max-width:100%;}
+.cardio-metrics-row .metric-label{font-size:10px;overflow-wrap:anywhere;}
+.cardio-metrics-row .metric-value{font-size:15px;overflow-wrap:anywhere;}
+.comparison-consent-row {margin:12px 0;padding:10px 0;border-bottom:1px solid var(--line);}
+.comparison-consent-card {padding-bottom:16px;}

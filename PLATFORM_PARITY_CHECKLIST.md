@@ -69,3 +69,15 @@ Potential adapter areas include permissions, installation, native notifications/
 - [ ] Notice dialogs: green 2 px outline and contrasting grey background in light, dark and system dark settings
 - [ ] Existing users who acknowledged 1.x receive cumulative 2.x What's New after account sync; acknowledgement persists and does not repeat on reload
 - [ ] Android must reuse exactly the same components, cue rules, colours, labels, and release change history; no independent UI fork
+
+
+### v2.1.0 parity and stabilisation acceptance
+
+- [ ] On both PWA and future Android, Friends shows an explicit account-level comparison ON/OFF, initially OFF, and only displays others' comparable e1RM when **both users opt in**. OFF withdraws points server-side even when another device is stale.
+- [ ] Client uses stable cloud workout UUIDs for comparison IDs, never device-local session numbers; no write is attempted merely on entering Friends.
+- [ ] Exactly entered 0 kg is preserved through entry, save, restart and cloud sync. Training calculations use recorded data, not the plan.
+- [ ] Tracker historical entries still load after archiving referenced items, including on a second device.
+- [ ] Workout ramp/rest/set Undo/Redo can restore phase and input state without rewinding overall workout duration, and cannot touch older workouts. The 2.1.0 journal is only within one live app session.
+- [ ] Four actual equal-width Cardio Log columns and consistent metric labels are inspected at real phone widths in both themes and languages; UI source rules alone are not evidence.
+- [ ] Original two Auth accounts and training databases survive the full-backup/migrate/verify sequence. No new Supabase project, account duplication or secret committed to Pages.
+- [ ] Android remains unbuilt; do not mark cross-platform parity complete until the same source and real Android tests pass.

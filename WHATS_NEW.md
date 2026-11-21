@@ -1,56 +1,25 @@
-# Gym Progress v2.0.4 — What’s new / Kas jauns
-
-- **Log / Žurnāls:** Effort ratings sit at the bottom of workout cards. Mixed sessions restore Strength volume progress and show four equal Cardio metric columns. / Piepūles vērtējumi ir kartīšu apakšā. Apvienotajos treniņos atjaunots spēka apjoma progress un četri vienādi kardio rādītāji.
-- **Active workout / Aktīvs treniņš:** Compact, standard-height two-line header, with four controls and truncated exercise names. / Kompakta divrindu galvene standarta augstumā, četras vadīklas un saīsināti garie nosaukumi.
-- **Audio / Skaņa:** Single short 30-second warning, short 3–2–1 countdown, longer start tone; safe against stacked delayed timer events. / Viens īss brīdinājums 30 sekundes pirms beigām, īsie 3–2–1 signāli un garāks starta signāls.
-- **Notices / Paziņojumi:** Light-grey, green-outlined notice dialogs with an adapted dark appearance. / Gaišpelēki paziņojumu logi ar zaļu apmali, pielāgoti arī tumšajai tēmai.
-- **Release news / Atjauninājumu jaunumi:** Cumulative English/Latvian What’s New appears after initial login sync; last acknowledgement persists. / Pēc sākotnējās sinhronizācijas tiek rādīts apkopots atjauninājuma saturs angliski vai latviski.
-
-No database migration or Android release is included.
-# What’s new — Gym Progress 2.0.3
+# What’s new — Gym Progress 2.1.0
 
 ## English
 
-- **Account restoration:** on sign-in, restore Programme, Workout log and Tracker from the account’s cloud workspace before offering a starter programme. A failed initial synchronisation shows a retry instead of pretending the account is empty.
-- **Friends and Progress:** repair Friends comparison when the exercise list is absent; stop unnecessary comparison-history uploads on screen entry. “All days” includes individual recorded exercise occurrences, while programme-day views remain available. Review chronological cycle numbering.
-- **Updates:** a verified new release installs automatically when the app is idle. Active workouts, dialogs, unsaved work and other unconfirmed windows continue to block activation for safety.
-- **UI:** exercise count and “next” now have a separated, non-orphaning dot; slightly stronger title within unchanged header height; neutral workout/log/progress/shared cards with bold effort labels; unclipped pastel rhythm dots in green/yellow/red. Restore early-finish X placement and improve cardio forms, sharing animation and decimal-dot display.
-- **Finishing and logs:** a longer finish effect, clear Strength/Cardio sections on mixed workouts and improved date/name/effort layout. No changes to existing workout records or Supabase schema.
+**Privacy and reliability.** Strength comparison is now an **explicit account-level opt-in**. It starts OFF, and switching it OFF withdraws currently published comparison points immediately. The server prevents older clients from bypassing this setting. Sharing again rebuilds points using stable cloud workout IDs; both friends must opt in.
+
+**Workout correctness.** A manually entered **0 kg** is not replaced by a planned value. Workout-step Undo/Redo now includes supported ramp-up/rest/working-set transitions, uses bounded session-only history and never rewinds the overall workout timer. Tracker items with history are archived instead of orphaning earlier entries. Server validation and required-parent checks are stricter.
+
+**Performance and presentation.** Repeated metrics-cache scans are reduced. Cardio Log summaries are arranged into four equal-width metrics slots with the same metric typography as Strength. Catalogue updates validate related references before replacing the live catalogue.
+
+**Database.** One controlled, transactional migration introduces consent and integrity rules. It preserves current training data and Supabase authentication; old comparison points go to a private restricted archive rather than being treated as live shared data. **Migration is required before deploying the app.**
 
 ## Latviski
 
-- **Konta datu ielāde:** pēc pieslēgšanās pirms sākuma programmas piedāvāšanas tiek sinhronizēta programma, treniņu žurnāls un Tracker. Ja ielāde neizdodas, ir redzama atkārtošanas iespēja.
-- **Draugi un Progress:** labota draugu salīdzināšanas sadaļa un novērsta nevajadzīga salīdzinājumu pārrakstīšana, atverot ekrānu. “Visas dienas” ietver katru reģistrēto vingrinājuma izpildi.
-- **Atjauninājumi:** ja nav nepabeigtu darbību, pārbaudīts atjauninājums tiek lietots automātiski. Aktīvs treniņš vai nesaglabāti dati neļauj to piemērot.
-- **Saskarne:** atdalīta atstarpe ap punktu starp vingrinājumu skaitu un nākamo treniņu, izteiksmīgāks virsraksts bez augstāka galvenes laukuma, neitrālas kartītes un treknas piepūles atzīmes. Ritma punkti ir pasteļtoņu zaļi/dzelteni/sarkani, bez kontūras un nogriešanas.
-- **Treniņš un žurnāls:** precizēta pabeigšanas poga, kardio ievades lauki, kopīgošanas animācija un garāka finiša animācija; skaitļiem lietots punkts kā decimālatdalītājs. Datubāzes shēmas izmaiņu nav.
+**Privātums un uzticamība.** Spēka rezultātu salīdzināšana tagad ir **brīvprātīga izvēle konta līmenī**. Sākotnēji tā ir izslēgta; izslēdzot jau kopīgotie salīdzinājuma dati tiek tūlīt atsaukti. Serveris neļauj vecākām lietotnes versijām šo izvēli apiet. Atkārtoti ieslēdzot, dati tiek atjaunoti ar stabilām mākoņa treniņu identitātēm; salīdzināšanai jāpiekrīt abiem draugiem.
 
-**Parity rule:** future PWA and Android packages must match functionally and visually. Android 2.0.3 is not yet built or verified.
+**Treniņa datu pareizība.** Manuāli ievadīts **0 kg** netiek aizstāts ar plānoto svaru. Atbalstītajos iesildīšanās, atpūtas un darba piegājienu posmos pieejama darbību atsaukšana/atjaunošana, nemainot kopējo treniņa laiku. Tracker vienumi ar vēsturi tiek arhivēti, nevis atstāti bez sasaistes. Stingrāka datu pārbaude.
 
-## v2.0.2 UI and reliability corrections
+**Veiktspēja un saskarne.** Samazināti lieki atkārtoti rādītāju aprēķini. Kardio rādītāji treniņu žurnālā izkārtoti četrās vienāda platuma kolonnās. Kataloga izmaiņas tiek pārbaudītas pirms ievietošanas.
 
-- More compact fixed-height section header. **Add friend** now sits next to the account button in the Friends header; on narrow screens it becomes an accessible `+` control.
-- Literal spaces surrounding the Home metadata separator (`6 exercises · next`); reduced space before Workout rotation.
-- One shared light/dark effort palette, neutral cards, pastel green/amber/coral/red dots and text. Mixed strength/cardio ratings share **one horizontal line**, with separate colour per modality and no dot separator.
-- Compact log metrics and a horizontally accessible single-row cardio metrics/entry layout. Log cards use a normal-weight date, bold workout name and right-aligned effort; bottom padding is reduced without collapsing the card edge.
-- Browser notifications use service-worker `showNotification()` with best-effort failure handling; no illegal direct constructor in the Tracker reminder path.
-- Added persistent `docs/USER_FEEDBACK_HISTORY.md` and `docs/WISHLIST.md` to protect user-driven features and capture future needs.
-- **App-only update:** no SQL migration; production Auth and training records remain unchanged.
+**Datu bāze.** Nepieciešama viena kontrolēta migrācija pirms PWA izvietošanas. Treniņu vēsture un Supabase autentifikācija netiek pārrakstīta; iepriekš kopīgotie salīdzinājuma dati tiek saglabāti ierobežotas piekļuves arhīvā.
 
-**Verification note:** actual browser layout and device notification/update behaviour require user acceptance; Android remains pending.
+## Known boundaries
 
-- **Compact names:** limit new/renamed workout days to 30 characters and custom exercise names to 60. Preserve historical/catalogue names intact; single-line header and list labels ellipsize rather than increase height.
-
-- **Active header:** workout day and elapsed time in row one beside Undo/Redo/Home/Exit; second row displays `1/x · Current exercise`; labels truncate instead of changing header height.
-- **Known verification gap:** restoring intermediate ramp-up/rest phases via Undo/Redo still requires separate transition-history tests. Ordinary completed-set Undo/Redo remains present.
-
-- Focused form fields and selection controls now use a quiet existing-border focus state instead of an extra exterior outline; keyboard navigation and error cues remain available.
-
-## v2.0.3 — layout precision (client only)
-
-- Active workout toolbar has its own taller fixed header: left-aligned day and live timer, four complete action icons, and a separately truncated one-line exercise name.
-- Removed the decorative heavy top border from the active exercise card.
-- Log card heading is `Date · Day name` on row one; modality-labelled effort with **coloured grades only** on row two. Metric section labels are neutral.
-- Cardio metrics appear in equal columns, with **Training load** as the shorter label.
-- Add friend is in the Friends list card header, including for an empty list, not next to the global account button.
-- No database migration. The PWA and Android visual/functionality parity contract remains binding; Android is not yet updated.
+This is a stabilisation update, **not** a full controller rewrite or legacy-table purge. Ramp/rest Undo history lives only in current session memory. SQL migration, actual Windows installer, real browser geometry and Android parity still require device/project acceptance; see the test report.

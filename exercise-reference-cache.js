@@ -19,10 +19,12 @@ function validate(snapshot){
 function install(snapshot){
   if(!validate(snapshot))throw new Error('Invalid reference catalogue');
   // Mutate the exported array/maps IN PLACE: every existing screen references them.
+  // Validate and construct relations FIRST. It may reject the snapshot;
+  // the live catalogue must not be partially replaced on that failure.
+  installPublishedRelations(snapshot.relations);
   CANONICAL_EXERCISES.splice(0,CANONICAL_EXERCISES.length,...snapshot.exercises);
   CANONICAL_BY_ID.clear();CANONICAL_BY_KEY.clear();
   for(const e of CANONICAL_EXERCISES){CANONICAL_BY_ID.set(e.id,e);CANONICAL_BY_KEY.set(e.key,e);}
-  installPublishedRelations(snapshot.relations);
 }
 export function restoreCachedReferenceData(){
   try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return false;install(JSON.parse(raw));return true;}catch{return false;}

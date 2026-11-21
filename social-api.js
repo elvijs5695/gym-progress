@@ -11,7 +11,7 @@ function invalidate(){generation++;workspaceStatus=null;for(const c of requests)
 function writeSession(value,{accountChange=false}={}){if(accountChange||session?.user?.id!==value?.user?.id)invalidate();session=value||null;if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}
 function adoptStoredSession(next){const changed=session?.user?.id!==next?.user?.id;if(changed)invalidate();session=next;if(changed&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('gp:auth-changed'));return next;}
 function sameCredentials(a,b){return a?.user?.id===b?.user?.id&&a?.access_token===b?.access_token&&a?.refresh_token===b?.refresh_token;}
-function headers(token=session?.access_token){const h={apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json','x-client-info':'gym-progress/2.0.4; protocol=2'};if(token)h.Authorization=`Bearer ${token}`;return h;}
+function headers(token=session?.access_token){const h={apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json','x-client-info':'gym-progress/2.1.0; protocol=2'};if(token)h.Authorization=`Bearer ${token}`;return h;}
 async function parse(res){const text=responseBodies.has(res)?responseBodies.get(res):await res.text();responseBodies.delete(res);let body;try{body=text?JSON.parse(text):null;}catch{body=text;}if(!res.ok){const e=new Error(body?.message||body?.error_description||body?.error||`HTTP ${res.status}`);e.status=res.status;e.code=body?.code||body?.error_code;const retry=Number(res.headers?.get('Retry-After'));e.retryAfterSeconds=Number.isFinite(retry)&&retry>0?retry:null;throw e;}return body;}
 function configured(){if(!SOCIAL_CONFIGURED)throw new Error('The application connection is unavailable.');}
 async function request(path,options={}){
@@ -158,15 +158,23 @@ function comparisonPointBody(points){
     source_labels:p.sourceLabels||[]
   }));
 }
-export async function publishComparisonPoints(points){
-  if(!points?.length)return [];
-  await getWorkspaceStatus();const uid=socialOwnerId();if(!uid)throw new Error('Account workspace is not connected.');
-  const body=comparisonPointBody(points).map(p=>({...p,user_id:uid}));
-  return authedFetch('/rest/v1/exercise_comparison_points?on_conflict=user_id,client_point_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
+// The database owns the privacy gate. Old clients cannot bypass opt-out via REST.
+export async function getComparisonPreference(){return rpc('social_comparison_preference');}
+export async function setComparisonEnabled(enabled){
+  if(typeof enabled!=='boolean')throw new Error('An explicit sharing choice is required.');
+  return rpc('social_set_comparison_enabled',{p_enabled:enabled});
 }
-export async function replaceComparisonPoints(points){
+export async function replaceComparisonPoints(points,{preferenceRevision,sourceCursor}={}){
   if(!socialUser()?.id)throw new Error('Sign in to compare exercises.');
-  return publishComparisonPoints(points);
+  if(!Number.isSafeInteger(preferenceRevision)||preferenceRevision<1||!Number.isSafeInteger(sourceCursor)||sourceCursor<0)
+    throw new Error('Refresh sharing settings and training sync before publishing.');
+  return rpc('social_reconcile_comparison_points',{
+    p_points:comparisonPointBody(points),p_preference_revision:preferenceRevision,p_source_cursor:sourceCursor
+  });
+}
+// Kept for callers; never append a partial session batch as a full publication.
+export async function publishComparisonPoints(points,options={}){
+  return replaceComparisonPoints(points,options);
 }
 export async function listCommonComparableExercises(friendId){return rpc('social_common_comparable_exercises',{p_friend_id:friendId});}
 export async function getExerciseComparison(friendId,canonicalExerciseId,sinceIso=null){return rpc('social_exercise_comparison',{p_friend_id:friendId,p_canonical_exercise_id:canonicalExerciseId,p_since:sinceIso});}

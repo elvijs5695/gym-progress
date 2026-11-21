@@ -35,7 +35,7 @@ export function endMetricsRender(){activeRenderBatch=0;}
 function groupedRows(rows,key,order,cache){
   const old=cache.get(rows);
   if(old&&activeRenderBatch&&old.batch===activeRenderBatch)return old.groups;
-  if(old&&old.members.length===rows.length&&old.members.every((entry,i)=>entry.row===rows[i]&&entry.parent===rows[i][key]&&entry.order===rows[i][order]))return old.groups;
+  if(old&&old.members.length===rows.length&&old.members.every((entry,i)=>entry.row===rows[i]&&entry.parent===rows[i][key]&&entry.order===rows[i][order])){old.batch=activeRenderBatch;return old.groups;}
   const groups=new Map();
   for(const row of rows){const k=String(row[key]);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(row);}
   for(const rowsInGroup of groups.values())rowsInGroup.sort((a,b)=>Number(a[order])-Number(b[order]));

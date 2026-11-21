@@ -1,6 +1,6 @@
 {
-  "version": "2.0.4",
-  "id": "2.0.4-52a102d4bb9c",
+  "version": "2.1.0",
+  "id": "2.1.0-0b903adc5295",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "ab6ad36bcb1b9371a06b32078fc0b558441df04396efbd8bf76623d3771673dc",
-      "bytes": 380023
+      "sha256": "1736fce24d7e001dc51382dba83721e652ae0ccf67ec1d0f9a348ff68b084b46",
+      "bytes": 386636
     },
     {
       "path": "autoregulation.js",
@@ -29,8 +29,8 @@
     },
     {
       "path": "data-contract.js",
-      "sha256": "598d977a2dd11e7562f37c9299ed6533f649f765cd265b9283b9638284af5ba0",
-      "bytes": 8633
+      "sha256": "ff4aa3b18858728d2cb659481543c3df817aaa4c3e05affa08f0d6adb7e910f2",
+      "bytes": 8686
     },
     {
       "path": "data-erasure.js",
@@ -84,8 +84,8 @@
     },
     {
       "path": "exercise-reference-cache.js",
-      "sha256": "49d980b4959286ac52ac7b29f1e6bfc784f6a5b9693cc37653da90223d194a10",
-      "bytes": 2788
+      "sha256": "1029d5f7b8a8e4dfec1bfc22f28890b39ef42563038c73bf5aedb6d26e931aa4",
+      "bytes": 2933
     },
     {
       "path": "export-data.js",
@@ -179,8 +179,8 @@
     },
     {
       "path": "metrics.js",
-      "sha256": "08324cfcb1a1359c62c000416688179c4ba4cd2e418d54cfa6fa0dfe960ae765",
-      "bytes": 10856
+      "sha256": "bf62c1ba74d152d2d1c2b0ffe1ad707de685bca780e203b9b022ae96aa1e09ff",
+      "bytes": 10886
     },
     {
       "path": "name-policy.js",
@@ -249,8 +249,8 @@
     },
     {
       "path": "social-api.js",
-      "sha256": "5b4b2ef15382b7bae28637d6acdd2d0b997da6be1fa7035045c718cf13cceb56",
-      "bytes": 15107
+      "sha256": "f34d05f00d201f1d80a2547662faf608f0954520f36419bba432598aae8d139d",
+      "bytes": 15582
     },
     {
       "path": "social-config.js",
@@ -294,8 +294,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "e91521d2db4901aaddb0e8c8b66aea4d093b3f29f5de65ba44b3e4887ad820cd",
-      "bytes": 68743
+      "sha256": "3b6ce03eebb6e9231bf3e8c7a1b5e92f31cddd1c57192e3e270a2d96a08652be",
+      "bytes": 69509
     },
     {
       "path": "vendor/ACORN_LICENSE.txt",
@@ -311,6 +311,11 @@
       "path": "workout-controller.js",
       "sha256": "f68a00aa5c5b82dc81636375b81847712cb114475a9b8cc0fe8761d53828743d",
       "bytes": 2846
+    },
+    {
+      "path": "workout-step-history.js",
+      "sha256": "0dc66c3b39e357684d1eb90d7487f1ee7487147508e18252eb13ab363bd844d4",
+      "bytes": 5301
     },
     {
       "path": "workspace-lifecycle.js",

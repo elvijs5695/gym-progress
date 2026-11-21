@@ -32,7 +32,7 @@ export function inspectState(input){
   }
  }
  const relation=(children,field,parents,required=true)=>{const ids=new Set((input[parents]||[]).map(r=>String(r.id)));for(const row of input[children]||[])if((required||row[field]!=null)&&!ids.has(String(row[field])))warnings.push({type:'missing_parent',collection:children,id:row.id??row.itemId,field,value:row[field]??null,parent:parents});};
- relation('template_exercises','workoutId','workout_templates');relation('session_exercises','sessionId','workout_sessions');relation('performed_sets','sessionExerciseId','session_exercises');relation('tracker_states','itemId','tracker_items');relation('template_exercises','userExerciseId','user_exercises',false);relation('session_exercises','userExerciseId','user_exercises',false);
+ relation('template_exercises','workoutId','workout_templates');relation('session_exercises','sessionId','workout_sessions');relation('performed_sets','sessionExerciseId','session_exercises');relation('tracker_states','itemId','tracker_items');relation('tracker_entries','itemId','tracker_items');relation('template_exercises','userExerciseId','user_exercises',false);relation('session_exercises','userExerciseId','user_exercises',false);
  return {errors:[...new Set(errors)],warnings,counts};
 }
 export function minutesToTime(value){const n=Number(value);if(!Number.isInteger(n)||n<0||n>1439)throw new Error('Invalid time in backup');return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}

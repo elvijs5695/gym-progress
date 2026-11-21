@@ -1,6 +1,6 @@
 # Gym Progress release contract
 
-Applies to the production v2 line, beginning with **2.0.0** (updated for **2.0.3**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
+Applies to the production v2 line, beginning with **2.0.0** (updated for **2.1.0**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
 
 ## One app on both platforms
 
@@ -46,3 +46,12 @@ Every release includes source, a reproducible built PWA, concise what's-new note
 The latest user feedback in `docs/USER_FEEDBACK_HISTORY.md` supersedes previous header and Log effort placement requests. Keep workout Log effort after **all** metrics; retain the Strength Volume progress metric in mixed sessions; show four equally sized Cardio metrics. The active header is the standard fixed height with two ellipsised lines parallel to four controls. Rest audio is one short 30-second warning, short ticks at 3/2/1, and one long completion cue, not a double warning or buffered missed tones. Informational notice dialogs are visually distinct from editable forms.
 
 The cumulative update announcement MUST actually be invoked after account bootstrap/sync using the v1.x last-acknowledged-version key. Do not mark a release read merely because a service worker activated or a page refreshed; acknowledgement is explicit. No production database changes are authorised for these UI fixes.
+
+
+## v2.1.0 — accepted privacy, correctness and migration contract
+
+1. **Account-level comparison sharing is opt-in and immediately revocable.** The default after upgrade is OFF, including existing accounts. Each participating friend must independently opt in. Per-exercise qualification still applies. Consent is enforced in the **database**, not only in the browser; stale clients cannot bypass revocation or silently republish on page entry. Stable cloud record identities replace device-local IDs. Explicit training/account erasure also removes any restricted historic comparison archive.
+2. Preserve manually entered **zero weight** separately from a missing value. Never use truthiness (`||`) to choose planned weights over explicitly entered zero. Keep strength and cardio source measurements separate and accurate.
+3. Preserve historical Tracker entries by **archiving** referenced definitions. Undo/Redo for supported ramp/rest/workout-stage transitions may change only the current workout and must never move the original workout-start clock; current 2.1.0 step journal is bounded and in memory, so refresh durability remains pending.
+4. This upgrade must run on the original Supabase **v2** database, not reimport v1. It requires a current full backup (including private schemas), preflight, atomic SQL execution and postflight, preserving Auth, workouts, custom programmes, historical aliases and old import data. No manual table deletion or blind pg_restore to live Supabase.
+5. PWA and later Android must reuse the accepted visual and functional contract. Android parity remains unverified and should not be represented as a completed release. Missing PG, browser or mobile tests must be disclosed.
