@@ -2,7 +2,7 @@
 
 ## Read before changing the app
 
-Read `RELEASE_CONTRACT.md`, `docs/PLATFORM_PARITY_CHECKLIST.md` and the relevant architecture/calculation/security documentation. The release contract records user requirements; explicit later user instructions govern scope. Do not introduce extra approval steps for work already authorised.
+Read `RELEASE_CONTRACT.md`, `docs/USER_FEEDBACK_HISTORY.md`, `docs/WISHLIST.md`, `docs/PLATFORM_PARITY_CHECKLIST.md` and the relevant architecture/calculation/security documentation. The release contract records user requirements; explicit later user instructions govern scope. Do not introduce extra approval steps for work already authorised.
 
 ## Shared implementation
 

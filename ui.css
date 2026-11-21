@@ -61,7 +61,7 @@
 
 /* Settings */
 .setting-stepper{display:grid;grid-template-columns:minmax(0,1fr) 44px 40px 44px;gap:8px;align-items:center;font-size:13px}.setting-stepper.centered{grid-template-columns:44px auto 44px;justify-content:center;margin-top:12px}.setting-stepper strong{text-align:center;font-weight:500;font-variant-numeric:tabular-nums}.ramp-stepper{grid-template-columns:44px 32px 44px;justify-content:end;flex:0 0 auto}.ramp-setting-card>.row{align-items:center}
-.setting-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:6px 0;cursor:pointer}.setting-toggle-copy{flex:1;min-width:0}.setting-toggle-copy .title{font-size:13px;font-weight:500}.setting-toggle-control{position:relative;display:inline-flex;align-items:center;justify-content:center;width:46px;min-width:46px;height:44px}.setting-toggle-input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;z-index:1;cursor:pointer}.setting-toggle-track{display:block;width:40px;height:24px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface3);transition:background-color var(--motion-fast)}.setting-toggle-thumb{display:block;width:18px;height:18px;border-radius:50%;margin:2px;background:var(--muted);transition:transform var(--motion-fast)}.setting-toggle-input:checked+.setting-toggle-track{background:var(--accent);border-color:var(--accent)}.setting-toggle-input:checked+.setting-toggle-track .setting-toggle-thumb{transform:translateX(16px);background:var(--on-accent)}.setting-toggle-input:focus-visible+.setting-toggle-track{outline:2px solid var(--focus);outline-offset:3px}.setting-toggle-input:disabled,.compare-toggle-row.is-disabled{cursor:not-allowed}.compare-toggle-row.is-disabled{opacity:.5}.compare-checkbox-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 0;cursor:pointer}.compare-checkbox-row>span{display:flex;flex-direction:column;gap:4px}.compare-checkbox-row small{color:var(--muted);font-size:12px;line-height:1.4}.compare-checkbox-row:has(input:disabled){opacity:.6;cursor:default}.control-disabled{opacity:.5}
+.setting-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:6px 0;cursor:pointer}.setting-toggle-copy{flex:1;min-width:0}.setting-toggle-copy .title{font-size:13px;font-weight:500}.setting-toggle-control{position:relative;display:inline-flex;align-items:center;justify-content:center;width:46px;min-width:46px;height:44px}.setting-toggle-input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;z-index:1;cursor:pointer}.setting-toggle-track{display:block;width:40px;height:24px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface3);transition:background-color var(--motion-fast)}.setting-toggle-thumb{display:block;width:18px;height:18px;border-radius:50%;margin:2px;background:var(--muted);transition:transform var(--motion-fast)}.setting-toggle-input:checked+.setting-toggle-track{background:var(--accent);border-color:var(--accent)}.setting-toggle-input:checked+.setting-toggle-track .setting-toggle-thumb{transform:translateX(16px);background:var(--on-accent)}.setting-toggle-input:focus-visible+.setting-toggle-track{outline:none;border-color:var(--focus)}.setting-toggle-input:disabled,.compare-toggle-row.is-disabled{cursor:not-allowed}.compare-toggle-row.is-disabled{opacity:.5}.compare-checkbox-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 0;cursor:pointer}.compare-checkbox-row>span{display:flex;flex-direction:column;gap:4px}.compare-checkbox-row small{color:var(--muted);font-size:12px;line-height:1.4}.compare-checkbox-row:has(input:disabled){opacity:.6;cursor:default}.control-disabled{opacity:.5}
 .progression-edit{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:end;gap:10px;width:100%;margin:16px 0 8px}.progression-edit label{min-width:0;margin:0}.progression-edit .field{margin:0 0 8px;line-height:1.45}.progression-edit input{text-align:center;font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}.progression-edit>button{width:44px;height:48px}.rep-progression input{font-size:20px}.theme-picker{margin:12px 0 0}.theme-picker legend{margin:0 0 8px;font-size:12px;color:var(--muted)}.theme-picker fieldset,fieldset.theme-picker{border:0;padding:0;min-width:0}.theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.theme-option{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12px;color:var(--muted);cursor:pointer}.theme-option:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}.theme-option input{width:16px;height:16px;min-height:16px}.theme-option svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5}
 
 /* Friends and Shared Rhythm */
@@ -113,7 +113,7 @@
 .ui-message{font-size:13px;font-weight:400;line-height:1.55;overflow-wrap:anywhere}.destructive-warning{padding:12px;border:1px solid var(--danger-line);border-radius:var(--radius-sm);background:var(--danger-surface);color:var(--danger)}
 .setting-toggle-control{width:44px;min-width:44px;height:44px}
 input.ui-item-control[type="checkbox"],input.ui-item-control[type="radio"],.theme-option input{position:static;inset:auto;opacity:1;min-width:24px;min-height:24px;width:24px!important;height:24px!important;accent-color:var(--green);flex-shrink:0}
-.setting-toggle-track{display:none}.setting-toggle-input:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.setting-toggle-track{display:none}.setting-toggle-input:focus-visible{outline:none;border-color:var(--focus)}
 .ui-disclosure{overflow:hidden;height:auto}.ui-disclosure[data-expanded="false"]{height:0}.ui-disclosure-inner{min-height:0;overflow:hidden}
 .friend-comparison-body{padding-bottom:12px}.friend-comparison-card.expanded .app-expand-chevron svg{transform:rotate(180deg)}
 .effort-surface{--effort-colour:var(--gray);background:color-mix(in srgb,var(--effort-colour) 5%,var(--surface));border-color:color-mix(in srgb,var(--effort-colour) 26%,var(--line));border-width:1px}
@@ -177,3 +177,82 @@ button.progress-entry strong,button.progress-entry .progress-entry-value{color:v
 /* Consistent, sufficiently visible Back icon, without raising the header height. */
 .topbar-back{display:grid;place-items:center;min-width:42px;width:42px;min-height:42px;height:42px;padding:0}
 .topbar-back-icon{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* v2.0.2 UI consistency. Deliberate single source of truth for the requested roles. */
+/* Header height does not depend on presence of Back, account button or active context. */
+.persistent-head{min-height:calc(var(--topbar-h) + env(safe-area-inset-top));}
+.topbar{height:calc(var(--topbar-h) + env(safe-area-inset-top));min-height:calc(var(--topbar-h) + env(safe-area-inset-top));max-height:calc(var(--topbar-h) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 14px 0;flex-wrap:nowrap;overflow:hidden}
+.topbar-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;min-width:0}
+.topbar-actions{flex-shrink:0;max-height:100%}
+.topbar .account-chip{max-height:44px}
+.active-workout-topbar .active-workout-context{overflow:hidden;white-space:normal}
+.active-workout-topbar .active-workout-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Whitespace belongs to literal text, not flex gap or pseudo content. */
+.home-workout-meta{display:block;white-space:normal}
+.home-workout-meta>.home-meta-status{display:inline;white-space:nowrap}
+.home-meta-status>.home-meta-separator{display:inline;white-space:pre;margin:0;color:var(--muted)}
+/* One distinct green -> amber -> coral -> rose scale for ALL effort labels. */
+.difficulty.comfortable,.difficulty.cardio-easy{color:var(--effort-easy-ink)}
+.difficulty.challenging,.difficulty.cardio-moderate{color:var(--effort-moderate-ink)}
+.difficulty.hard,.difficulty.cardio-hard{color:var(--effort-hard-ink)}
+.difficulty.very-hard,.difficulty.cardio-veryhard,.difficulty.failure,.difficulty.aborted{color:var(--effort-max-ink)}
+.difficulty.unknown,.difficulty.cardio-unknown,.difficulty.mixed{color:var(--muted)}
+.friend-timeline-dot.comfortable,.friend-timeline-dot.cardio-easy{background:var(--effort-easy-dot)}
+.friend-timeline-dot.challenging,.friend-timeline-dot.cardio-moderate{background:var(--effort-moderate-dot)}
+.friend-timeline-dot.hard,.friend-timeline-dot.cardio-hard{background:var(--effort-hard-dot)}
+.friend-timeline-dot.very-hard,.friend-timeline-dot.cardio-veryhard,.friend-timeline-dot.failure,.friend-timeline-dot.aborted{background:var(--effort-max-dot)}
+/* Mixes retain both per-modality label colours; the surface remains neutral. */
+.log-heading-effort,.session-effort-label{display:inline-flex;flex-wrap:wrap;align-items:baseline;justify-content:flex-end;gap:0;min-width:0;max-width:100%;font-weight:700;font-size:12px;line-height:1.4;text-align:right}
+.log-heading-effort .difficulty,.session-effort-label .difficulty{font-weight:700;white-space:nowrap}
+.effort-divider{white-space:pre;color:var(--muted)}
+.session-effort-label{margin-left:auto}
+.log-metric-section-title.difficulty{font-size:11px;font-weight:700}
+/* Cardio measurements never become a 2x2/3x2 grid. Long sets scroll instead of shrinking digits to unreadable size. */
+.metric-grid.log-metric-grid.cardio-metrics-row{display:flex;flex-wrap:nowrap;align-items:flex-start;column-gap:9px;row-gap:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;padding:2px 0 8px;scroll-snap-type:x proximity}
+.cardio-metrics-row>.metric{flex:1 0 72px;min-width:72px;scroll-snap-align:start}
+.cardio-metrics-row .metric-label{font-size:10px;line-height:1.3;overflow-wrap:break-word}
+.cardio-metrics-row .metric-value{font-size:13px;line-height:1.35;overflow-wrap:normal;white-space:nowrap}
+.cardio-metrics-row:focus-visible{outline:none;background:color-mix(in srgb,var(--focus) 6%,transparent);border-radius:var(--radius-sm)}
+/* One horizontal strip for cardio entry, with full-size inputs and N/A, not four squeezed microfields. */
+.form-grid.cardio-fields{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(152px,1fr);gap:10px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:thin;padding-bottom:10px}
+.cardio-fields>div{min-width:0;scroll-snap-align:start}
+.cardio-fields .cardio-optional-field{gap:5px}
+.cardio-fields .cardio-optional-field button{flex:0 0 55px;width:55px;min-width:55px;padding:8px 5px}
+.cardio-fields .cardio-optional-field input,.cardio-fields .cardio-optional-field select{flex:1 1 0;min-width:0;padding-inline:6px}
+.dialog:has(.cardio-fields){width:min(760px,100%)}
+.cardio-rpe-explanation{margin:11px 0 0;line-height:1.55}
+@media(max-width:340px){.form-grid.cardio-fields{grid-template-columns:none;grid-auto-columns:152px}}
+
+
+/* v2.0.2 — compact persistent Friends action, one header height. */
+.main-header .topbar-actions{display:flex;align-items:center;gap:6px;min-width:0;flex-shrink:0}
+.main-header .account-chip{max-width:min(35vw,160px)}
+.topbar .header-add-friend{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;min-height:38px;height:38px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font-size:12px;font-weight:600;line-height:1.2;white-space:nowrap}
+.header-add-plus{font-size:18px;font-weight:500;line-height:1}
+.header-add-label{white-space:nowrap}
+@media(max-width:480px){.topbar .header-add-friend{width:38px;min-width:38px;padding:0}.header-add-label{display:none}}
+/* Home starts immediately after the fixed header. Eliminate inherited section top margin. */
+.view.home-view.with-top{padding-top:7px}
+.home-view>.section-title:first-child{margin-top:4px}
+/* Mixed strength/cardio effort belongs to separate lines, never a dot-separated phrase. */
+.effort-stack{display:inline-flex;flex-direction:row;align-items:baseline;justify-content:flex-end;gap:10px;max-width:100%;white-space:nowrap;line-height:1.35}
+.effort-stack>.difficulty{display:inline-block;text-align:right;white-space:nowrap}
+.log-heading-effort:has(.effort-stack){overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.log-heading-effort:has(.effort-stack)::-webkit-scrollbar{display:none}
+/* Smaller intrinsic metric width lets three common measures share one compact row. */
+.metric-grid.log-metric-grid:not(.cardio-metrics-row){display:flex;flex-wrap:wrap;gap:9px 7px;margin:11px 0}
+.metric-grid.log-metric-grid:not(.cardio-metrics-row)>.metric{flex:1 1 70px;min-width:70px}
+.metric-grid.log-metric-grid:not(.cardio-metrics-row) .metric-label{font-size:10px;line-height:1.35}
+.metric-grid.log-metric-grid:not(.cardio-metrics-row) .metric-value{font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+
+/* v2.0.2 — Log card density and heading hierarchy. Retain a clear card bottom edge. */
+.log-session-card{padding-bottom:11px}
+.log-session-card>.metric-grid.log-metric-grid:last-child{margin-bottom:0}
+.log-session-card>.log-cardio-section:last-child{margin-bottom:0;padding-bottom:0}
+.log-session-card>.log-cardio-section:last-child>.metric-grid.log-metric-grid:last-child{margin-bottom:0;padding-bottom:5px}
+.log-heading .log-date{font-weight:400}
+.log-heading .log-name{font-weight:700}
+
+/* v2.0.2 — Choice controls show keyboard focus via their existing border, with no exterior ring or geometry change. */
+.segmented button:focus-visible,.rir-row button:focus-visible,.cardio-optional-field button:focus-visible,.share-toggle:focus-visible{outline:none;border-color:var(--focus)}

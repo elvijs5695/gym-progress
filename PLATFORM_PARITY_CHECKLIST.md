@@ -1,6 +1,6 @@
 # Platform parity and release checklist
 
-Release: **Gym Progress 2.0.1**. Authoritative requirements: `RELEASE_CONTRACT.md`.
+Release: **Gym Progress 2.0.2**. Authoritative requirements: `RELEASE_CONTRACT.md`.
 
 ## Current status
 
@@ -8,7 +8,7 @@ Release: **Gym Progress 2.0.1**. Authoritative requirements: `RELEASE_CONTRACT.m
 |---|---|
 | PWA final automated test/build receipt | Focused Node tests and source build passed; full suite pending due to unavailable test dependencies; see TEST_RESULTS.md |
 | PWA real-device acceptance | Pending user testing |
-| Existing production v2 schema | Already deployed by user; **no new SQL migration in 2.0.1** |
+| Existing production v2 schema | Already deployed by user; **no new SQL migration in 2.0.2** |
 | Android package | Not built |
 | Android functional and visual parity | Not tested; not parity-certified |
 
@@ -40,3 +40,15 @@ Only operating-system necessities may differ. Record each one before certifying 
 | None approved yet | — | — | Pending Android implementation |
 
 Potential adapter areas include permissions, installation, native notifications/share/export, safe areas, screen wakefulness and system Back. This list is not blanket approval for feature or visual divergence. Document any limitation, its user-visible consequence and the tested fallback.
+
+### v2.0.2 visual acceptance
+
+- [ ] Friends shows `+ Add friend` beside username within a constant-height header (narrow screens retain an accessible `+` control); no duplicated Add friend block lower down.
+- [ ] Home uses exact `6 exercises · next` spacing and a compact header-to-rotation gap.
+- [ ] Strength/cardio mixed rating has two separately coloured lines; neutral card surface.
+- [ ] Workout metrics fit three across where practical; cardio remains accessible in one scrollable row.
+- [ ] Tracker notifications work or fail silently when service-worker notifications are unavailable; login remains functional.
+
+- [ ] Active workout header: 60px fixed height across all phases; day/timer beside Undo, Redo, Home and Exit on row one; stage (`1/x`) and current exercise on row two. Long translated exercise names are truncated without growing the header. Verify at 320px/375px and in EN/LV. Android must use the same hierarchy.
+
+- [ ] Name limits: new day labels <=30, new custom exercise labels <=60; old/imported names are not shortened or destroyed. Both clients reject overlength edits with localized validation. Long day/exercise labels truncate visually only, including a full-name access mechanism.

@@ -13,3 +13,83 @@
 @keyframes finishSpark{0%{opacity:0;transform:rotate(var(--angle)) translateY(0) scaleY(.4)}12%{opacity:.7}62%{opacity:.45}100%{opacity:0;transform:rotate(var(--angle)) translateY(var(--reach)) scaleY(.3)}}
 @media(max-width:370px){.workout-history-controls{gap:2px}.active-workout-topbar .workout-history-control{width:40px;min-width:40px}.active-workout-name{overflow-wrap:anywhere}}
 @media(prefers-reduced-motion:reduce){.finish-fireworks{display:none}.finish-firework i{animation:none}.share-summary-dialog.finish-reveal{animation:none}}
+
+
+/* v2.0.2 — two stable active-workout header rows within the existing 60px shell.
+   Row 1: day, live timer and action icons. Row 2: stage and current exercise.
+   Long names truncate, never wrap or alter the persistent header height. */
+.active-workout-topbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:40px 18px;
+  column-gap:6px;
+  row-gap:0;
+  align-items:center;
+  padding-inline:10px;
+  overflow:hidden;
+}
+.active-workout-mainline{
+  grid-column:1;
+  grid-row:1;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  overflow:hidden;
+}
+.active-workout-topbar .active-workout-name{
+  display:block;
+  flex:1 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.3;
+}
+.active-workout-timer{
+  flex:0 0 auto;
+  white-space:nowrap;
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+  color:var(--muted);
+}
+.active-workout-topbar .workout-history-controls{
+  grid-column:2;
+  grid-row:1;
+  justify-self:end;
+  flex-wrap:nowrap;
+  min-width:0;
+}
+.active-workout-subline{
+  grid-column:1/-1;
+  grid-row:2;
+  display:flex;
+  align-items:center;
+  gap:0;
+  min-width:0;
+  width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:11px;
+  line-height:17px;
+}
+.active-header-stage,.active-header-divider{flex:0 0 auto;white-space:pre}
+.active-header-stage{font-weight:650;color:var(--text)}
+.active-header-current{
+  display:block;
+  min-width:0;
+  flex:1 1 auto;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:370px){
+  .active-workout-topbar{padding-inline:6px;column-gap:3px;row-gap:0}
+  .active-workout-mainline{gap:4px}
+  .active-workout-topbar .workout-history-controls{gap:1px}
+  .active-workout-topbar .workout-history-control{width:36px;min-width:36px;padding-inline:6px}
+  .active-workout-topbar .workout-history-control svg{width:19px;height:19px}
+}

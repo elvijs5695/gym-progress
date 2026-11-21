@@ -1,6 +1,6 @@
 {
-  "version": "2.0.1",
-  "id": "2.0.1-a998fdd628cb",
+  "version": "2.0.2",
+  "id": "2.0.2-5d36bf9021fd",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "42fa7ac0cbd8b728c1ea45c5076122c846bdcc85677d79a31c5b60ce2e9c833d",
-      "bytes": 374431
+      "sha256": "e0f5386bcdccc996142e2e55ab16e1a0938930c5aadc18fd06ac65ea0e4a1668",
+      "bytes": 377725
     },
     {
       "path": "autoregulation.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "design-system.css",
-      "sha256": "869e1a03cfaf2efe6113535fc53d3d0aa2ad894003effa39b7312dd384fe5c68",
-      "bytes": 10835
+      "sha256": "a20d60747af27860e1c626de88b1b40c4d141c526e456a6e500f9f2e909cab75",
+      "bytes": 11878
     },
     {
       "path": "dom-actions.js",
@@ -183,6 +183,16 @@
       "bytes": 10856
     },
     {
+      "path": "name-policy.js",
+      "sha256": "697893847f4dca4c1fc4d21f65ddf990aad0519363085e54c1c3fcb0bbb21e53",
+      "bytes": 589
+    },
+    {
+      "path": "notification-delivery.js",
+      "sha256": "4514f102876325a0194d157878ecf88012b5d1001847f57f2dcac516587f117a",
+      "bytes": 1269
+    },
+    {
       "path": "performance-rules.js",
       "sha256": "68b0dc119259352c3af54246f57567af4c74f1bb4b6176d4c24b694bd8b69513",
       "bytes": 11528
@@ -229,12 +239,12 @@
     },
     {
       "path": "release-workout.css",
-      "sha256": "92c16de031ce2c73271e72994965e387429e5298699df5aeb3aa95bd422775b0",
-      "bytes": 1689
+      "sha256": "bc6bbbe381c277e953335ab03bd597b6c6bd13ff42828c5b09afe5ed57db3950",
+      "bytes": 3662
     },
     {
       "path": "social-api.js",
-      "sha256": "3e9dab5d453313fcb3a91ff873a5ab4a10c9afe619ea6bb3887f7f3a93ae3954",
+      "sha256": "d034a88ace82d021ad7b6d2e2013cae60130818f14d8c49dae817514bcbbd8a1",
       "bytes": 15107
     },
     {
@@ -279,8 +289,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "1d7135e49f9894b88e49319db8fcaef390f21e0543e6cabad9afc700a34ef6f7",
-      "bytes": 57539
+      "sha256": "8a8bf4cfb13ab2a8ed92a0587f038525b5fd3f8d8e3bd1cc67078cc50cf3f869",
+      "bytes": 64855
     },
     {
       "path": "vendor/ACORN_LICENSE.txt",

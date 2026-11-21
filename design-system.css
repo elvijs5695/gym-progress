@@ -30,9 +30,18 @@
   --danger: var(--red);
   --danger-surface: #fbefef;
   --danger-line: #e2c3c6;
-  --rhythm-green: #90c6a0;
-  --rhythm-yellow: #ebd07f;
-  --rhythm-red: #e6a09e;
+  /* Effort colour pairs: same hue, contrast-appropriate text versus pastel dots. */
+  --effort-easy-ink: #2d7755;
+  --effort-moderate-ink: #876400;
+  --effort-hard-ink: #b34d31;
+  --effort-max-ink: #ae344b;
+  --effort-easy-dot: #96cfaa;
+  --effort-moderate-dot: #ecd17a;
+  --effort-hard-dot: #eaa17d;
+  --effort-max-dot: #e58d9d;
+  --rhythm-green: var(--effort-easy-dot);
+  --rhythm-yellow: var(--effort-moderate-dot);
+  --rhythm-red: var(--effort-max-dot);
   --rhythm-neutral: #aeb8ae;
   --tracker-progress: #d6ded5;
   --tracker-complete: #cfdfd0;
@@ -50,6 +59,7 @@
   --space-6: 24px;
   --page-width: 720px;
   --nav-h: 66px;
+  --topbar-h: 60px;
   --touch: 44px;
   --font-body: 14px;
   --font-caption: 12px;
@@ -102,9 +112,17 @@
   --purple: #c1afd7;
   --danger-surface: #332326;
   --danger-line: #68474d;
-  --rhythm-green: #86bca0;
-  --rhythm-yellow: #d5bd79;
-  --rhythm-red: #d79598;
+  --effort-easy-ink: #a2dbb9;
+  --effort-moderate-ink: #f1d585;
+  --effort-hard-ink: #edaa88;
+  --effort-max-ink: #ed9dac;
+  --effort-easy-dot: #84c49f;
+  --effort-moderate-dot: #d8bd67;
+  --effort-hard-dot: #d99170;
+  --effort-max-dot: #d67c8e;
+  --rhythm-green: var(--effort-easy-dot);
+  --rhythm-yellow: var(--effort-moderate-dot);
+  --rhythm-red: var(--effort-max-dot);
   --rhythm-neutral: #8a978e;
   --tracker-progress: #3d4b40;
   --tracker-complete: #45664b;
@@ -126,7 +144,12 @@
     --orange: #d5aa85; --red: #e4a2a9; --deepred: #e294a1;
     --gray: #adb8bf; --blue: #a6c1df; --purple: #c1afd7;
     --danger-surface: #332326; --danger-line: #68474d;
-    --rhythm-green: #86bca0; --rhythm-yellow: #d5bd79; --rhythm-red: #d79598; --rhythm-neutral: #8a978e;
+    --effort-easy-ink: #a2dbb9; --effort-moderate-ink: #f1d585;
+    --effort-hard-ink: #edaa88; --effort-max-ink: #ed9dac;
+    --effort-easy-dot: #84c49f; --effort-moderate-dot: #d8bd67;
+    --effort-hard-dot: #d99170; --effort-max-dot: #d67c8e;
+    --rhythm-green: var(--effort-easy-dot); --rhythm-yellow: var(--effort-moderate-dot);
+    --rhythm-red: var(--effort-max-dot); --rhythm-neutral: #8a978e;
     --tracker-progress: #3d4b40; --tracker-complete: #45664b;
     --scrim: rgb(4 9 6 / .62);
     --shadow-sm: 0 2px 8px rgb(0 0 0 / .07);
@@ -154,7 +177,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-v
 button.small-btn, .button.small-btn, button.tiny-btn, .button.tiny-btn { min-height: 40px; padding: 8px 11px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; }
 button.icon-btn { display: inline-grid; place-items: center; width: 44px; min-width: 44px; height: 44px; padding: 0; border-radius: 11px; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 22px; font-weight: 400; flex-shrink: 0; }
 input, select, textarea { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); padding: 10px 11px; font: inherit; font-size: 16px; line-height: 1.35; }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
+/* Quiet, stable input focus: use the existing 1px border, not a second offset outline. */
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--focus); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 input:disabled, select:disabled, textarea:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; opacity: 1; }
 input[type="checkbox"], input[type="radio"] { width: 24px; height: 24px; min-height: 24px; margin: 0; padding: 0; accent-color: var(--accent); flex-shrink: 0; }
