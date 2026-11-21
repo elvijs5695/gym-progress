@@ -1,4 +1,4 @@
-# What’s new — Gym Progress 2.0.2
+# What’s new — Gym Progress 2.0.3
 
 ## English
 
@@ -16,7 +16,7 @@
 - **Saskarne:** atdalīta atstarpe ap punktu starp vingrinājumu skaitu un nākamo treniņu, izteiksmīgāks virsraksts bez augstāka galvenes laukuma, neitrālas kartītes un treknas piepūles atzīmes. Ritma punkti ir pasteļtoņu zaļi/dzelteni/sarkani, bez kontūras un nogriešanas.
 - **Treniņš un žurnāls:** precizēta pabeigšanas poga, kardio ievades lauki, kopīgošanas animācija un garāka finiša animācija; skaitļiem lietots punkts kā decimālatdalītājs. Datubāzes shēmas izmaiņu nav.
 
-**Parity rule:** future PWA and Android packages must match functionally and visually. Android 2.0.2 is not yet built or verified.
+**Parity rule:** future PWA and Android packages must match functionally and visually. Android 2.0.3 is not yet built or verified.
 
 ## v2.0.2 UI and reliability corrections
 
@@ -36,3 +36,12 @@
 - **Known verification gap:** restoring intermediate ramp-up/rest phases via Undo/Redo still requires separate transition-history tests. Ordinary completed-set Undo/Redo remains present.
 
 - Focused form fields and selection controls now use a quiet existing-border focus state instead of an extra exterior outline; keyboard navigation and error cues remain available.
+
+## v2.0.3 — layout precision (client only)
+
+- Active workout toolbar has its own taller fixed header: left-aligned day and live timer, four complete action icons, and a separately truncated one-line exercise name.
+- Removed the decorative heavy top border from the active exercise card.
+- Log card heading is `Date · Day name` on row one; modality-labelled effort with **coloured grades only** on row two. Metric section labels are neutral.
+- Cardio metrics appear in equal columns, with **Training load** as the shorter label.
+- Add friend is in the Friends list card header, including for an empty list, not next to the global account button.
+- No database migration. The PWA and Android visual/functionality parity contract remains binding; Android is not yet updated.

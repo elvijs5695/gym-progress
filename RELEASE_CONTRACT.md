@@ -1,6 +1,6 @@
 # Gym Progress release contract
 
-Applies to the production v2 line, beginning with **2.0.0** (updated for **2.0.1**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
+Applies to the production v2 line, beginning with **2.0.0** (updated for **2.0.3**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
 
 ## One app on both platforms
 
@@ -39,4 +39,4 @@ A database promotion must have a verified current backup, snapshot/schema/owners
 
 Every release includes source, a reproducible built PWA, concise what's-new notes, deployment/migration instructions, conversion findings, test receipts and the platform parity checklist. Identify the exact tested build and distinguish simulated, database, browser and real-device checks. A passing automated test is not proof of mobile layout, notification delivery, installation or live authentication.
 
-**Current gate state (2.0.1):** PWA package build and focused Node tests have been executed; full suite and live-device acceptance are pending as detailed in `docs/TEST_RESULTS.md`. Android has not been built and is not parity-certified. Update these statuses only from recorded evidence. Never describe a package as deployed, migrated or device-verified unless that outcome was observed.
+**Current gate state (2.0.3):** PWA source build and focused Node tests are executed; full suite and live-device visual, notification and update checks remain pending as detailed in `docs/TEST_RESULTS.md`. Android has not been built and is not parity-certified. Update these statuses only from recorded evidence. Never describe a package as deployed, migrated or device-verified unless that outcome was observed.

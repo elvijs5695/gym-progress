@@ -256,3 +256,27 @@ button.progress-entry strong,button.progress-entry .progress-entry-value{color:v
 
 /* v2.0.2 — Choice controls show keyboard focus via their existing border, with no exterior ring or geometry change. */
 .segmented button:focus-visible,.rir-row button:focus-visible,.cardio-optional-field button:focus-visible,.share-toggle:focus-visible{outline:none;border-color:var(--focus)}
+
+/* v2.0.3 — workout Log hierarchy: date · name, then left-aligned effort. */
+.log-session-card .log-heading{display:flex;align-items:baseline;flex-wrap:nowrap;gap:6px;min-width:0;margin:0}
+.log-session-card .log-heading .log-date{font-weight:400;white-space:nowrap;flex:0 0 auto}
+.log-session-card .log-heading .log-name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.log-session-card .log-heading .log-heading-separator{white-space:nowrap;flex:0 0 auto}
+.log-effort-line{display:flex;align-items:baseline;flex-wrap:nowrap;justify-content:flex-start;gap:0;min-width:0;margin:4px 0 6px;text-align:left;font-size:12px;line-height:1.45;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.log-effort-item{display:inline-flex;align-items:baseline;gap:4px;white-space:nowrap;flex:0 0 auto}
+.log-effort-title{font-weight:500;color:var(--muted)}
+.log-effort-item .difficulty{font-size:12px;font-weight:700;white-space:nowrap}
+.log-effort-divider{white-space:pre;color:var(--muted);flex:0 0 auto}
+.log-effort-line::-webkit-scrollbar{display:none}
+.log-session-card .log-metric-section-title{color:var(--muted);font-weight:600}
+/* Cardio metrics: equal-width columns within one row. Overflow scrolls only
+   when the phone cannot accommodate every column at readable width. */
+.metric-grid.log-metric-grid.cardio-metrics-row{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(78px,1fr);align-items:start;column-gap:8px;row-gap:0}
+.cardio-metrics-row>.metric{flex:initial;width:auto;min-width:0;scroll-snap-align:start}
+.cardio-metrics-row .metric-label{min-height:2.6em;overflow-wrap:break-word}
+/* The Add-friend control belongs in the list card header, not the page bar. */
+.friends-panel-header{display:flex;align-items:center;gap:3px;min-height:48px;padding-right:6px}
+.friends-panel-header>.friends-list-toggle{flex:1 1 auto;width:auto;min-width:0}
+.friends-panel-header>.friends-panel-add{flex:0 0 40px;min-width:40px;width:40px;min-height:40px;height:40px;padding:0;margin:0;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--text);display:grid;place-items:center}
+.friends-panel-add>span{font-size:24px;font-weight:400;line-height:1}
+.friends-empty{padding:10px 0 14px;color:var(--muted)}

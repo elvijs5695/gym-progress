@@ -1,6 +1,6 @@
 {
-  "version": "2.0.2",
-  "id": "2.0.2-5d36bf9021fd",
+  "version": "2.0.3",
+  "id": "2.0.3-6be33c7cdaf8",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "e0f5386bcdccc996142e2e55ab16e1a0938930c5aadc18fd06ac65ea0e4a1668",
-      "bytes": 377725
+      "sha256": "b1a8defd9768ad476afb1b7c5ff625945fecbfbb81cf4da8175ec36c3e058158",
+      "bytes": 378766
     },
     {
       "path": "autoregulation.js",
@@ -239,12 +239,12 @@
     },
     {
       "path": "release-workout.css",
-      "sha256": "bc6bbbe381c277e953335ab03bd597b6c6bd13ff42828c5b09afe5ed57db3950",
-      "bytes": 3662
+      "sha256": "5b6eb1d6977f0cfaf0a52fdc69c8ad8fa9cff47bbeba70499cde4e66d8a99288",
+      "bytes": 4367
     },
     {
       "path": "social-api.js",
-      "sha256": "d034a88ace82d021ad7b6d2e2013cae60130818f14d8c49dae817514bcbbd8a1",
+      "sha256": "f594185557fc3375912bfd1da4e0f6930b08133eae533d7649fa0d52c03e8f8b",
       "bytes": 15107
     },
     {
@@ -289,8 +289,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "8a8bf4cfb13ab2a8ed92a0587f038525b5fd3f8d8e3bd1cc67078cc50cf3f869",
-      "bytes": 64855
+      "sha256": "2716263b7fed1628b6e99434c7a16bcea7b73e41c9bd03351ae2a0da5bea86d4",
+      "bytes": 67136
     },
     {
       "path": "vendor/ACORN_LICENSE.txt",

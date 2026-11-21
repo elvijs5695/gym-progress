@@ -37,7 +37,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.0.2';
+const APP_VERSION='2.0.3';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -301,6 +301,7 @@ async function checkMotivationReminders(){const a=state?.app_state;if(!a?.motiva
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
+ {version:'2.0.3',key:'workout-log-header',importance:3,en:'Clear two-line workout log headings, compact evenly spaced cardio metrics, stable active-workout controls and Add friend in its card.',lv:'Skaidras divrindu žurnāla galvenes, vienmērīgi kardio rādītāji, stabila treniņa vadība un Drauga pievienošana kartītē.'},
  {version:'2.0.2',key:'ui-density-consistency',importance:3,en:'Clear green-to-red effort colours, stable section header, explicitly spaced workout status and one-row cardio statistics.',lv:'Skaidri piepūles toņi no zaļā līdz sarkanam, nemainīga galvenes augstuma josla, precīzas atstarpes un kardio rādītāji vienā rindā.'},
  {version:'2.0.1',key:'sync-on-login',importance:5,en:'Signing in now restores cloud training data before the Home programme prompt.',lv:'Pēc pieslēgšanās mākoņa treniņu dati tiek ielādēti pirms sākuma programmas piedāvājuma.'},
  {version:'2.0.1',key:'friends-progress-fix',importance:4,en:'Friends comparison and Progress all-days history have been corrected.',lv:'Labots draugu salīdzinājums un visu dienu vēsture sadaļā Progress.'},
@@ -369,8 +370,7 @@ function accountDisplayLabel(){return socialSignedIn()?(socialUi.profile?.displa
 function accountChip(){return `<button class="account-chip ${socialSignedIn()?'signed-in':''}" onclick="gp.openAccount()">${esc(accountDisplayLabel())}</button>`;}
 function shell(content,{topbar:customTopbar=null,navBar=true}={}){
  const titles={home:S('Home','Sākums'),logs:S('Logs','Žurnāls'),progress:S('Progress','Progress'),friends:S('Friends','Draugi'),settings:S('Settings','Iestatījumi')};
- const friendAction=route.name==='friends'&&socialSignedIn()?`<button type="button" class="header-add-friend ghost small-btn" onclick="gp.openAddFriend()" title="${esc(S('Add friend','Pievienot draugu'))}" aria-label="${esc(S('Add friend','Pievienot draugu'))}"><span class="header-add-plus" aria-hidden="true">+</span><span class="header-add-label">${esc(S('Add friend','Pievienot draugu'))}</span></button>`:'';
- const header=customTopbar||'<div class="topbar main-header"><h1 class="topbar-title">'+esc(titles[route.name]||'Gym Progress')+'</h1><div class="topbar-actions">'+friendAction+accountChip()+'</div></div>';
+ const header=customTopbar||'<div class="topbar main-header"><h1 class="topbar-title">'+esc(titles[route.name]||'Gym Progress')+'</h1><div class="topbar-actions">'+accountChip()+'</div></div>';
  // Header height must not change with section navigation. The active-session notice is separate.
  return '<div class="app-shell"><div class="persistent-head">'+header+'</div>'+(route.name!=='active'?activeSessionBanner():'')+'<main class="view with-top '+(route.name==='home'?'home-view':'')+'">'+content+'</main>'+(navBar?bottomNav():'')+'</div>';
 }
@@ -911,7 +911,7 @@ function workoutLogEffort(session,sm){
     const cardioKey=CARDIO_TO_LOG_DIFFICULTY[cardio.effort.key]||'unknown';
     const dominant=strength.key==='unknown'&&cardioKey!=='unknown'?{key:cardioKey,color:cardio.effort.color}:strength;
     const cardioLabel=cardio.effort.rpe!=null?translateUI(cardio.effort.label,languageCode(state)):S('effort not recorded','piepūle nav norādīta');
-    return {key:dominant.key,label:`${S('Strength','Spēks')}: ${translateUI(strength.label,languageCode(state))} · ${S('Cardio','Kardio')}: ${cardioLabel}`,color:dominant.color,components:[{key:strength.key,label:`${S('Strength','Spēks')}: ${translateUI(strength.label,languageCode(state))}`},{key:'cardio-'+cardio.effort.key,label:`${S('Cardio','Kardio')}: ${cardioLabel}`} ]};
+    return {key:dominant.key,label:`${S('Strength','Spēks')}: ${translateUI(strength.label,languageCode(state))} · ${S('Cardio','Kardio')}: ${cardioLabel}`,color:dominant.color,components:[{key:strength.key,title:S('Strength','Spēks'),value:translateUI(strength.label,languageCode(state)),label:`${S('Strength','Spēks')}: ${translateUI(strength.label,languageCode(state))}`},{key:'cardio-'+cardio.effort.key,title:S('Cardio','Kardio'),value:cardioLabel,label:`${S('Cardio','Kardio')}: ${cardioLabel}`}]};
   }
   return sessionDifficultyLevel(sm,state.app_state,session.status);
 }
@@ -920,6 +920,19 @@ function effortLabelHtml(effort){
   const parts=effort.components?.length?effort.components:[{key:effort.key,label:effort.label}];
   const rows=parts.map(part=>`<span class="difficulty ${esc(part.key)}">${esc(part.label)}</span>`).join('');
   return parts.length>1?`<span class="effort-stack">${rows}</span>`:rows;
+}
+/** Log summary: modality names are neutral; only the effort grade carries colour.
+ * This is distinct from effortLabelHtml(), which is also used in detail views. */
+function logSummaryEffortHtml(effort,mode){
+  const parts=Array.isArray(effort.components)&&effort.components.length?effort.components:[{
+    key:effort.key,
+    title:mode==='cardio'?S('Cardio','Kardio'):mode==='strength'?S('Strength','Spēks'):null,
+    value:effort.label
+  }];
+  return parts.map((part,index)=>{
+    const title=part.title?`<span class="log-effort-title">${esc(part.title)}:</span> `:'';
+    return `${index?'<span class="log-effort-divider" aria-hidden="true"> · </span>':''}<span class="log-effort-item">${title}<strong class="difficulty ${esc(part.key)}">${esc(part.value??part.label)}</strong></span>`;
+  }).join('');
 }
 function logMetric(label,value){return `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">${esc(value)}</div></div>`;}
 function cardioLogFields(cardio){
@@ -939,9 +952,9 @@ function renderLogs(){
       let strengthStats=logMetric(S('Duration','Ilgums'),formatDuration(dur));
       if(strength)strengthStats+=logMetric(S('Strength volume','Spēka apjoms'),formatKgRounded(m.volume));
       if(cardio.mode==='strength')strengthStats+=logMetric(S('Volume progress','Apjoma progress'),fmtPct(m.progressPercent));
-      const cardioMetrics=hasCardio?(cardio.mode==='mixed'?cardioLogFields(cardioStats):'')+logMetric(S('Cardio training load','Kardio treniņslodze'),formatCardioSessionLoad(s))+(cardio.mode==='cardio'&&cardioStats.meanRpe!=null?logMetric('RPE',formatNumber(cardioStats.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})):'')+(cardio.mode==='cardio'&&cardioStats.meanHr!=null?logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioStats.meanHr)} ${S('bpm','sit./min')}`):''):'';
-      const cardioSection=hasCardio?`<div class="log-cardio-section">${cardio.mode==='mixed'?`<div class="small log-metric-section-title difficulty ${esc('cardio-'+cardio.effort.key)}">${esc(S('Cardio','Kardio'))}</div>`:''}<div class="metric-grid log-metric-grid cardio-metrics-row" tabindex="0" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioMetrics}</div></div>`:'';
-      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card effort-surface" data-effort="${esc(diff.key)}" onclick="gp.nav('session',${s.id})"><div class="log-heading"><span class="log-date">${dateOnly(s.startedAt)}</span><span class="log-heading-separator" aria-hidden="true">·</span><span class="log-name">${esc(s.workoutName)}</span><span class="log-heading-effort ${diff.components?'mixed-effort':''}" aria-label="${esc(S('Effort','Piepūle')+': '+translateUI(diff.label,languageCode(state)))}">${effortLabelHtml(diff)}</span></div>${cardio.mode==='mixed'?`<div class="small log-metric-section-title difficulty ${esc(diff.components?.[0]?.key||'unknown')}">${esc(S('Strength','Spēks'))}</div>`:''}<div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}</div>`;
+      const cardioMetrics=hasCardio?(cardio.mode==='mixed'?cardioLogFields(cardioStats):'')+logMetric(S('Training load','Treniņslodze'),formatCardioSessionLoad(s))+(cardio.mode==='cardio'&&cardioStats.meanRpe!=null?logMetric('RPE',formatNumber(cardioStats.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})):'')+(cardio.mode==='cardio'&&cardioStats.meanHr!=null?logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioStats.meanHr)} ${S('bpm','sit./min')}`):''):'';
+      const cardioSection=hasCardio?`<div class="log-cardio-section">${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div>`:''}<div class="metric-grid log-metric-grid cardio-metrics-row" tabindex="0" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioMetrics}</div></div>`:'';
+      c+=`<div id="log-session-${s.id}" class="card clickable log-session-card effort-surface" data-effort="${esc(diff.key)}" onclick="gp.nav('session',${s.id})"><div class="log-heading"><span class="log-date">${dateOnly(s.startedAt)}</span><span class="log-heading-separator" aria-hidden="true">·</span><span class="log-name">${esc(s.workoutName)}</span></div><div class="log-effort-line" aria-label="${esc(S('Effort','Piepūle')+': '+translateUI(diff.label,languageCode(state)))}">${logSummaryEffortHtml(diff,cardio.mode)}</div>${cardio.mode==='mixed'?`<div class="small log-metric-section-title">${esc(S('Strength','Spēks'))}</div>`:''}<div class="metric-grid log-metric-grid">${strengthStats}</div>${cardioSection}</div>`;
     });
     if(sessions.length>(ui.logLimit||40))c+=`<button class="secondary full" onclick="gp.moreLogs()" style="margin-top:14px">${esc(S('Show more workouts','Rādīt vairāk treniņu'))} (${sessions.length-(ui.logLimit||40)})</button>`;
   }
@@ -970,7 +983,7 @@ function renderSessionDetail(id){
   const sessionFields=[logMetric(S('Duration','Ilgums'),formatDuration((s.endedAt||s.startedAt)-s.startedAt))];
   if(cardio.mode!=='cardio'&&cardio.mode!=='empty')sessionFields.push(logMetric(S('Strength volume','Spēka apjoms'),formatKgRounded(sm.volume)));
   c+=`<div class="metric-grid log-metric-grid session-overview-grid">${sessionFields.join('')}</div>`;
-  if(cardioActive){const cardioSummary=sessionCardioSummary(s),cardioFields=[logMetric(S('Cardio time','Kardio ilgums'),formatDuration(cardioSummary.duration*1000)),logMetric(S('Cardio training load','Kardio treniņslodze'),formatCardioSessionLoad(s))];if(cardioSummary.meanRpe!=null)cardioFields.push(logMetric('RPE',formatNumber(cardioSummary.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})));if(cardioSummary.meanHr!=null)cardioFields.push(logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioSummary.meanHr)} ${S('bpm','sit./min')}`));c+=`<div class="log-cardio-section"><div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div><div class="metric-grid log-metric-grid cardio-metrics-row" tabindex="0" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioFields.join('')}</div></div>`;}
+  if(cardioActive){const cardioSummary=sessionCardioSummary(s),cardioFields=[logMetric(S('Cardio time','Kardio ilgums'),formatDuration(cardioSummary.duration*1000)),logMetric(S('Training load','Treniņslodze'),formatCardioSessionLoad(s))];if(cardioSummary.meanRpe!=null)cardioFields.push(logMetric('RPE',formatNumber(cardioSummary.meanRpe,{minimumFractionDigits:1,maximumFractionDigits:1})));if(cardioSummary.meanHr!=null)cardioFields.push(logMetric(S('Avg cardio HR','Vidējais kardio pulss'),`${Math.round(cardioSummary.meanHr)} ${S('bpm','sit./min')}`));c+=`<div class="log-cardio-section"><div class="small log-metric-section-title">${esc(S('Cardio','Kardio'))}</div><div class="metric-grid log-metric-grid cardio-metrics-row" tabindex="0" role="group" aria-label="${esc(S('Cardio statistics','Kardio statistika'))}">${cardioFields.join('')}</div></div>`;}
   c+=`<div class="phase-grid"><div class="phase-item"><strong>${esc(S('Warm-up','Iesildīšanās'))}</strong>${phaseDuration(s.warmupStartedAt,s.warmupEndedAt,s.warmupSkipped)}</div><div class="phase-item"><strong>${esc(S('Stretching','Stiepšanās'))}</strong>${phaseDuration(s.stretchStartedAt,s.stretchEndedAt,s.stretchSkipped)}</div></div>`;
   es.forEach(e=>{
     const m=exerciseMetrics(state,e),isCardio=e.trackingMode===TrackingMode.CARDIO;
@@ -1778,7 +1791,7 @@ async function syncComparisonHistory(){if(!socialConfigured()||!socialSignedIn()
 
 function renderFriends(){
   const configured=socialConfigured(),signed=socialSignedIn(),profile=socialUi.profile;
-  let c=''; // Add friend is in the persistent Friends header, not a separate vertical block.
+  let c=''; // Add friend belongs to the Friends list card header, not the global page header.
   if(!configured){c+=`<div class="card"><div class="title">${esc(S('Friends backend is not configured','Draugu serveris nav konfigurēts'))}</div><div class="note">${esc(S('Add your Supabase publishable key to social-config.js. Everything else in Gym Progress continues to work offline.','Ievieto Supabase publicējamo atslēgu social-config.js failā. Pārējā Gym Progress darbība turpinās bezsaistē.'))}</div></div>`;return shell(c);}
   if(!signed){c+=`<div class="card social-onboarding"><div class="title">${esc(S('Log in to use Friends','Pieslēdzies, lai izmantotu Draugus'))}</div><div class="note">${esc(S('Friends requires your Gym Progress account. Your private programme, workout history and Tracker are shared only through account sync, never with friends. Social cards are published only when you select them.','Draugu sadaļai nepieciešams Gym Progress konts. Privātā programma, treniņu vēsture un Tracker ar draugiem netiek kopīgoti; tie tiek sinhronizēti tikai tavā kontā. Sociālās kartītes publicē tikai tad, kad tās pats izvēlies.'))}</div><button class="full" onclick="gp.openAccount()">${esc(S('Log in','Pieslēgties'))}</button></div>`;return shell(c);}
   if(socialUi.loading&&!socialUi.loaded)c+=`<div class="card"><div class="note">${esc(S('Loading friends…','Ielādē draugus…'))}</div></div>`;
@@ -1786,9 +1799,7 @@ function renderFriends(){
     const acceptedUpdates=(socialUi.notifications||[]).filter(n=>n.notification_type==='friend_accepted');
     if(acceptedUpdates.length){c+=`<div class="stack social-updates">${acceptedUpdates.map(n=>`<div class="card compact"><strong>${esc(S('Friend request accepted','Draudzības uzaicinājums apstiprināts'))}</strong><div class="small">${esc(`${n.display_name} ${S('accepted your friend request.','apstiprināja tavu draudzības uzaicinājumu.')}`)}</div></div>`).join('')}</div>`;}
     if(socialUi.requests.length){c+=`<h3>${esc(S('Friend requests','Draudzības uzaicinājumi'))}</h3><div class="stack">${socialUi.requests.map(r=>`<div class="card compact friend-request-card"><div class="row between"><strong>${esc(r.display_name)}</strong><div class="row"><button class="tiny-btn" onclick="gp.acceptSocialRequest('${r.request_id}')">${esc(S('Accept','Apstiprināt'))}</button><button class="ghost tiny-btn" onclick="gp.rejectSocialRequest('${r.request_id}')">${esc(S('Decline','Noraidīt'))}</button></div></div></div>`).join('')}</div>`;}
-    if(socialUi.friends.length){
-      c+=`<div class="friends-panel ${socialUi.friendsExpanded?'expanded':''}"><button class="friends-list-toggle" onclick="gp.toggleFriendsList()" aria-expanded="${socialUi.friendsExpanded}"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span>${expandChevron(`friends-toggle-chevron ${socialUi.friendsExpanded?'expanded':''}`)}</button><div class="ui-disclosure" data-disclosure-key="friends-list" data-expanded="${socialUi.friendsExpanded}" ${socialUi.friendsExpanded?'':'inert aria-hidden="true"'}><div class="ui-disclosure-inner"><div class="friends-list">${socialUi.friends.map(f=>`<div class="friend-row"><span>${esc(f.display_name)}</span><button class="ghost tiny-btn friend-remove" onclick="gp.removeSocialFriend('${f.user_id}')">${esc(S('Remove','Noņemt'))}</button></div>`).join('')}</div></div></div></div>`;
-    }
+    c+=`<div class="friends-panel ${socialUi.friendsExpanded?'expanded':''}"><div class="friends-panel-header"><button class="friends-list-toggle" onclick="gp.toggleFriendsList()" aria-expanded="${socialUi.friendsExpanded}"><span>${esc(S('Friends','Draugi'))} <span class="small">(${socialUi.friends.length})</span></span>${expandChevron(`friends-toggle-chevron ${socialUi.friendsExpanded?'expanded':''}`)}</button><button type="button" class="friends-panel-add icon-btn" onclick="gp.openAddFriend()" title="${esc(S('Add friend','Pievienot draugu'))}" aria-label="${esc(S('Add friend','Pievienot draugu'))}"><span aria-hidden="true">+</span></button></div><div class="ui-disclosure" data-disclosure-key="friends-list" data-expanded="${socialUi.friendsExpanded}" ${socialUi.friendsExpanded?'':'inert aria-hidden="true"'}><div class="ui-disclosure-inner"><div class="friends-list">${socialUi.friends.length?socialUi.friends.map(f=>`<div class="friend-row"><span>${esc(f.display_name)}</span><button class="ghost tiny-btn friend-remove" onclick="gp.removeSocialFriend('${f.user_id}')">${esc(S('Remove','Noņemt'))}</button></div>`).join(''):`<div class="small friends-empty">${esc(S('No friends yet.','Pagaidām nav draugu.'))}</div>`}</div></div></div></div>`;
     c+=renderFriendComparison();
     c+=renderFriendsTimeline();
     c+=`<div class="row between friends-feed-title"><h2>${esc(S('Activity','Aktivitātes'))}</h2><span class="small">${socialUi.friends.length} ${esc(S('friends','draugi'))}</span></div>`;

@@ -15,66 +15,50 @@
 @media(prefers-reduced-motion:reduce){.finish-fireworks{display:none}.finish-firework i{animation:none}.share-summary-dialog.finish-reveal{animation:none}}
 
 
-/* v2.0.2 — two stable active-workout header rows within the existing 60px shell.
-   Row 1: day, live timer and action icons. Row 2: stage and current exercise.
-   Long names truncate, never wrap or alter the persistent header height. */
+/* v2.0.3 — the active header alone has room for two lines and 44px controls.
+   The fixed non-workout header stays 60px. Day and timer are left aligned,
+   grouped vertically and centred against controls. Stage/exercise do not wrap. */
 .active-workout-topbar{
+  box-sizing:border-box;
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
-  grid-template-rows:40px 18px;
+  grid-template-rows:46px 18px;
   column-gap:6px;
-  row-gap:0;
+  row-gap:8px;
   align-items:center;
-  padding-inline:10px;
+  height:calc(98px + env(safe-area-inset-top));
+  min-height:calc(98px + env(safe-area-inset-top));
+  max-height:calc(98px + env(safe-area-inset-top));
+  padding:calc(13px + env(safe-area-inset-top)) 10px 13px;
   overflow:hidden;
 }
 .active-workout-mainline{
-  grid-column:1;
-  grid-row:1;
-  display:flex;
-  align-items:center;
-  gap:7px;
-  min-width:0;
-  overflow:hidden;
+  grid-column:1;grid-row:1;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:2px;min-width:0;overflow:hidden;
 }
 .active-workout-topbar .active-workout-name{
-  display:block;
-  flex:1 1 auto;
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  font-size:13px;
-  font-weight:650;
-  line-height:1.3;
+  display:block;flex:0 1 auto;max-width:100%;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:13px;font-weight:650;line-height:18px;
 }
 .active-workout-timer{
-  flex:0 0 auto;
-  white-space:nowrap;
-  font-size:11px;
-  font-variant-numeric:tabular-nums;
-  color:var(--muted);
+  display:block;flex:0 0 auto;white-space:nowrap;
+  font-size:11px;line-height:16px;font-variant-numeric:tabular-nums;color:var(--muted);
 }
 .active-workout-topbar .workout-history-controls{
-  grid-column:2;
-  grid-row:1;
-  justify-self:end;
-  flex-wrap:nowrap;
-  min-width:0;
+  grid-column:2;grid-row:1;justify-self:end;
+  display:flex;flex-wrap:nowrap;align-items:center;
+  min-width:0;gap:4px;
+}
+.active-workout-topbar .workout-history-control{
+  width:44px;min-width:44px;height:44px;min-height:44px;
+  padding:8px;flex:0 0 44px;
 }
 .active-workout-subline{
-  grid-column:1/-1;
-  grid-row:2;
-  display:flex;
-  align-items:center;
-  gap:0;
-  min-width:0;
-  width:100%;
-  white-space:nowrap;
-  overflow:hidden;
-  color:var(--muted);
-  font-size:11px;
-  line-height:17px;
+  grid-column:1/-1;grid-row:2;display:flex;align-items:center;
+  gap:0;min-width:0;width:100%;white-space:nowrap;overflow:hidden;
+  color:var(--muted);font-size:11px;line-height:18px;
 }
 .active-header-stage,.active-header-divider{flex:0 0 auto;white-space:pre}
 .active-header-stage{font-weight:650;color:var(--text)}
@@ -87,9 +71,13 @@
   text-overflow:ellipsis;
 }
 @media(max-width:370px){
-  .active-workout-topbar{padding-inline:6px;column-gap:3px;row-gap:0}
-  .active-workout-mainline{gap:4px}
+  .active-workout-topbar{padding-left:6px;padding-right:6px;column-gap:3px;row-gap:8px}
+  .active-workout-mainline{gap:2px}
   .active-workout-topbar .workout-history-controls{gap:1px}
-  .active-workout-topbar .workout-history-control{width:36px;min-width:36px;padding-inline:6px}
+  .active-workout-topbar .workout-history-control{width:39px;min-width:39px;height:42px;min-height:42px;flex-basis:39px;padding-inline:6px}
   .active-workout-topbar .workout-history-control svg{width:19px;height:19px}
 }
+
+/* Set/repetition panel: no thick decorative top rule; uniform card edges. */
+.pulse-circle,.superset-pulse-circle{border:1px solid var(--line)}
+.pulse-circle::before,.superset-pulse-circle::before{content:none;animation:none}

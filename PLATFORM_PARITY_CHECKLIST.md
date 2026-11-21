@@ -52,3 +52,11 @@ Potential adapter areas include permissions, installation, native notifications/
 - [ ] Active workout header: 60px fixed height across all phases; day/timer beside Undo, Redo, Home and Exit on row one; stage (`1/x`) and current exercise on row two. Long translated exercise names are truncated without growing the header. Verify at 320px/375px and in EN/LV. Android must use the same hierarchy.
 
 - [ ] Name limits: new day labels <=30, new custom exercise labels <=60; old/imported names are not shortened or destroyed. Both clients reject overlength edits with localized validation. Long day/exercise labels truncate visually only, including a full-name access mechanism.
+
+### v2.0.3 PWA/Android acceptance points
+
+- Active workout: taller self-contained header, left-stacked day and elapsed timer against four icon controls, one-line stage + exercise, no clipped controls.
+- Active set card: uniformly thin border, no top accent for strength, timed/cardio or supersets.
+- Log: date regular + day bold on line one; coloured strength/cardio grades left on line two; neutral headings above data.
+- Cardio metrics evenly spaced one-row; localised short `Training load` label.
+- Add friend in Friends list card header even at friend count zero, no top-bar action.
