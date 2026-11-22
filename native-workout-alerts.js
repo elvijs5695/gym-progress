@@ -25,12 +25,12 @@ export function exerciseReminderOverlapsCountdown(runtime, time = Date.now()) {
   return Number.isFinite(gap) && gap >= -1000 && gap <= 4500;
 }
 
-export function workoutAlarmPlan(runtime, exercise, set, soundEnabled = true, language = 'en') {
+export function workoutAlarmPlan(runtime, exercise, set, soundEnabled = true, language = 'en', settings = {}) {
   const inactive = {kind: 'none'};
   if (!runtime || !Number.isFinite(Number(runtime.sessionId))) return inactive;
   const lv = language === 'lv';
   const anchor = exerciseReminderAnchor(runtime);
-  const reminder = anchor === null ? null : {
+  const reminder = anchor === null || settings.exerciseReminderSoundEnabled === false ? null : {
     startedAt: anchor,
     token: `${runtime.sessionId}/exercise/${runtime.currentExerciseIndex ?? 0}/${runtime.currentSetIndex ?? 0}/${anchor}`
   };
@@ -41,7 +41,7 @@ export function workoutAlarmPlan(runtime, exercise, set, soundEnabled = true, la
     return {
       kind: 'rest', token: `${runtime.sessionId}/rest/${rest.setId ?? 'after'}/${deadline}`,
       deadline, startedAt: Number(rest.startedAt) || 0,
-      soundEnabled: !!soundEnabled, ...(reminder ? {reminder} : {})
+      soundEnabled: !!soundEnabled, warningSeconds: Number(settings.workoutWarningSeconds ?? 30), countdownEnabled: settings.workoutCountdownEnabled !== false, readyCue: settings.nextWarmupCue ? 'warmup' : 'ready', ...(reminder ? {reminder} : {})
     };
   }
   if (runtime.phase === 'TIMED_SET' && set && exercise) {
@@ -68,7 +68,8 @@ export function workoutStatusPlan(runtime, session, exercise, language='en') {
     startedAt: Number.isSafeInteger(startedAt) && startedAt > 0 ? startedAt : Date.now(),
     title: String(session.workoutName || (language === 'lv' ? 'Treniņš' : 'Workout')).slice(0, 80),
     exercise: String(exercise?.name || exercise?.exerciseName || '').slice(0, 90),
-    phase: String(runtime.phase || '').slice(0, 30)
+    phase: String(runtime.phase || '').slice(0, 30),
+    restEndsAt: runtime.rest && ['REST','ENTRY','SUPERSET_ENTRY'].includes(runtime.phase) ? Math.max(0,Number(runtime.rest.endsAt)||0) : 0
   };
 }
 

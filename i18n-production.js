@@ -1,6 +1,17 @@
 // Authored interface strings only. Exercise names and notes are resolved
 // separately from their catalogue identity, never through this dictionary.
 export const PRODUCTION_LV={
+ 'Matched exercise volume':'Salīdzināmo vingrinājumu apjoms',
+ 'Unlinked exercise history':'Nesaistīta vingrinājuma vēsture',
+ 'New catalogue exercise identity':'Jauna kataloga vingrinājuma identitāte',
+ 'NEXT SET':'NĀKAMAIS PIEGĀJIENS',
+ 'NEXT EXERCISE':'NĀKAMAIS VINGRINĀJUMS',
+ 'Warning before next set':'Brīdinājums pirms nākamā piegājiena',
+ 'App settings':'Lietotnes iestatījumi',
+ 'Data sharing':'Datu kopīgošana',
+ 'Account & sync':'Konts un sinhronizācija',
+ 'Performance evaluation':'Snieguma novērtēšana',
+ 'Notifications & sounds':'Paziņojumi un skaņas',
  'Edit':'Rediģēt','Create superset':'Izveidot supersetu','Separate superset':'Atdalīt supersetu',
  'No comparison points yet.':'Vēl nav salīdzināšanas datu.','No items yet.':'Vēl nav ierakstu.',
  'Suggested increase':'Ieteiktais palielinājums','Suggested increase:':'Ieteiktais palielinājums:',

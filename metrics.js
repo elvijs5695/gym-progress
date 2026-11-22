@@ -62,20 +62,41 @@ export function exerciseMetrics(state,e){
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
   return {...cardio,volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,strengthCompletedSets:repBased?complete.length:0,effortRecordedSets:rirs.length,volumeRecordedSets:measured.length,bestE1rm,maxWeight,maxReps,totalDurationSeconds,failureCount,actionableFailureCount,analysisVersion:'GYM_PROGRESS_METRICS_V2'};
 }
+/** Compare only identical strength movements/occurrences, keeping current and
+ * historical exercise identity and loading semantics separate. Missing or
+ * newly added exercises never contribute to a fabricated percentage. */
+export function matchedVolumeProgress(state,current){
+ if(current?.status!=='COMPLETE')return {percent:null,matched:0,total:0,partial:false};
+ const weighted=sessionExercises(state,current.id).filter(e=>trackingModeOf(e)===TrackingMode.WEIGHT_REPS);
+ const previous=(state.workout_sessions||[]).filter(s=>s.id!==current.id&&s.status==='COMPLETE'&&
+    s.startedAt<current.startedAt&&(current.workoutId!=null?sameId(s.workoutId,current.workoutId):s.workoutName===current.workoutName))
+    .sort((a,b)=>b.startedAt-a.startedAt);
+ if(!weighted.length)return {percent:null,matched:0,total:0,partial:false};
+ for(const oldSession of previous){
+   const historical=sessionExercises(state,oldSession.id).filter(e=>trackingModeOf(e)===TrackingMode.WEIGHT_REPS);
+   const used=new Set();let currentVolume=0,olderVolume=0,matched=0;
+   for(const e of weighted){
+     const index=historical.findIndex((candidate,i)=>!used.has(i)&&candidate.equipment===e.equipment&&candidate.dumbbellLoad===e.dumbbellLoad&&
+       (e.programmeExerciseId!=null&&sameId(e.programmeExerciseId,candidate.programmeExerciseId)||
+         e.userExerciseId!=null&&sameId(e.userExerciseId,candidate.userExerciseId)&&Number(e.position)===Number(candidate.position)));
+     if(index<0)continue;
+     used.add(index);const cm=exerciseMetrics(state,e),pm=exerciseMetrics(state,historical[index]);
+     if(cm.volumeRecordedSets===0||pm.volumeRecordedSets===0||!(pm.volume>0))continue;
+     currentVolume+=cm.volume;olderVolume+=pm.volume;matched++;
+   }
+   if(matched&&olderVolume>0)return {percent:(currentVolume/olderVolume-1)*100,matched,total:weighted.length,partial:matched<weighted.length||used.size<historical.length,previousSessionId:oldSession.id};
+ }
+ return {percent:null,matched:0,total:weighted.length,partial:false};
+}
 export function sessionMetrics(state,session){
   const es=sessionExercises(state,session.id); const em=es.map(e=>exerciseMetrics(state,e));
   const volume=em.some(m=>m.volume==null)?null:finiteSum(em.map(m=>m.volume)),failures=em.reduce((a,m)=>a+m.failureCount,0),actionableFailures=em.reduce((a,m)=>a+m.actionableFailureCount,0);
   const completeSets=es.flatMap(e=>exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE'));
   const strengthSets=es.filter(isRepExercise).flatMap(e=>exerciseSets(state,e.id).filter(s=>s.status==='COMPLETE'));
   const rirs=strengthSets.map(s=>effectiveRir(s,performanceRulesFor(state,session))).filter(v=>v!=null);
-  const prev=previousIdenticalSession(state,session);
-  let progressPercent=null;
-  if(prev){
-    const previousVolume=sessionExercises(state,prev.id).map(e=>exerciseMetrics(state,e).volume).reduce((a,b)=>a+b,0);
-    if(previousVolume>0&&volume!=null)progressPercent=(volume/previousVolume-1)*100;
-  }
+  const volumeComparison=matchedVolumeProgress(state,session);
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
-  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:completeSets.length,strengthCompletedSets:strengthSets.length,effortRecordedSets:rirs.length,progressPercent,failureCount:failures,actionableFailureCount:actionableFailures,failedExercises:em.filter(m=>m.actionableFailureCount>0).length,analysisSettings:performanceSettingsFor(state,session),analysisRules:performanceRulesFor(state,session)};
+  return {volume,avgRir,effectiveRirAvg:avgRir,completedSets:completeSets.length,strengthCompletedSets:strengthSets.length,effortRecordedSets:rirs.length,progressPercent:volumeComparison.percent,volumeComparison,failureCount:failures,actionableFailureCount:actionableFailures,failedExercises:em.filter(m=>m.actionableFailureCount>0).length,analysisSettings:performanceSettingsFor(state,session),analysisRules:performanceRulesFor(state,session)};
 }
 function volumeStructure(state,session){return JSON.stringify(sessionExercises(state,session.id).filter(e=>trackingModeOf(e)===TrackingMode.WEIGHT_REPS).map(e=>[e.programmeExerciseId??e.userExerciseId??e.templateExerciseId??e.name,e.equipment,e.dumbbellLoad]));}
 export function previousIdenticalSession(state,current){

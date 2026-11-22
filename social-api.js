@@ -109,12 +109,13 @@ async function authedFetch(path,options={}){
 }
 export async function rpc(name,args={}){if(!/^[a-z][a-z0-9_]*$/.test(name))throw new Error('Invalid RPC name');return authedFetch(`/rest/v1/rpc/${name}`,{method:'POST',body:JSON.stringify(args)});}
 export async function getWorkspaceStatus({refresh=false,workspaceId=null}={}){if(workspaceStatus&&!refresh&&(!workspaceId||workspaceStatus.workspace_id===workspaceId))return workspaceStatus;const result=workspaceId?await rpc('gp_v2_status',{p_workspace_id:workspaceId}):await rpc('gp_v2_ensure_workspace');if(result?.protocol!==2||result.minimum_client_protocol!=null&&(!Number.isSafeInteger(result.minimum_client_protocol)||result.minimum_client_protocol>2)){workspaceStatus=null;throw new Error('Database protocol 2 with a minimum client protocol of 2 or lower is required.');}workspaceStatus=result;return result;}
-export async function getMyProfile(){if(!socialSignedIn())return null;await getWorkspaceStatus();const rows=await authedFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(socialOwnerId())}&select=id,display_name`);return rows?.[0]||null;}
+export async function getMyProfile(){if(!socialSignedIn())return null;await getWorkspaceStatus();const rows=await authedFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(socialOwnerId())}&select=id,display_name,username`);return rows?.[0]||null;}
 if(typeof window!=='undefined')window.addEventListener('storage',event=>{if(event.key!==SESSION_KEY&&event.key!==null)return;adoptStoredSession(readSession());});
 
 export async function setDisplayName(name){return rpc('social_set_display_name',{p_name:name});}
-export async function findFriend(email){const r=await rpc('social_find_user_by_email',{p_email:email});return Array.isArray(r)?r[0]||null:r;}
-export async function sendFriendRequest(email){return rpc('social_send_friend_request',{p_email:email});}
+export async function setUsername(username){return rpc('social_set_username',{p_username:username});}
+export async function findFriend(username){const r=await rpc('social_find_user_by_username',{p_username:username});return Array.isArray(r)?r[0]||null:r;}
+export async function sendFriendRequest(username){return rpc('social_send_friend_request_by_username',{p_username:username});}
 export async function listFriends(){return rpc('social_list_friends');}
 export async function listIncomingRequests(){return rpc('social_list_incoming_requests');}
 export async function listNotifications(limit=20){return rpc('social_list_notifications',{p_limit:limit});}

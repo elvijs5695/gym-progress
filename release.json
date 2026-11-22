@@ -1,6 +1,6 @@
 {
-  "version": "2.2.1",
-  "id": "2.2.1-b1cce370a0ef",
+  "version": "2.2.2",
+  "id": "2.2.2-b573234cc50b",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "188df9084aa3531994e488c1866900f447f005a7915bdb1d9da81139ca564d16",
-      "bytes": 412366
+      "sha256": "c6266f62c8c58acdecfffa2c5d8f0249f8e6bb9ea7e71eaccaa97262dfe15ebc",
+      "bytes": 422838
     },
     {
       "path": "autoregulation.js",
@@ -26,6 +26,11 @@
       "path": "cardio-analytics.js",
       "sha256": "b163e89ec73670cdf67ae1a7b78426a2767ece540ae0e9dcb0e9c542f3796a4c",
       "bytes": 7460
+    },
+    {
+      "path": "catalogue-relink.js",
+      "sha256": "0afb85e4c0971e068d79979859823736aebef5dc6f9258a774d82f27ed9db576",
+      "bytes": 2984
     },
     {
       "path": "data-contract.js",
@@ -74,8 +79,8 @@
     },
     {
       "path": "exercise-identity.js",
-      "sha256": "d56008ff44be7d4bce2ba96f904d79d8de6aa6a6f79785ef1edab0274c81383f",
-      "bytes": 8143
+      "sha256": "131d461f0def861bc6b60ff92219284bb886b7831be194c570eb9708b2b738ff",
+      "bytes": 8353
     },
     {
       "path": "exercise-library.js",
@@ -109,13 +114,13 @@
     },
     {
       "path": "i18n-production.js",
-      "sha256": "6afc827daf11cb8000e04bd079a2d7ca0d287a26f964641fff94ee42ae8f7c74",
-      "bytes": 6529
+      "sha256": "c9ddce79ccf1b2373a4c039cfd0c746fb6af759695c9ef90dcf6eadcb6dc46ed",
+      "bytes": 7122
     },
     {
       "path": "i18n.js",
-      "sha256": "cc70b6fb2d28ff543074ef502635c55c69e82ce06f399929752a9d5a70d28e91",
-      "bytes": 54974
+      "sha256": "89078db83c01695d3adb6ea3df4baf86ea954f78920c38d60548bee00b04042d",
+      "bytes": 54928
     },
     {
       "path": "icons/apple-touch-icon.png",
@@ -184,8 +189,8 @@
     },
     {
       "path": "metrics.js",
-      "sha256": "bf62c1ba74d152d2d1c2b0ffe1ad707de685bca780e203b9b022ae96aa1e09ff",
-      "bytes": 10886
+      "sha256": "250c0a11bcdaf69ad8ec805b3567c04466be8d099008bb30129173f8db102478",
+      "bytes": 12707
     },
     {
       "path": "name-policy.js",
@@ -194,13 +199,13 @@
     },
     {
       "path": "native-reminder-plan.js",
-      "sha256": "3d8757fd58cfa63791a5d137e9c4f11f1ab72dcda40f093ff391ff8c2e986d34",
-      "bytes": 3733
+      "sha256": "0efcb108ec6e3ff68c4c53028b2cecfe93a5da08d663cc13ef0a83d522582623",
+      "bytes": 3705
     },
     {
       "path": "native-workout-alerts.js",
-      "sha256": "72869738d42e2d20f6622073c7a36118a39385ef8aaa02c175fca43089b18d2a",
-      "bytes": 4080
+      "sha256": "b9037a113fbe9c958b5b79e95936ca3fb34ea17fa772cd7eb4632ac2d5949d64",
+      "bytes": 4465
     },
     {
       "path": "notification-delivery.js",
@@ -294,13 +299,13 @@
     },
     {
       "path": "rest-audio-cues.js",
-      "sha256": "c88a43cd10a3f7cbca9bd78a6df025c0f0c453723f18ac5072103a0df815c1df",
-      "bytes": 1139
+      "sha256": "8cee994d24da54241e12a41475499eeab2389698bea811343e848f2f767988d9",
+      "bytes": 1459
     },
     {
       "path": "social-api.js",
-      "sha256": "f34d05f00d201f1d80a2547662faf608f0954520f36419bba432598aae8d139d",
-      "bytes": 15582
+      "sha256": "1a6e1d3796997500bd200c0aea470b98a0763d4620a6bb0d391a0fb00a125379",
+      "bytes": 15726
     },
     {
       "path": "social-config.js",
@@ -349,8 +354,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "7ed788afe5b821177b2f7a39d467cb56d946f9a1d4000e96327e70ecc788ecb3",
-      "bytes": 70599
+      "sha256": "6f8486181fa2f7e205a3a5dd0c304d512560a009b242bc565a9d7282ba447cce",
+      "bytes": 72255
     },
     {
       "path": "update-policy.js",
@@ -381,6 +386,11 @@
       "path": "workout-controller.js",
       "sha256": "576a839db9a1ad8d1d2b2597e5b44eba525067a1be16fe1b292fe226ef4aa7f1",
       "bytes": 3767
+    },
+    {
+      "path": "workout-stage-summary.js",
+      "sha256": "e481177c29ee9f925eb6df4fd02bfa02ebc08ab0337a33dbace2a2bd3663e6f1",
+      "bytes": 1057
     },
     {
       "path": "workout-step-history.js",

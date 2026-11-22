@@ -99,7 +99,10 @@ export function displayNameForUserExercise(state,user,fallback='Exercise',lang=s
 export function displayNameForSessionExercise(state,e,lang=state?.app_state?.languageCode||'en'){
  const user=getUserExercise(state,e?.userExerciseId),raw=e?.name||user?.displayName||'Exercise';
  if(e?.displayNameMode==='CUSTOM'||e?.displayNameMode==null&&user?.displayNameMode==='CUSTOM'&&raw===user.displayName)return raw;
- const canonical=canonicalExerciseById(e?.canonicalExerciseId)||canonicalExerciseById(user?.canonicalExerciseId);
+ // Historical sessions are immutable snapshots. A later catalogue link or change
+ // to a user exercise must never re-identify or relabel an earlier session.
+ const historical=e?.sessionId!=null;
+ const canonical=canonicalExerciseById(historical?e?.canonicalExerciseId:(e?.canonicalExerciseId||user?.canonicalExerciseId));
  return canonical&&isCatalogueDisplayName(raw,canonical)?canonicalName(canonical,lang)||raw:raw;
 }
 export function activeUserExercises(state){return (state.user_exercises||[]).filter(x=>!x.archived).slice().sort((a,b)=>a.displayName.localeCompare(b.displayName));}

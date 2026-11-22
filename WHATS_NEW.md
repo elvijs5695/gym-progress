@@ -1,3 +1,13 @@
+# Gym Progress 2.2.2 — exercise history, privacy, audio and Settings
+
+- Private Friends discovery through unique public usernames instead of email; a Supabase migration is required. Existing display names are preserved.
+- Past workout identity and measurements remain unchanged when relinking exercises to catalogue movements for the future.
+- Partial volume progress comparison now uses matching, measurable strength exercises after programme changes.
+- Settings reorganised into topical cards; new configurable workout cues, distinct warm-up sound, exercise-level minute reminder, foreground iOS audio unlock/test.
+- Android workout cues use media audio routing without focus requests; nonworkout notifications stay silent, workout notification shows rest countdown. Hardware/Spotify compatibility requires device tests.
+- Rest screen: daily exercise status list; completed/skipped/active/upcoming indicators; superset preview of both exercises and set number; automatic post-rest warm-up.
+- Tracker progress transition smoothed; additional LV/EN labels updated.
+
 # Gym Progress 2.2.1 — Android cue and workout UI correction
 
 - Skipping an exercise now offers the standard rest screen before the next exercise or stretching. Rest uses the planned duration, or an optional 60 seconds when none was configured; **Skip rest** and ±30 seconds remain available. Skipping another exercise while already resting does not restart the countdown.

@@ -23,7 +23,7 @@ export function nativeReminderPlan(state,{scope='guest',trackerEnabled=true,now=
     events.push({id,type:'tracker',hour:Math.floor(dueMinute/60)%24,minute:dueMinute%60,skipToday:amount+1e-6>=dueAmount,
      title:`Gym Progress · ${String(item.name).slice(0,60)}`,
      body:lv?`Dienas mērķis: ${dueAmount} / ${pace.target}${item.unit?' '+item.unit:''}`:`Today's pace: ${dueAmount} / ${pace.target}${item.unit?' '+item.unit:''}`,
-     sound:soundEnabled,planDay:key});
+     sound:false,planDay:key});
    }
   }
  }
@@ -33,12 +33,12 @@ export function nativeReminderPlan(state,{scope='guest',trackerEnabled=true,now=
   if(nextAt>0){const date=new Date(nextAt),p=t=>{const m=/^(\d{2}):(\d{2})$/.exec(t||'');return m?[Number(m[1]),Number(m[2])]:[8,0];};
    const [eh,em]=p(settings.eveningReminderTime||'19:00'),[mh,mm]=p(settings.morningReminderTime||'08:00');
    const evening=new Date(date.getFullYear(),date.getMonth(),date.getDate()-1,eh,em).getTime(),morning=new Date(date.getFullYear(),date.getMonth(),date.getDate(),mh,mm).getTime();
-   if(evening>now.getTime())events.push({id:'workout-evening/'+nextAt,type:'workout',at:evening,title:lv?'Rīt treniņš':'Gym tomorrow',body:lv?'Rīt ieplānots treniņš.':'You have a planned workout tomorrow.',sound:soundEnabled});
-   if(morning>now.getTime())events.push({id:'workout-morning/'+nextAt,type:'workout',at:morning,title:lv?'Šodien treniņš':'Gym today',body:lv?'Šodien ieplānots treniņš.':'Your workout is scheduled for today.',sound:soundEnabled});
+   if(evening>now.getTime())events.push({id:'workout-evening/'+nextAt,type:'workout',at:evening,title:lv?'Rīt treniņš':'Gym tomorrow',body:lv?'Rīt ieplānots treniņš.':'You have a planned workout tomorrow.',sound:false});
+   if(morning>now.getTime())events.push({id:'workout-morning/'+nextAt,type:'workout',at:morning,title:lv?'Šodien treniņš':'Gym today',body:lv?'Šodien ieplānots treniņš.':'Your workout is scheduled for today.',sound:false});
   }
   const completed=(state?.workout_sessions||[]).filter(s=>s.status==='COMPLETE'||s.status==='ABORTED').map(s=>Number(s.endedAt||s.startedAt||0)).filter(Number.isFinite);
   if(completed.length){const last=Math.max(...completed),due=last+Number(settings.inactivityReminderHours||72)*3600000;
-   if(due>now.getTime())events.push({id:'inactivity/'+last,type:'inactivity',at:due,title:lv?'Laiks treniņam?':'Ready for another session?',body:lv?'Laiks atgriezties treniņā.':'Time to plan another workout.',sound:soundEnabled});}
+   if(due>now.getTime())events.push({id:'inactivity/'+last,type:'inactivity',at:due,title:lv?'Laiks treniņam?':'Ready for another session?',body:lv?'Laiks atgriezties treniņā.':'Time to plan another workout.',sound:false});}
  }
  return {scope,events:events.slice(0,96)};
 }
