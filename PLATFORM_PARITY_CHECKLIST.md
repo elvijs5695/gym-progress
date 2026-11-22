@@ -1,3 +1,11 @@
+# Gym Progress 2.2.1 UI parity amendment
+
+A skipped exercise must present the same rest panel on PWA and Android. Countdown duration, Skip rest, +30/-30 controls, next-exercise card, last-exercise stretching transition and native Android deadline must match. Do not restart rest if skipping during rest. Verify with a real browser and device; only shared source logic is presently tested.
+
+Both UI targets must render the same active workout header **without Home icon**, while retaining persistent bottom navigation and all configured cards. Android-only permission explanation is allowed only when OS permissions are missing. Android schedules tones and the one ongoing notification natively; PWA audio remains subject to browser restrictions. Physical side-by-side visual and timing checks are NOT YET RUN. Historical checklist follows.
+
+---
+
 # Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
 
 **Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.

@@ -1,3 +1,9 @@
+# Current release contract amendment — Gym Progress 2.2.1
+
+The Android workout must show exactly one ongoing silent status notification, not rest-finished notifications. Sounds must be native-only on Android, with 3 short countdown cues and one long completion cue plus one exercise-entry reminder each minute. PWA and Android share workout/UI logic; remove redundant Home icon from active header while retaining bottom navigation. Previous release text below is historical where contradictory. See `docs/RELEASE_2_2_1_HANDOVER.md`.
+
+---
+
 # Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
 
 **Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.

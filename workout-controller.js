@@ -1,5 +1,23 @@
 import {clone,fingerprint} from './data-contract.js';
 export const WORKOUT_ENGINE_VERSION='2.0.0';
+
+/** Standard rest after skipping an exercise. The countdown is optional and
+ * can always be skipped. Zero-rest activities still offer a 60-second rest. */
+export function skippedExerciseRest(members, at = Date.now()) {
+ const duration = Math.max(0,...(members||[]).map(e=>Math.max(0,Number(e?.plannedRestSeconds)||0)))||60;
+ return {setId:null,setIds:[],startedAt:at,endsAt:at+duration*1000,
+   plannedSeconds:duration,warned30:false,count3:false,count2:false,count1:false,beeped0:false};
+}
+
+export function beginSkippedExerciseRest(runtime, members, at = Date.now()) {
+ if(!runtime)throw new Error('Cannot start skipped-exercise rest without an active workout');
+ runtime.entry=null;runtime.supersetEntry=null;runtime.supersetTimed={};
+ delete runtime.cardioDraft;
+ runtime.reminderStartedAt=null;
+ runtime.rest=skippedExerciseRest(members,at);
+ runtime.phase='REST';runtime.phaseStartedAt=at;
+ return runtime.rest;
+}
 export function capturedDuration(runtime,time=Date.now()){
  if(runtime?.cardioDraft?.durationSeconds!=null)return runtime.cardioDraft.durationSeconds;
  return Math.max(0,Math.round((time-Number(runtime?.phaseStartedAt??time))/1000));

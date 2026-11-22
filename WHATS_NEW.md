@@ -1,3 +1,17 @@
+# Gym Progress 2.2.1 — Android cue and workout UI correction
+
+- Skipping an exercise now offers the standard rest screen before the next exercise or stretching. Rest uses the planned duration, or an optional 60 seconds when none was configured; **Skip rest** and ±30 seconds remain available. Skipping another exercise while already resting does not restart the countdown.
+
+- Removed top-right Home button from active workout (both PWA and Android; bottom navigation unchanged).
+- Removed individual native rest/timed completion notifications; Android shows one silent ongoing workout-status card instead.
+- Android final rest countdown uses one preloaded native SoundPool with three short tones and one long tone and prevents double completion tones during UI phase changes.
+- The current exercise now has one reminder beep per minute during SET and while SET/SUPERSET result entry is unfinished, including via OS alarms when Android is locked.
+- Clear Android-specific permission reminder in the active workout if required access is missing.
+
+**Source-tested; native APK compilation and real-phone lock-screen delivery remain acceptance blockers.**
+
+---
+
 # Release 2.2.0 — offline ownership, Android-native alerts and guarded updates
 
 - Keep training as **guest offline**; on account sign-in/creation explicitly offer to attach guest training or keep separate. Existing account data is preserved and source guest data is backed up transactionally.

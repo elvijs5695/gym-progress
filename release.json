@@ -1,6 +1,6 @@
 {
-  "version": "2.2.0",
-  "id": "2.2.0-fc561483999d",
+  "version": "2.2.1",
+  "id": "2.2.1-b1cce370a0ef",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "9ca3d171ff098803eda91e40026518ba4a9593942506c1529c5e019bcd099cdf",
-      "bytes": 410084
+      "sha256": "188df9084aa3531994e488c1866900f447f005a7915bdb1d9da81139ca564d16",
+      "bytes": 412366
     },
     {
       "path": "autoregulation.js",
@@ -179,8 +179,8 @@
     },
     {
       "path": "manual.js",
-      "sha256": "401ab89fd89078370c6eda149d54cb370c79d1d4d0494244dd29493206a1f7b2",
-      "bytes": 16083
+      "sha256": "7eb9cb14ef9063711e4e0264699bac07fe9331ec96f96ea06caa93a62403c0b0",
+      "bytes": 16182
     },
     {
       "path": "metrics.js",
@@ -199,8 +199,8 @@
     },
     {
       "path": "native-workout-alerts.js",
-      "sha256": "599b1821956e76d4c61b9f0617dfd7b7de62748063f5148b909e0f72a31ad407",
-      "bytes": 2376
+      "sha256": "72869738d42e2d20f6622073c7a36118a39385ef8aaa02c175fca43089b18d2a",
+      "bytes": 4080
     },
     {
       "path": "notification-delivery.js",
@@ -379,8 +379,8 @@
     },
     {
       "path": "workout-controller.js",
-      "sha256": "f68a00aa5c5b82dc81636375b81847712cb114475a9b8cc0fe8761d53828743d",
-      "bytes": 2846
+      "sha256": "576a839db9a1ad8d1d2b2597e5b44eba525067a1be16fe1b292fe226ef4aa7f1",
+      "bytes": 3767
     },
     {
       "path": "workout-step-history.js",

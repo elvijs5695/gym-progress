@@ -1,44 +1,86 @@
 /**
- * Shared workout timer state -> Android OS alarm plan. The Android host does
- * not calculate exercise or rest durations: it receives absolute deadlines
- * already decided by the shared PWA domain model. Browsers simply ignore it.
- * All timestamps are epoch milliseconds so sleep does not pause the timer.
+ * Platform-neutral workout sound contract. Workout state and deadlines are owned
+ * by the shared model. Android only transports audio at these exact times.
+ * The native bridge must be the sole cue producer on Android (even after a
+ * deadline has elapsed or exact-alarm permission was denied).
  */
+export const EXERCISE_REMINDER_INTERVAL_MS = 60_000;
+
+export function exerciseReminderAnchor(runtime) {
+  if (!runtime || !['SET', 'ENTRY', 'SUPERSET_ENTRY'].includes(runtime.phase)) return null;
+  const start = Number(runtime.reminderStartedAt || runtime.phaseStartedAt);
+  return Number.isSafeInteger(start) && start > 0 ? start : null;
+}
+
+export function exerciseReminderMinute(runtime, time = Date.now()) {
+  const start = exerciseReminderAnchor(runtime);
+  if (start === null) return 0;
+  return Math.max(0, Math.floor((Number(time) - start) / EXERCISE_REMINDER_INTERVAL_MS));
+}
+
+export function exerciseReminderOverlapsCountdown(runtime, time = Date.now()) {
+  const rest = runtime?.rest;
+  if (!rest || !['ENTRY', 'SUPERSET_ENTRY'].includes(runtime.phase)) return false;
+  const gap = Number(rest.endsAt) - Number(time);
+  return Number.isFinite(gap) && gap >= -1000 && gap <= 4500;
+}
+
 export function workoutAlarmPlan(runtime, exercise, set, soundEnabled = true, language = 'en') {
-  const inactive = {kind:'none'};
+  const inactive = {kind: 'none'};
   if (!runtime || !Number.isFinite(Number(runtime.sessionId))) return inactive;
   const lv = language === 'lv';
+  const anchor = exerciseReminderAnchor(runtime);
+  const reminder = anchor === null ? null : {
+    startedAt: anchor,
+    token: `${runtime.sessionId}/exercise/${runtime.currentExerciseIndex ?? 0}/${runtime.currentSetIndex ?? 0}/${anchor}`
+  };
   const rest = runtime.rest;
-  if (rest && ['REST','ENTRY','SUPERSET_ENTRY'].includes(runtime.phase)) {
+  if (rest && ['REST', 'ENTRY', 'SUPERSET_ENTRY'].includes(runtime.phase)) {
     const deadline = Number(rest.endsAt);
-    if (!Number.isSafeInteger(deadline) || deadline<=0) return inactive;
+    if (!Number.isSafeInteger(deadline) || deadline <= 0) return inactive;
     return {
-      kind:'rest', token:`${runtime.sessionId}/rest/${rest.setId??'after'}/${deadline}`,
-      deadline, startedAt:Number(rest.startedAt)||0, soundEnabled:!!soundEnabled,
-      title:lv?'Atpūta beigusies':'Rest finished',
-      body:lv?'Laiks nākamajam piegājienam':'Ready for the next set'
+      kind: 'rest', token: `${runtime.sessionId}/rest/${rest.setId ?? 'after'}/${deadline}`,
+      deadline, startedAt: Number(rest.startedAt) || 0,
+      soundEnabled: !!soundEnabled, ...(reminder ? {reminder} : {})
     };
   }
   if (runtime.phase === 'TIMED_SET' && set && exercise) {
     const target = Number(set.targetDurationSeconds || exercise.targetSeconds || 60);
     const start = Number(runtime.phaseStartedAt);
-    if (!Number.isFinite(target)||target<=0||!Number.isFinite(start)||start<=0) return inactive;
-    const deadline = Math.round(start+target*1000);
+    if (!Number.isFinite(target) || target <= 0 || !Number.isFinite(start) || start <= 0) return inactive;
+    const deadline = Math.round(start + target * 1000);
     if (!Number.isSafeInteger(deadline)) return inactive;
-    const cardio = exercise.trackingMode === 'CARDIO';
     return {
-      kind:'timed', token:`${runtime.sessionId}/timed/${set.id}/${deadline}`,
-      deadline, startedAt:start, soundEnabled:!!soundEnabled,
-      title:cardio?(lv?'Kardio mērķis sasniegts':'Cardio target reached'):(lv?'Laika piegājiens pabeigts':'Timed set completed'),
-      body:cardio?(lv?'Sasniegts plānotais ilgums':'Target duration reached'):(lv?'Piegājiena laiks ir beidzies':'Your timed set has ended')
+      kind: 'timed', token: `${runtime.sessionId}/timed/${set.id}/${deadline}`,
+      deadline, startedAt: start, soundEnabled: !!soundEnabled
     };
   }
+  if (reminder) return {kind: 'exercise', token: reminder.token, ...reminder, soundEnabled: !!soundEnabled};
   return inactive;
 }
 
-/** Returns 'scheduled', 'delivered', 'elapsed', 'exact-alarm-required', etc. */
+export function workoutStatusPlan(runtime, session, exercise, language='en') {
+  if (!runtime || !session) return {active: false};
+  const startedAt = Number(session.startedAt);
+  return {
+    active: true,
+    sessionId: String(runtime.sessionId),
+    startedAt: Number.isSafeInteger(startedAt) && startedAt > 0 ? startedAt : Date.now(),
+    title: String(session.workoutName || (language === 'lv' ? 'Treniņš' : 'Workout')).slice(0, 80),
+    exercise: String(exercise?.name || exercise?.exerciseName || '').slice(0, 90),
+    phase: String(runtime.phase || '').slice(0, 30)
+  };
+}
+
+/** Returns 'scheduled', 'elapsed', 'exact-alarm-required', etc. */
 export function syncNativeWorkoutAlarms(plan, bridge = globalThis.GymProgressAndroid) {
   if (!bridge || typeof bridge.syncWorkoutAlarms !== 'function') return 'browser';
   try { return String(bridge.syncWorkoutAlarms(JSON.stringify(plan))); }
+  catch { return 'bridge-error'; }
+}
+
+export function syncNativeWorkoutStatus(plan, bridge = globalThis.GymProgressAndroid) {
+  if (!bridge || typeof bridge.syncWorkoutStatus !== 'function') return 'browser';
+  try { return String(bridge.syncWorkoutStatus(JSON.stringify(plan))); }
   catch { return 'bridge-error'; }
 }

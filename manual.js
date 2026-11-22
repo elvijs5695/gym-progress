@@ -5,7 +5,7 @@ const EN=[
   ],
   [
     "Workout flow",
-    "Warm-up → exercise preparation → optional ramp-up → working sets and rest → optional unload → stretching. Before an exercise you can begin, move it later, replace it or skip it. Rest continues while choosing the next exercise. The thin progress line follows the current work and rest phases; a superset counts as one exercise stage. Back returns to navigation without undoing a result. Undo and Redo explicitly change the last saved set."
+    "Warm-up → exercise preparation → optional ramp-up → working sets and rest → optional unload → stretching. Before an exercise you can begin, move it later, replace it or skip it. Skipping an exercise offers optional rest before the next activity. If you skip another exercise during an existing rest, that countdown continues. The thin progress line follows the current work and rest phases; a superset counts as one exercise stage. Back returns to navigation without undoing a result. Undo and Redo explicitly change the last saved set."
   ],
   [
     "Saving a set: RIR and Failure",

@@ -1,3 +1,11 @@
+# Current handover entry — Gym Progress 2.2.1
+
+Newest user requirement: Skipping an exercise must offer optional rest, never jump straight to the next exercise. Rest duration is planned duration or 60 s if unset; skipping an upcoming exercise during an ongoing rest preserves the original clock. Both clients share this state transition. Source tests passed; browser and physical Android QA pending.
+
+Read `docs/RELEASE_2_2_1_HANDOVER.md`, `docs/RELEASE_2_2_1_ACCEPTANCE.md`, then `docs/ANDROID_LOCK_SCREEN_ALERTS.md`. Do not reintroduce redundant Home icons, individual rest-finished notifications, competing JS/Android audio owners or JS-only exercise reminders. Keep exactly one silent ongoing workout status notification, 3 short + 1 long audible countdown, and per-exercise minute reminders. Shared UI and workout model are authoritative. Phone build/lock test is still outstanding; never claim otherwise. Historical specifications follow.
+
+---
+
 # Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
 
 **Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.
