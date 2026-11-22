@@ -32,7 +32,7 @@ import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progressio
 import {ensureSyncFoundation} from './sync-foundation.js';
 import {metaForLocal} from './sync-codec.js';
 import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel,listTrainingSyncConflicts,resolveTrainingSyncConflict,resetAfterCloudErasure} from './training-sync.js';
-import {checkForWaitingRelease} from './release-update.js';
+import {checkForWaitingRelease,inspectPublishedRelease,readWorkerRelease} from './release-update.js';
 
 import {deliverPwaNotification} from './notification-delivery.js';
 import {advanceRestAudioCue} from './rest-audio-cues.js';
@@ -43,7 +43,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.1.2';
+const APP_VERSION='2.1.3';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -826,7 +826,7 @@ function renderSettings(){
   <div class="card stack comparison-settings-card"><div class="title">${esc(S('Compare exercises','Salīdzināt vingrinājumus'))}</div><label class="setting-toggle-row"><span class="setting-toggle-copy"><strong>${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}</strong><small>${esc(S('Only accepted friends can compare selected exercises when both accounts opt in. Turning this off immediately withdraws your shared comparison points.','Tikai apstiprināti draugi var salīdzināt izvēlētos vingrinājumus, ja abi konti ir devuši atļauju. Izslēdzot, kopīgotie salīdzinājuma dati tiek nekavējoties atsaukti.'))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" onchange="gp.setComparisonSharing(this.checked)" ${socialUi.comparisonPref?.allowed?'checked':''} ${socialSignedIn()&&socialUi.comparisonPref?.loaded?'':'disabled'} aria-label="${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label>${!socialSignedIn()?`<div class="small">${esc(S('Sign in to manage comparison sharing.','Pieslēdzies, lai pārvaldītu salīdzināšanas kopīgošanu.'))}</div>`:!socialUi.comparisonPref?.loaded?`<div class="small" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`:''}</div>
   <div class="section-title" data-i18n="Data">Data</div>
   ${pendingAccountCleanups().length?`<div class="card stack"><div>${esc(S('Cloud account deleted; local cleanup is pending.','Mākoņa konts dzēsts; lokālā tīrīšana vēl jāveic.'))}</div><button class="secondary full" onclick="gp.retryDeletedAccountCleanup()">${esc(S('Retry local cleanup','Atkārtot lokālo tīrīšanu'))}</button></div>`:''}<div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()" data-i18n="Full backup">Full backup</button><button class="secondary full" onclick="gp.pickRestore()" data-i18n="Restore backup">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()" data-i18n="Export CSV">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()" data-i18n="Export detailed JSON">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()" data-i18n="Erase all data">Erase all data</button><button class="secondary full log-erase-btn" onclick="gp.eraseExerciseLogs()" data-i18n="Erase exercise log data">Erase exercise log data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>
-  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(serviceRegistration?.waiting?S('Apply update','Lietot atjauninājumu'):S('Check for updates','Pārbaudīt atjauninājumus'))}</button><a class="secondary full" href="./update-rescue.html">${esc(S('Update recovery','Atjauninājuma atkopšana'))}</a><button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
+  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(serviceRegistration?.waiting?S('Apply update','Lietot atjauninājumu'):S('Check for updates','Pārbaudīt atjauninājumus'))}</button>${lastReleaseIssue?`<p class="note" role="status">${esc(S('Update blocked by website deployment: ','Atjauninājums bloķēts vietnes publikācijas dēļ: ')+lastReleaseIssue)}</p>`:''}<button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
   return shell(content);
 }
 
@@ -2246,7 +2246,7 @@ async function openRecovery(){const copies=await recoveryList();openDialog(`<h2>
 async function exportOriginalLocal(){const original=await readOriginalLocalState();if(!original){toast(S('No original local data found.','Sākotnējie lokālie dati nav atrasti.'));return;}exportTextFile('GymProgress-original-local-backup.json',JSON.stringify(originalLocalBackup(original),null,2));toast(S('Original local data exported.','Sākotnējie lokālie dati eksportēti.'));}
 
 async function restoreRecovery(key){const saved=await loadRecoveryState(key);if(!saved)throw new Error(S('Recovery copy not found','Atkopšanas kopija nav atrasta'));return restoreFile(new Blob([JSON.stringify(createBackup(saved))],{type:'application/json'}));}
-let serviceRegistration=null,serviceRegistrationPromise=null,updateActivationInFlight=false,autoUpdateTimer=null,releaseCheckInFlight=null,lastReleaseCheck=0,releaseStartupCheckPending=('serviceWorker' in navigator);
+let serviceRegistration=null,serviceRegistrationPromise=null,updateActivationInFlight=false,autoUpdateTimer=null,releaseCheckInFlight=null,lastReleaseCheck=0,releaseCandidateVerified=false,lastReleaseIssue='',lastPublishedRelease='',releaseStartupCheckPending=('serviceWorker' in navigator);
 // Update availability is independent of cloud sync *status*. A deferred remote
 // record is not a workout and cannot permanently veto a verified PWA update.
 // Only actual in-flight saves, active workouts, dirty forms, dialogs and other
@@ -2259,24 +2259,43 @@ function updateHasPendingWork(){
 }
 function scheduleAutomaticUpdate(){
  if(autoUpdateTimer)clearTimeout(autoUpdateTimer);
- if(!serviceRegistration?.waiting||updateActivationInFlight||updateHasPendingWork())return;
- autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(serviceRegistration?.waiting&&!updateHasPendingWork())void applyPendingUpdate({automatic:true});},500);
+ if(!releaseCandidateVerified||!serviceRegistration?.waiting||updateActivationInFlight||updateHasPendingWork())return;
+ autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(releaseCandidateVerified&&serviceRegistration?.waiting&&!updateHasPendingWork())void applyPendingUpdate({automatic:true});},500);
 }
 // Explicitly ask the browser to fetch sw.js. Merely looking at .waiting is
 // insufficient in Firefox; its update check might not have happened yet.
 async function refreshRelease({force=false}={}){
  if(!serviceRegistration)return {kind:'unavailable'};
- if(serviceRegistration.waiting)return {kind:'waiting'};
  if(releaseCheckInFlight)return releaseCheckInFlight;
- if(!force&&Date.now()-lastReleaseCheck<60000)return {kind:'current'};
- lastReleaseCheck=Date.now();
- const task=checkForWaitingRelease(serviceRegistration,{timeoutMs:15000});releaseCheckInFlight=task;
- try{
-  const result=await task;
-  if(result.kind==='waiting')scheduleAutomaticUpdate();
-  if(result.kind==='error')console.warn('App release check failed:',result.message);
+ if(!force&&Date.now()-lastReleaseCheck<60000)return {kind:releaseCandidateVerified?'waiting':'current'};
+ lastReleaseCheck=Date.now();releaseCandidateVerified=false;
+ const task=(async()=>{
+  const published=await inspectPublishedRelease();
+  if(published.kind==='error'){
+   lastReleaseIssue=published.message;console.warn('PWA publication invalid:',published.message);
+   return published;
+  }
+  lastPublishedRelease=published.id;
+  if(compareVersions(published.version,APP_VERSION)<0){
+   lastReleaseIssue='Published website is older than the installed app. Refusing a downgrade.';
+   return {kind:'error',message:lastReleaseIssue};
+  }
+  const result=await checkForWaitingRelease(serviceRegistration,{timeoutMs:20000});
+  if(result.kind==='waiting'){
+   const pending=await readWorkerRelease(serviceRegistration.waiting);
+   if(!pending||pending.id!==published.id){
+    lastReleaseIssue='The waiting service worker is not the published verified release. Check the website deployment.';
+    return {kind:'error',message:lastReleaseIssue};
+   }
+   releaseCandidateVerified=true;lastReleaseIssue='';scheduleAutomaticUpdate();
+  }else if(result.kind==='error'){
+   lastReleaseIssue=result.message;console.warn('App release check failed:',result.message);
+  }else lastReleaseIssue='';
+  if(route.name==='settings')render();
   return result;
- }finally{if(releaseCheckInFlight===task)releaseCheckInFlight=null;}
+ })();
+ releaseCheckInFlight=task;
+ try{return await task;}finally{if(releaseCheckInFlight===task)releaseCheckInFlight=null;}
 }
 async function registerServiceWorker(){
  if(serviceRegistrationPromise)return serviceRegistrationPromise;
@@ -2285,10 +2304,12 @@ async function registerServiceWorker(){
   serviceRegistration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
   const show=()=>{
    if(!serviceRegistration?.waiting)return;
+   if(!releaseCandidateVerified)return;
    if(updateHasPendingWork())toast(S('An update is available in Settings.','Iestatījumos ir pieejams atjauninājums.'));
    else scheduleAutomaticUpdate();
   };
-  show();
+  // Never activate a pre-existing waiting worker before comparing it with
+  // the uncached public release proof.
   serviceRegistration.addEventListener('updatefound',()=>{
    const installing=serviceRegistration.installing;
    installing?.addEventListener('statechange',show);
@@ -2315,13 +2336,13 @@ async function applyPendingUpdate({automatic=false}={}){
  if(!automatic){
   if(!serviceRegistration)await registerServiceWorker();
   if(!serviceRegistration){toast(S('Update checks are unavailable in this browser.','Atjauninājumu pārbaude šajā pārlūkā nav pieejama.'),7000);return;}
-  if(!serviceRegistration.waiting){
+  if(!releaseCandidateVerified){
    toast(S('Checking for an update…','Pārbauda atjauninājumus…'));
    const check=await refreshRelease({force:true});
    if(check.kind==='error'){toast(S('Update check failed. Check your connection and try again.','Atjauninājuma pārbaude neizdevās. Pārbaudi savienojumu un mēģini vēlreiz.'),7000);return;}
   }
  }
- const waiting=serviceRegistration?.waiting;
+ const waiting=releaseCandidateVerified?serviceRegistration?.waiting:null;
  if(!waiting){if(!automatic)toast(S('No newer verified release is waiting.','Nav gaidoša jaunāka pārbaudīta laidiena.'));return;}
  if(updateHasPendingWork()){
   if(!automatic)toast(S('Finish or save your current work before updating. If another dialog is open, close it first.','Pirms atjaunināšanas saglabā iesākto. Ja ir atvērts dialogs, vispirms aizver to.'),7000);
@@ -2332,7 +2353,7 @@ async function applyPendingUpdate({automatic=false}={}){
  updateActivationInFlight=true;
  try{
   await persist();await flushSaves();
-  if(state!==captured||localGeneration!==version||updateHasPendingWork()||serviceRegistration?.waiting!==waiting){toast(S('The app changed. Review the current state before updating.','Lietotnes stāvoklis ir mainījies. Pirms atjaunināšanas pārbaudi to.'));return;}
+  if(state!==captured||localGeneration!==version||updateHasPendingWork()||!releaseCandidateVerified||serviceRegistration?.waiting!==waiting){toast(S('The app changed. Review the current state before updating.','Lietotnes stāvoklis ir mainījies. Pirms atjaunināšanas pārbaudi to.'));return;}
   appEl.inert=true;if(dialogRoot)dialogRoot.inert=true;
   if(!automatic)toast(S('Preparing update…','Sagatavo atjauninājumu…'),20000);
   channel=new MessageChannel();

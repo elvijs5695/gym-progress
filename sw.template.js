@@ -39,12 +39,32 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
  // serving an active page. A reused release ID with different bytes is invalid.
  if(existed&&previous?.complete&&previous.assetManifest!==assetManifest())throw new Error('Release ID was reused with different assets');
  try{
-  for(const asset of RELEASE.assets){const url=new URL(asset.path,SCOPE),response=await fetch(url,{cache:'reload',credentials:'same-origin'});if(!response.ok)throw new Error('Incomplete release: '+asset.path);const bytes=await response.clone().arrayBuffer(),digest=await crypto.subtle.digest('SHA-256',bytes),hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');if(hash!==asset.sha256||asset.bytes!=null&&asset.bytes!==bytes.byteLength)throw new Error('Release verification failed: '+asset.path);await cache.put(url,response);}
+  let nextAsset=0;
+  const fetchAndVerify=async()=>{
+   while(nextAsset<RELEASE.assets.length){
+    const asset=RELEASE.assets[nextAsset++],url=new URL(asset.path,SCOPE);
+    const response=await fetch(url,{cache:'reload',credentials:'same-origin'});
+    if(!response.ok)throw new Error('Incomplete release: '+asset.path+' (HTTP '+response.status+')');
+    const bytes=await response.clone().arrayBuffer();
+    const digest=await crypto.subtle.digest('SHA-256',bytes);
+    const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    if(hash!==asset.sha256||(asset.bytes!=null&&asset.bytes!==bytes.byteLength))throw new Error('Release verification failed: '+asset.path);
+    await cache.put(url,response);
+   }
+  };
+  // Drain all in-flight requests before removing an incomplete cache; avoid
+  // writing into the same cache after failure cleanup.
+  const results=await Promise.allSettled(Array.from({length:Math.min(6,RELEASE.assets.length)},()=>fetchAndVerify()));
+  const failed=results.find(x=>x.status==='rejected');if(failed)throw failed.reason;
   await writeMetadata(cache,{scope:SCOPE.href,releaseId:RELEASE.id,assetManifest:assetManifest(),complete:true,verifiedAt:Date.now(),activatedAt:previous?.activatedAt||null});
  }catch(error){if(!existed)await caches.delete(CACHE);throw error;}
  // No automatic skipWaiting: an open workout continues using its complete release.
 })()));
 self.addEventListener('message',event=>{
+ if(event.data?.type==='GET_RELEASE_STATUS'&&event.ports?.[0]){
+  event.ports[0].postMessage({type:'RELEASE_STATUS',version:RELEASE.version,id:RELEASE.id});
+  return;
+ }
  if(event.data?.type!=='ACTIVATE_RELEASE'||!event.ports?.[0])return;
  const reply=value=>event.ports[0].postMessage({type:'ACTIVATE_RELEASE_RESULT',releaseId:RELEASE.id,...value});
  event.waitUntil((async()=>{

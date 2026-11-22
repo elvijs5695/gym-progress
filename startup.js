@@ -10,3 +10,9 @@ window.addEventListener('error',event=>{
  const recovery=document.createElement('a');recovery.href='./recovery.html';recovery.textContent=lv?'Atvērt atkopšanu':'Open recovery';card.append(title,note,recovery);app.append(card);
 },true);
 try{document.documentElement.dataset.theme=localStorage.getItem('gym-progress-ui-theme-v2')||'system';}catch{}
+
+// Early network recheck on every refresh, even if app.js subsequently fails to load.
+// Registration/activation remains managed by app.js to protect active workouts.
+if ('serviceWorker' in navigator) {
+  void navigator.serviceWorker.getRegistration('./').then(reg => reg?.update()).catch(error => console.warn('Early release check deferred:', error));
+}
