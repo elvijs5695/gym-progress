@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7f8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; worker-src 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Gym Progress · Update recovery</title>
+<link rel="stylesheet" href="./styles.css">
+<script src="./update-rescue-212.js" type="module"></script>
+</head>
+<body>
+<main class="view">
+<h1>Gym Progress · Update recovery</h1>
+<div class="card stack">
+<p>This page can request the latest verified app release without deleting your locally stored training data.</p>
+<p><strong>Before continuing:</strong> finish any workout, save any unsaved edits, and close other Gym Progress tabs on this device. If possible, export a full backup from Settings or the Recovery page first.</p>
+<p id="rescue-status" role="status" aria-live="polite">Ready to check for updates.</p>
+<button type="button" id="rescue-check">Check and apply latest release</button>
+<a href="./recovery.html">Open backup recovery</a>
+<a href="./index.html">Return to Gym Progress</a>
+<p class="small">This tool never clears site data, unregisters service workers, deletes caches, or modifies workout records. If an app window cannot confirm it is idle, activation will be refused.</p>
+</div>
+</main>
+</body>
+</html>

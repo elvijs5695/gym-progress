@@ -28,7 +28,7 @@ async function confirmIdle(client){
  return new Promise(resolve=>{
   const channel=new MessageChannel();let complete=false;
   const done=value=>{if(complete)return;complete=true;clearTimeout(timer);channel.port1.close();channel.port2.close();resolve(value);};
-  const timer=setTimeout(()=>done(null),1300);
+  const timer=setTimeout(()=>done(null),6000);
   channel.port1.onmessage=event=>done(event.data?.type==='UPDATE_STATE'&&typeof event.data.safe==='boolean'?event.data.safe:null);
   try{client.postMessage({type:'CHECK_UPDATE_STATE'},[channel.port2]);}catch{done(null);}
  });

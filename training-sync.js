@@ -233,13 +233,30 @@ export function createTrainingSyncClient({rpc:callRpc=rpc,user:currentUser=socia
     }
     // A final dependency pass may now connect records whose parents arrived on later pages.
     changed=applyDeferred(state,{initiallyEmptyProgramme})||changed;
+    // A cursor can already be past a valid parent (e.g. after an interrupted
+    // historical import). A normal incremental sync would then report
+    // "Waiting for related records" indefinitely. Replay a verified cloud
+    // snapshot from cursor 0, but only for the affected selected domains and
+    // at most once every six hours. This is READ-ONLY reconciliation; no
+    // record is deleted or fabricated when a parent genuinely does not exist.
+    const relevantDeferred=()=>state.sync_foundation.deferredRemote.some(item=>selected.has(TYPE_DOMAIN[item.record.entity_type]));
+    if(relevantDeferred()&&Date.now()-Number(state.sync_foundation.lastDependencyRecheckAt||0)>6*60*60*1000){
+      await fetchPages(context,{after:0,limit:pageSize,onPage:async page=>{
+        for(const record of page.changes)if(selected.has(TYPE_DOMAIN[record.entity_type]))retainDeferred(state,record);
+        changed=applyDeferred(state,{initiallyEmptyProgramme})||changed;
+        await persistChecked(state,persist,context);
+      }});
+      state.sync_foundation.lastDependencyRecheckAt=Date.now();
+      changed=applyDeferred(state,{initiallyEmptyProgramme})||changed;
+      await persistChecked(state,persist,context);
+    }
     buildOutbox(state,selected);await persistChecked(state,persist,context);
     applied+=await flushOutbox(state,context,selected,persist);
     ensureSyncFoundation(state);
     for(const domain of selected){
       const info=state.sync_foundation.domains[domain];info.enabled=true;
       const conflict=openConflicts(state).some(c=>c.domain===domain),deferred=state.sync_foundation.deferredRemote.some(item=>TYPE_DOMAIN[item.record.entity_type]===domain),pending=Object.values(state.sync_foundation.records).some(meta=>meta.domain===domain&&meta.pending&&!meta.suppressed&&eligibleForUpload(state,meta));
-      info.status=conflict?'Conflict requires review':deferred?'Waiting for related records':pending?'Changes pending':'Synced';
+      info.status=conflict?'Conflict requires review':deferred?'Related records need review':pending?'Changes pending':'Synced';
       if(!conflict&&!deferred&&!pending)info.lastSuccessfulSyncAt=Date.now();
     }
     await persistChecked(state,persist,context);
@@ -280,7 +297,7 @@ export function syncStatusLabel(state){
   const sync=state?.sync_foundation;if(sync?.blocked)return 'Sync paused: cloud erasure requires review';
   const enabled=enabledSyncDomains(state);if(!enabled.length)return 'Not enabled';
   if(openConflicts(state).length)return 'Conflict requires review';
-  if(sync.deferredRemote?.length)return 'Waiting for related records';
+  if(sync.deferredRemote?.length)return `Related records need review (${sync.deferredRemote.length})`;
   if(sync.outbox?.length||Object.values(sync.records||{}).some(meta=>meta.pending&&!meta.suppressed&&enabled.includes(meta.domain)))return 'Changes pending';
   const times=enabled.map(domain=>Number(sync.domains[domain]?.lastSuccessfulSyncAt||0));return times.every(Boolean)?`Synced ${new Date(Math.min(...times)).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`:'Enabled';
 }

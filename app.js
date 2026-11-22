@@ -32,6 +32,7 @@ import {persistWorkoutIntelligence,trendLabel,fatigueSummary} from './progressio
 import {ensureSyncFoundation} from './sync-foundation.js';
 import {metaForLocal} from './sync-codec.js';
 import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel,listTrainingSyncConflicts,resolveTrainingSyncConflict,resetAfterCloudErasure} from './training-sync.js';
+import {checkForWaitingRelease} from './release-update.js';
 
 import {deliverPwaNotification} from './notification-delivery.js';
 import {advanceRestAudioCue} from './rest-audio-cues.js';
@@ -42,7 +43,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.1.1';
+const APP_VERSION='2.1.2';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -122,15 +123,39 @@ async function bootstrapAccountHistory(){
   accountBootstrapStatus=result?'ready':'failed';
   if(result){ensureRotation();ui.selectedWorkoutId=state.app_state.nextWorkoutId;}
   render();
+  // A release can finish installing during initial cloud reconciliation. Once
+  // account loading ends, an idle app should apply it without another tap.
+  scheduleAutomaticUpdate();
 }
 function retryInitialSync(){return bootstrapAccountHistory();}
 
+let lastCloudResumeAt=0;
+// A refresh calls bootstrapAccountHistory once after workspace recovery.
+// A failed startup sync is retried on connectivity/foreground, while an
+// already-running sync is reused and no second mutation is submitted.
+function resumeCloudSync(reason,{force=false}={}){
+ if(!state||!socialSignedIn())return;
+ const time=Date.now();
+ if(!force&&time-lastCloudResumeAt<20000)return;
+ lastCloudResumeAt=time;
+ if(accountBootstrapStatus==='failed')void bootstrapAccountHistory().catch(reportAppError);
+ else if(accountBootstrapStatus==='ready')void performTrainingSync({reason});
+}
+function resumeApp(reason,force=false){
+ if(!state)return;
+ syncWorkoutAlarmPlan();
+ void tick().catch(reportAppError);
+ void refreshSocialBadge();
+ resumeCloudSync(reason,{force});
+ void refreshRelease({force});
+ scheduleAutomaticUpdate();
+}
 function scheduleTrainingSync(delay=4500){
   if(suppressTrainingSyncSchedule||!state||!socialSignedIn()||!enabledSyncDomains(state).length)return;
   if(trainingSyncTimer)clearTimeout(trainingSyncTimer);
   trainingSyncTimer=setTimeout(()=>{trainingSyncTimer=null;void performTrainingSync({reason:'local-change'});},Math.max(250,Number(delay)||0));
 }
-async function persistImmediately(){if(writeBlocked)throw new StaleWorkspaceError();if(workspaceTransition||currentWorkspace()!==stateWorkspace)throw new Error('Workspace change in progress');ensureSyncFoundation(state);const snapshot=state;try{await saveState(snapshot,{expectedWorkspace:stateWorkspace});}catch(error){if(error instanceof StaleWorkspaceError)writeBlocked=true;throw error;}if(snapshot===state){syncWorkoutAlarmPlan();scheduleTrainingSync();}}
+async function persistImmediately(){if(writeBlocked)throw new StaleWorkspaceError();if(workspaceTransition||currentWorkspace()!==stateWorkspace)throw new Error('Workspace change in progress');ensureSyncFoundation(state);const snapshot=state;try{await saveState(snapshot,{expectedWorkspace:stateWorkspace});}catch(error){if(error instanceof StaleWorkspaceError)writeBlocked=true;throw error;}if(snapshot===state){syncWorkoutAlarmPlan();if(!updateActivationInFlight)scheduleTrainingSync();}}
 
 function trainingSyncSummaryText(p){
   const parts=[];
@@ -164,11 +189,11 @@ async function openTrainingSyncReview(){
 }
 async function confirmTrainingSync(){if(trainingSyncInFlight)return;const domains=[];if($('#sync-programme')?.checked)domains.push('programme');if($('#sync-history')?.checked)domains.push('workout_log');if($('#sync-tracker')?.checked)domains.push('tracker');if(!domains.length){toast(S('Select at least one data type.','Izvēlies vismaz vienu datu veidu.'));return;}const preview=window.__gpTrainingSyncPreview;for(const domain of ['programme','workout_log','tracker'])state.sync_foundation.domains[domain].enabled=domains.includes(domain);closeDialog();await persist();await performTrainingSync({reason:'manual',preview,domains,force:true});}
 async function performTrainingSync({reason='auto',preview=null,domains=null,force=false}={}){
- if(!state||!socialSignedIn()||workspaceTransition||writeBlocked||['LOCAL_ERASE_PENDING','ACCOUNT_ERASE_PENDING'].includes(state.sync_foundation?.blocked?.code))return null;if(trainingSyncInFlight)return trainingSyncInFlight;
+ if(!state||!socialSignedIn()||workspaceTransition||writeBlocked||updateActivationInFlight||['LOCAL_ERASE_PENDING','ACCOUNT_ERASE_PENDING'].includes(state.sync_foundation?.blocked?.code))return null;if(trainingSyncInFlight)return trainingSyncInFlight;
  const captured=state,owner=socialUser().id,localVersion=localGeneration,activeDomains=domains||enabledSyncDomains(captured);if(!activeDomains.length&&!force)return null;
  const isCurrent=value=>value===state&&localVersion===localGeneration&&socialUser()?.id===owner&&currentWorkspace()==='account:'+owner;
  const persistSync=async value=>{if(!isCurrent(value))throw new Error('Workspace changed during sync');await saveState(value,{expectedWorkspace:'account:'+owner});};
- const job=(async()=>{suppressTrainingSyncSchedule=true;try{const result=await runTrainingSync(captured,{domains:activeDomains,preview,persist:persistSync,isCurrent});if(!isCurrent(captured))return null;if(result.changed){ensureRotation();await persistSync(captured);render();}if(result.conflicts){if(reason==='manual')openSyncConflictReview();else toast(S('Sync conflicts need review in Settings.','Sinhronizācijas konflikti jāpārskata iestatījumos.'));}else if(reason==='manual')toast(result.deferred||result.pending?S('Waiting for related records.','Gaida saistītos ierakstus.'):S('Sync complete.','Sinhronizācija pabeigta.'));return result;}catch(error){if(!isCurrent(captured))return null;if(error instanceof StaleWorkspaceError)writeBlocked=true;if(reason==='manual')toast(String(error.message),7000);return null;}finally{if(isCurrent(captured))suppressTrainingSyncSchedule=false;}})();trainingSyncInFlight=job;try{return await job;}finally{if(trainingSyncInFlight===job)trainingSyncInFlight=null;}
+ const job=(async()=>{suppressTrainingSyncSchedule=true;try{const result=await runTrainingSync(captured,{domains:activeDomains,preview,persist:persistSync,isCurrent});if(!isCurrent(captured))return null;if(result.changed){ensureRotation();await persistSync(captured);render();}if(result.conflicts){if(reason==='manual')openSyncConflictReview();else toast(S('Sync conflicts need review in Settings.','Sinhronizācijas konflikti jāpārskata iestatījumos.'));}else if(reason==='manual')toast(result.deferred?S('Related records need review. Open Data review in Settings; all records are preserved.','Saistītie ieraksti jāpārskata sadaļā Datu pārskats; visi ieraksti ir saglabāti.'):result.pending?S('Some changes are still pending.','Dažas izmaiņas vēl gaida sinhronizāciju.'):S('Sync complete.','Sinhronizācija pabeigta.'));return result;}catch(error){if(!isCurrent(captured))return null;if(error instanceof StaleWorkspaceError)writeBlocked=true;if(reason==='manual')toast(String(error.message),7000);return null;}finally{if(isCurrent(captured))suppressTrainingSyncSchedule=false;}})();trainingSyncInFlight=job;try{return await job;}finally{if(trainingSyncInFlight===job){trainingSyncInFlight=null;if(route.name==='settings')render();scheduleAutomaticUpdate();}}
 }
 
 // Coalesce persistence requests raised by one UI event. Callers may still await
@@ -345,6 +370,7 @@ const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
  {version:'2.1.1',key:'friends-settings-cardio-android',importance:4,en:'Add friend now appears at the end of the expanded Friends card. Exercise comparison consent is managed in Settings, and cardio summaries put average heart rate before RPE.',lv:'Drauga pievienošana atrodas izvērstās Draugu kartītes beigās. Vingrinājumu salīdzināšanas atļauja ir Iestatījumos, un kardio kopsavilkumā vidējais pulss ir pirms RPE.'},
+ {version:'2.1.2',key:'release-and-sync-recovery',importance:8,en:'Refresh now checks for verified app updates and syncs all training data automatically. Missing related cloud records can be reviewed in Data review. Exercise comparison has moved below workout settings.',lv:'Pārlādēšana tagad automātiski pārbauda lietotnes atjauninājumus un sinhronizē treniņu datus. Trūkstošos saistītos ierakstus var pārskatīt Datu pārskatā. Vingrinājumu salīdzināšana pārvietota zem treniņu iestatījumiem.'},
  {version:'2.1.0',key:'consent-workout-integrity',importance:6,en:'Strength comparison is now an account-level opt-in with immediate withdrawal. Workout-step Undo/Redo, zero-weight entry, Tracker history and data validation have been strengthened.',lv:'Spēka salīdzināšana tagad ir konta izvēle ar tūlītēju datu atsaukšanu. Uzlabota treniņa darbību atsaukšana/atjaunošana, nulles svara ievade, Tracker vēsture un datu pārbaude.'},
  {version:'2.1.0',key:'performance-and-cards',importance:3,en:'Reduced repeated metric calculations and improved four-column cardio summaries in Workout Log.',lv:'Samazināti atkārtotie rādītāju aprēķini un uzlabots četru kolonnu kardio kopsavilkums treniņu žurnālā.'},
  {version:'2.0.4',key:'workout-log-sounds-notices',importance:5,en:'Workout Log cards now show every strength progress metric and four equally sized cardio metrics, with effort below the data. Compact workout controls, clearer notices and precise rest cues are restored.',lv:'Treniņu žurnālā atjaunots spēka apjoma progress un četri vienādi kardio rādītāji, piepūles novērtējums ir apakšā. Atjaunota kompakta treniņa galvene, pārskatāmi paziņojumi un precīzi atpūtas signāli.'},
@@ -398,15 +424,6 @@ function expandChevron(extraClass=''){return `<span class="app-expand-chevron ${
 function navChevron(){return expandChevron('nav-chevron');}
 function pencilIcon(){return `<svg class="pencil-outline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l3.2-.8L18.4 8l-2.4-2.4L5.8 15.8 5 19Z"/><path d="m14.6 7 2.4 2.4"/></svg>`;}
 
-const SYNC_PROMPT_VERSION_KEY='gym-progress-sync-prompt-version';
-async function maybeOfferTrainingSyncAfterUpdate(){
-  if(!socialSignedIn())return false;
-  let shown='';try{shown=localStorage.getItem(SYNC_PROMPT_VERSION_KEY)||'';}catch{}
-  if(shown===APP_VERSION)return false;
-  try{localStorage.setItem(SYNC_PROMPT_VERSION_KEY,APP_VERSION);}catch{}
-  await openTrainingSyncReview();return true;
-}
-
 async function init(){
  restoreCachedReferenceData();
  initUI({getLanguage:()=>languageCode(state),onThemeChange:()=>render(),closeDialog:()=>closeDialog(),onReorder:(kind,id,delta)=>kind==='workout'?moveWorkout(Number(id),delta):moveExerciseBlock(Number(id),delta)});
@@ -429,9 +446,13 @@ async function init(){
  if('serviceWorker'in navigator)void registerServiceWorker();
  if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
  tickHandle=setInterval(()=>void tick().catch(reportAppError),1000);
- backgroundHandles.push(setInterval(()=>void refreshSocialBadge(),30000),setInterval(()=>void performTrainingSync({reason:'interval'}),300000));
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncWorkoutAlarmPlan();void tick().catch(reportAppError);void refreshSocialBadge();void performTrainingSync({reason:'resume'});}});
- window.addEventListener('online',()=>void performTrainingSync({reason:'online'}));
+ backgroundHandles.push(setInterval(()=>void refreshSocialBadge(),30000),setInterval(()=>void resumeCloudSync('interval'),300000));
+ // Startup/refresh always runs bootstrapAccountHistory. BFCache restores,
+ // foreground returns and connectivity recovery also reconcile automatically.
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeApp('resume');});
+ window.addEventListener('focus',()=>resumeApp('focus'));
+ window.addEventListener('pageshow',event=>{if(event.persisted)resumeApp('history-restore',true);});
+ window.addEventListener('online',()=>resumeApp('online',true));
  window.addEventListener('gp:auth-changed',()=>void switchAccountWorkspace().catch(reportAppError));
  window.addEventListener('pagehide',()=>{if(state&&!writeBlocked&&!workspaceTransition&&currentWorkspace()===stateWorkspace)void persist().catch(()=>{});});
  if(socialSignedIn())void bootstrapAccountHistory().catch(reportAppError);
@@ -489,7 +510,7 @@ function render(){
     // First show the accumulated release announcement, after the initial
     // account sync and before any starter-programme empty-state prompt.
     setTimeout(()=>{
-      if(route.name!=='home'||runtime()||document.querySelector('#dialog-root .dialog-backdrop')||(socialSignedIn()&&accountBootstrapStatus!=='ready'))return;
+      if(route.name!=='home'||runtime()||releaseStartupCheckPending||serviceRegistration?.waiting||releaseCheckInFlight||document.querySelector('#dialog-root .dialog-backdrop')||(socialSignedIn()&&accountBootstrapStatus!=='ready'))return;
       if(showUpdateAnnouncementIfNeeded())return;
       if(!state.workout_templates.some(w=>w.isActive!==false)&&!state.app_state.starterPromptDismissed)showEmptyStarterPrompt();
     },80);
@@ -783,7 +804,7 @@ function renderSettings(){
   const content=`
   <div class="card stack"><div class="title" data-i18n="Language">Language</div><div class="segmented"><button class="${a.languageCode==='en'?'active':''}" onclick="gp.setLanguage('en')">English</button><button class="${a.languageCode==='lv'?'active':''}" onclick="gp.setLanguage('lv')">Latviešu</button></div></div>
   <div class="card stack account-settings-card"><div><div class="title">${esc(S('Account','Konts'))}</div><div class="subtitle">${esc(socialSignedIn()?(syncUser||accountDisplayLabel()):S('Not signed in','Nav pieslēgts'))}</div></div><button class="secondary full" onclick="gp.openAccount()">${esc(socialSignedIn()?S('Account settings / sign out','Konta iestatījumi / iziet'):S('Log in','Pieslēgties'))}</button>${socialSignedIn()?`<div class="divider"></div><div class="title">${esc(S('Sync','Sinhronizācija'))}</div><div class="small">${esc(translateUI(syncLabel,languageCode(state)))} · ${esc(S('Programme','Programma'))}: ${syncEnabled.includes('programme')?S('On','Ieslēgta'):S('Off','Izslēgta')} · ${esc(S('Workout history','Treniņu vēsture'))}: ${syncEnabled.includes('workout_log')?S('On','Ieslēgta'):S('Off','Izslēgta')} · Tracker: ${syncEnabled.includes('tracker')?S('On','Ieslēgta'):S('Off','Izslēgta')}</div><button class="secondary full" onclick="gp.openTrainingSyncReview()">${esc(S('Review & sync now','Pārskatīt un sinhronizēt'))}</button>`:''}</div>
-  <div class="card stack comparison-settings-card"><div class="title">${esc(S('Compare exercises','Salīdzināt vingrinājumus'))}</div><label class="setting-toggle-row"><span class="setting-toggle-copy"><strong>${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}</strong><small>${esc(S('Only accepted friends can compare selected exercises when both accounts opt in. Turning this off immediately withdraws your shared comparison points.','Tikai apstiprināti draugi var salīdzināt izvēlētos vingrinājumus, ja abi konti ir devuši atļauju. Izslēdzot, kopīgotie salīdzinājuma dati tiek nekavējoties atsaukti.'))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" onchange="gp.setComparisonSharing(this.checked)" ${socialUi.comparisonPref?.allowed?'checked':''} ${socialSignedIn()&&socialUi.comparisonPref?.loaded?'':'disabled'} aria-label="${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label>${!socialSignedIn()?`<div class="small">${esc(S('Sign in to manage comparison sharing.','Pieslēdzies, lai pārvaldītu salīdzināšanas kopīgošanu.'))}</div>`:!socialUi.comparisonPref?.loaded?`<div class="small" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`:''}</div>
+
   <div class="section-title" data-i18n="Training">Training</div>
   <div class="card clickable" onclick="gp.nav('programme')"><div class="card-row"><div class="grow"><div class="title" data-i18n="Programme">Programme</div></div>${navChevron()}</div></div>
   <details class="card starter-settings"><summary><div><strong data-i18n="Starter programme">Starter programme</strong><div class="subtitle" data-i18n="Adds three editable workout days. Your existing programme is kept.">Adds three editable workout days. Your existing programme is kept.</div></div>${expandChevron('details-chevron')}</summary><div class="details-body"><button class="secondary full" onclick="gp.openStarterWizard()" data-i18n="Set up starter programme">Set up starter programme</button></div></details>
@@ -801,9 +822,11 @@ function renderSettings(){
   <div class="section-title" data-i18n="Display">Display</div><div class="card">${themePickerHTML(languageCode(state))}</div><div class="card"><label class="setting-toggle-row"><span>${esc(S('Sound notifications','Skaņas paziņojumi'))}</span><input type="checkbox" ${a.soundEnabled!==false?'checked':''} onchange="gp.setSound(this.checked)"></label></div>
   ${globalThis.GymProgressAndroid?`<div class="card stack native-workout-alerts"><div class="title">${esc(S('Locked-screen workout alerts','Treniņa signāli pie bloķēta ekrāna'))}</div><div class="small">${esc(S('Android schedules rest warnings, 3–2–1 countdown, rest completion and timed/cardio targets independently of the app screen. Requires notification and exact-alarm access.','Android plāno atpūtas brīdinājumu, 3–2–1 atskaiti, atpūtas beigas un laika/kardio mērķus neatkarīgi no ekrāna. Nepieciešamas paziņojumu un precīzo signālu atļaujas.'))}</div><div class="small"><strong>${esc(S('Notifications','Paziņojumi'))}:</strong> ${esc(notificationPermissionState()==='granted'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><div class="small"><strong>${esc(S('Exact alarms','Precīzie signāli'))}:</strong> ${esc(androidAlarmAccessStatus()==='ready'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><button type="button" class="secondary full" onclick="gp.requestBackgroundAlerts()">${esc(S('Set up Android background alerts','Iestatīt Android fona signālus'))}</button></div>`:''}
   <div class="card"><div class="card-row"><div class="grow"><div class="title" data-i18n="Keep screen awake">Keep screen awake</div><div class="subtitle" data-i18n="Keep the display on while a workout is active">Keep the display on while a workout is active</div></div><input style="width:auto" type="checkbox" ${a.keepScreenAwake?'checked':''} onchange="gp.toggleAwake(this.checked)"></div></div>
+  <div class="section-title">${esc(S('Social preferences','Sociālie iestatījumi'))}</div>
+  <div class="card stack comparison-settings-card"><div class="title">${esc(S('Compare exercises','Salīdzināt vingrinājumus'))}</div><label class="setting-toggle-row"><span class="setting-toggle-copy"><strong>${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}</strong><small>${esc(S('Only accepted friends can compare selected exercises when both accounts opt in. Turning this off immediately withdraws your shared comparison points.','Tikai apstiprināti draugi var salīdzināt izvēlētos vingrinājumus, ja abi konti ir devuši atļauju. Izslēdzot, kopīgotie salīdzinājuma dati tiek nekavējoties atsaukti.'))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" onchange="gp.setComparisonSharing(this.checked)" ${socialUi.comparisonPref?.allowed?'checked':''} ${socialSignedIn()&&socialUi.comparisonPref?.loaded?'':'disabled'} aria-label="${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label>${!socialSignedIn()?`<div class="small">${esc(S('Sign in to manage comparison sharing.','Pieslēdzies, lai pārvaldītu salīdzināšanas kopīgošanu.'))}</div>`:!socialUi.comparisonPref?.loaded?`<div class="small" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`:''}</div>
   <div class="section-title" data-i18n="Data">Data</div>
   ${pendingAccountCleanups().length?`<div class="card stack"><div>${esc(S('Cloud account deleted; local cleanup is pending.','Mākoņa konts dzēsts; lokālā tīrīšana vēl jāveic.'))}</div><button class="secondary full" onclick="gp.retryDeletedAccountCleanup()">${esc(S('Retry local cleanup','Atkārtot lokālo tīrīšanu'))}</button></div>`:''}<div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()" data-i18n="Full backup">Full backup</button><button class="secondary full" onclick="gp.pickRestore()" data-i18n="Restore backup">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()" data-i18n="Export CSV">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()" data-i18n="Export detailed JSON">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()" data-i18n="Erase all data">Erase all data</button><button class="secondary full log-erase-btn" onclick="gp.eraseExerciseLogs()" data-i18n="Erase exercise log data">Erase exercise log data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>
-  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(S('Apply update','Lietot atjauninājumu'))}</button><button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
+  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(serviceRegistration?.waiting?S('Apply update','Lietot atjauninājumu'):S('Check for updates','Pārbaudīt atjauninājumus'))}</button><a class="secondary full" href="./update-rescue.html">${esc(S('Update recovery','Atjauninājuma atkopšana'))}</a><button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
   return shell(content);
 }
 
@@ -1781,7 +1804,7 @@ function confirmDialog(title,text,confirmLabel,onConfirm,danger=false,onCancel=n
 function formDialog(title,body,confirmLabel,onConfirm,cancelAction='gp.closeDialog()'){window.__gpFormConfirm=onConfirm;openDialog(`<h2>${esc(translateUI(title,languageCode(state)))}</h2>${body}<div class="dialog-actions"><button type="button" class="secondary" onclick="${cancelAction}">Cancel</button><button type="button" onclick="gp.formConfirm()">${esc(translateUI(confirmLabel,languageCode(state)))}</button></div>`);}
 let dialogVersion=0,emailOtpFlow=null;
 function openDialog(inner,{otpFlow=null,notice=false}={}){dialogVersion++;if(emailOtpFlow!==otpFlow){cancelEmailOtp();emailOtpFlow=otpFlow;}let root=$('#dialog-root');if(!root){root=document.createElement('div');root.id='dialog-root';document.body.append(root);}setHTML(root,'<div class="dialog-backdrop" onclick="if(event.target===this)gp.closeDialog()"><div class="dialog'+(notice?' notice-dialog':'')+'">'+inner+'</div></div>');localizeDom(root,languageCode(state));enhanceDialog(root,{onClose:()=>closeDialog(),language:languageCode(state)});}
-function closeDialog(){dialogVersion++;cancelEmailOtp();emailOtpFlow=null;if(runtime()?.phase==='CARDIO_ENTRY'){void cancelCardioSet();return;}trainingSyncReviewToken++;const skippedExerciseNote=!!window.__gpExerciseNote;window.__gpExerciseNote=null;const r=$('#dialog-root');if(r)setHTML(r,'');window.__gpConfirm=window.__gpCancel=window.__gpFormConfirm=null;if(skippedExerciseNote)continuePostSetQueue();}
+function closeDialog(){dialogVersion++;cancelEmailOtp();emailOtpFlow=null;if(runtime()?.phase==='CARDIO_ENTRY'){void cancelCardioSet();return;}trainingSyncReviewToken++;const skippedExerciseNote=!!window.__gpExerciseNote;window.__gpExerciseNote=null;const r=$('#dialog-root');if(r)setHTML(r,'');window.__gpConfirm=window.__gpCancel=window.__gpFormConfirm=null;if(skippedExerciseNote)continuePostSetQueue();scheduleAutomaticUpdate();}
 
 
 function socialErrorMessage(err){
@@ -2223,10 +2246,11 @@ async function openRecovery(){const copies=await recoveryList();openDialog(`<h2>
 async function exportOriginalLocal(){const original=await readOriginalLocalState();if(!original){toast(S('No original local data found.','Sākotnējie lokālie dati nav atrasti.'));return;}exportTextFile('GymProgress-original-local-backup.json',JSON.stringify(originalLocalBackup(original),null,2));toast(S('Original local data exported.','Sākotnējie lokālie dati eksportēti.'));}
 
 async function restoreRecovery(key){const saved=await loadRecoveryState(key);if(!saved)throw new Error(S('Recovery copy not found','Atkopšanas kopija nav atrasta'));return restoreFile(new Blob([JSON.stringify(createBackup(saved))],{type:'application/json'}));}
-let serviceRegistration=null,updateActivationInFlight=false,autoUpdateTimer=null;
-// A clean workspace can install a verified release without an approval dialog.
-// Unfinished workouts, dirty fields, dialogs and in-flight storage/sync retain
-// control of the existing release until work is safely completed.
+let serviceRegistration=null,serviceRegistrationPromise=null,updateActivationInFlight=false,autoUpdateTimer=null,releaseCheckInFlight=null,lastReleaseCheck=0,releaseStartupCheckPending=('serviceWorker' in navigator);
+// Update availability is independent of cloud sync *status*. A deferred remote
+// record is not a workout and cannot permanently veto a verified PWA update.
+// Only actual in-flight saves, active workouts, dirty forms, dialogs and other
+// open app windows can prevent activation.
 function updateHasPendingWork(){
  if(!state||state.runtime||writeBlocked||workspaceTransition||accountBootstrapStatus==='loading'||trainingSyncInFlight)return true;
  if(document.querySelector('#dialog-root .dialog-backdrop'))return true;
@@ -2236,13 +2260,39 @@ function updateHasPendingWork(){
 function scheduleAutomaticUpdate(){
  if(autoUpdateTimer)clearTimeout(autoUpdateTimer);
  if(!serviceRegistration?.waiting||updateActivationInFlight||updateHasPendingWork())return;
- autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(serviceRegistration?.waiting&&!updateHasPendingWork())void applyPendingUpdate({automatic:true});},350);
+ autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(serviceRegistration?.waiting&&!updateHasPendingWork())void applyPendingUpdate({automatic:true});},500);
+}
+// Explicitly ask the browser to fetch sw.js. Merely looking at .waiting is
+// insufficient in Firefox; its update check might not have happened yet.
+async function refreshRelease({force=false}={}){
+ if(!serviceRegistration)return {kind:'unavailable'};
+ if(serviceRegistration.waiting)return {kind:'waiting'};
+ if(releaseCheckInFlight)return releaseCheckInFlight;
+ if(!force&&Date.now()-lastReleaseCheck<60000)return {kind:'current'};
+ lastReleaseCheck=Date.now();
+ const task=checkForWaitingRelease(serviceRegistration,{timeoutMs:15000});releaseCheckInFlight=task;
+ try{
+  const result=await task;
+  if(result.kind==='waiting')scheduleAutomaticUpdate();
+  if(result.kind==='error')console.warn('App release check failed:',result.message);
+  return result;
+ }finally{if(releaseCheckInFlight===task)releaseCheckInFlight=null;}
 }
 async function registerServiceWorker(){
- try{
-  serviceRegistration=await navigator.serviceWorker.register('./sw.js');
-  const show=()=>{if(!serviceRegistration?.waiting)return;if(updateHasPendingWork())toast(S('An update is available in Settings.','Iestatījumos ir pieejams atjauninājums.'));else scheduleAutomaticUpdate();};
-  show();serviceRegistration.addEventListener('updatefound',()=>serviceRegistration.installing?.addEventListener('statechange',show));
+ if(serviceRegistrationPromise)return serviceRegistrationPromise;
+ if(!('serviceWorker'in navigator))return null;
+ serviceRegistrationPromise=(async()=>{
+  serviceRegistration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+  const show=()=>{
+   if(!serviceRegistration?.waiting)return;
+   if(updateHasPendingWork())toast(S('An update is available in Settings.','Iestatījumos ir pieejams atjauninājums.'));
+   else scheduleAutomaticUpdate();
+  };
+  show();
+  serviceRegistration.addEventListener('updatefound',()=>{
+   const installing=serviceRegistration.installing;
+   installing?.addEventListener('statechange',show);
+  });
   navigator.serviceWorker.addEventListener('message',event=>{
    if(event.data?.type!=='CHECK_UPDATE_STATE'||!event.ports?.[0])return;
    event.ports[0].postMessage({type:'UPDATE_STATE',safe:!updateHasPendingWork()&&!updateActivationInFlight});
@@ -2250,16 +2300,33 @@ async function registerServiceWorker(){
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
    if(!updateActivationInFlight&&!updateHasPendingWork())location.reload();
   });
- }catch(error){console.warn('Offline cache registration failed',error);}
+  // Firefox can keep a long-lived, controlled tab alive for days. Recheck
+  // when it becomes foregrounded and periodically; never clear site data.
+  backgroundHandles.push(setInterval(()=>{if(!document.hidden)void refreshRelease();},15*60*1000));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshRelease();});
+  window.addEventListener('online',()=>void refreshRelease({force:true}));
+  void refreshRelease({force:true}).finally(()=>{releaseStartupCheckPending=false;if(route.name==='home')render();});
+  return serviceRegistration;
+ })().catch(error=>{serviceRegistrationPromise=null;releaseStartupCheckPending=false;console.warn('Offline cache registration failed',error);if(route.name==='home')render();return null;});
+ return serviceRegistrationPromise;
 }
 async function applyPendingUpdate({automatic=false}={}){
  if(updateActivationInFlight)return;
- if(updateHasPendingWork()){
-  if(!automatic)toast(S('Finish or save your current work before updating.','Pirms atjaunināšanas pabeidz vai saglabā iesākto.'));
-  return;
+ if(!automatic){
+  if(!serviceRegistration)await registerServiceWorker();
+  if(!serviceRegistration){toast(S('Update checks are unavailable in this browser.','Atjauninājumu pārbaude šajā pārlūkā nav pieejama.'),7000);return;}
+  if(!serviceRegistration.waiting){
+   toast(S('Checking for an update…','Pārbauda atjauninājumus…'));
+   const check=await refreshRelease({force:true});
+   if(check.kind==='error'){toast(S('Update check failed. Check your connection and try again.','Atjauninājuma pārbaude neizdevās. Pārbaudi savienojumu un mēģini vēlreiz.'),7000);return;}
+  }
  }
  const waiting=serviceRegistration?.waiting;
- if(!waiting){if(!automatic)toast(S('No waiting update.','Nav gaidoša atjauninājuma.'));return;}
+ if(!waiting){if(!automatic)toast(S('No newer verified release is waiting.','Nav gaidoša jaunāka pārbaudīta laidiena.'));return;}
+ if(updateHasPendingWork()){
+  if(!automatic)toast(S('Finish or save your current work before updating. If another dialog is open, close it first.','Pirms atjaunināšanas saglabā iesākto. Ja ir atvērts dialogs, vispirms aizver to.'),7000);
+  return;
+ }
  const captured=state,version=localGeneration,dialogRoot=$('#dialog-root'),previousAppInert=appEl.inert,previousDialogInert=dialogRoot?.inert;
  let channel=null,timer=null,controllerListener=null,sent=false,uncertain=false;
  updateActivationInFlight=true;
@@ -2279,20 +2346,19 @@ async function applyPendingUpdate({automatic=false}={}){
     if(result.ok===true){accepted=true;done();return;}
     const error=new Error(result.code||'ACTIVATION_FAILED');error.code=result.code||'ACTIVATION_FAILED';reject(error);
    };
-   timer=setTimeout(()=>{const error=new Error('UPDATE_TIMEOUT');error.code='UPDATE_TIMEOUT';reject(error);},20000);
+   timer=setTimeout(()=>{const error=new Error('UPDATE_TIMEOUT');error.code='UPDATE_TIMEOUT';reject(error);},25000);
    waiting.postMessage({type:'ACTIVATE_RELEASE',workoutActive:false,unsavedChanges:false},[channel.port2]);sent=true;
   });
   location.reload();
  }catch(error){
   if(sent&&error.code==='UPDATE_TIMEOUT'){
-   // An unknown activation outcome must not allow a new workout to begin while
-   // the worker could still take control. Offer an explicit reload recovery.
    uncertain=true;if(dialogRoot)dialogRoot.inert=false;
    openDialog(`<h2>${esc(S('Reload to continue','Pārlādē, lai turpinātu'))}</h2><p>${esc(S('The update could not be confirmed. Reload this tab before continuing. Your saved data is retained.','Atjauninājumu neizdevās apstiprināt. Pirms turpināšanas pārlādē šo cilni. Saglabātie dati ir saglabāti.'))}</p><div class="dialog-actions"><button id="reload-after-update">${esc(S('Reload this tab','Pārlādēt šo cilni'))}</button></div>`);
    $('#reload-after-update')?.addEventListener('click',()=>location.reload());
-  }else if(['OTHER_WINDOW_BUSY','UNCONFIRMED_WINDOW'].includes(error.code)) {if(!automatic)toast(S('Another Gym Progress window has unfinished work or cannot confirm it is safe.','Citā Gym Progress logā ir nepabeigts darbs vai nav iespējams apstiprināt drošu atjaunināšanu.'),7000);}
-  else if(error.code==='ACTIVE_WORKOUT')toast(S('Finish your workout before applying an update.','Pirms atjaunināšanas pabeidz treniņu.'));
-  else toast(S('The update was not applied. Reload this tab and try again.','Atjauninājums netika piemērots. Pārlādē šo cilni un mēģini vēlreiz.'),7000);
+  }else if(['OTHER_WINDOW_BUSY','UNCONFIRMED_WINDOW'].includes(error.code)){
+   if(!automatic)toast(S('Another Gym Progress tab cannot confirm that it is idle. Close other tabs and try again; do not clear site data.','Cita Gym Progress cilne nevar apstiprināt, ka tā ir brīva. Aizver citas cilnes un mēģini vēlreiz; nedzēs vietnes datus.'),9000);
+  }else if(error.code==='ACTIVE_WORKOUT')toast(S('Finish your workout before applying an update.','Pirms atjaunināšanas pabeidz treniņu.'));
+  else toast(S('The update was not applied. Try again in Settings.','Atjauninājums netika lietots. Mēģini vēlreiz Iestatījumos.'),7000);
  }finally{
   if(timer)clearTimeout(timer);channel?.port1.close();channel?.port2.close();
   if(controllerListener)navigator.serviceWorker.removeEventListener('controllerchange',controllerListener);
@@ -2329,7 +2395,15 @@ export function stopApp(){clearInterval(tickHandle);for(const h of backgroundHan
 
 function calibrateExercise(id){const target=getSessionExercise(id);if(!target)return;formDialog(S('Working weight','Darba svars'),'<p data-user-content>'+esc(sessionDisplayName(target))+'</p><label class="field" for="calibration-weight">kg</label><input id="calibration-weight" type="text" inputmode="decimal"><div class="small">'+esc(S('Enter the weight you have chosen for this exercise.','Ievadi šim vingrinājumam izvēlēto svaru.'))+'</div>',S('Set weight','Iestatīt svaru'),async()=>{const input=$('#calibration-weight'),raw=input?.value?.trim(),weight=recommendationWeight(raw);if(weight==null||weight>100000){toast(S('Enter a valid working weight.','Ievadi derīgu darba svaru.'));return;}if(currentActiveContext().e?.sessionId!==target.sessionId)throw new Error('Workout changed');target.plannedWeightKg=weight;target.requiresCalibration=false;target.rampPlanJson=JSON.stringify(recommendRamp(weight,target.targetReps,target.exerciseType,target.exerciseKey,target.name,target.equipment,state.app_state.maxRampUpSets));for(const set of exerciseSets(state,id).filter(x=>x.status==='PENDING'))set.plannedWeightKg=weight;const template=state.template_exercises.find(t=>t.id===target.templateExerciseId);if(template){template.initialWeightKg=weight;template.requiresCalibration=false;template.weightSource='USER_ENTERED';}runtime().workingWeight=weight;await persist();closeDialog();await beginPreparedExercise();});}
 
-function openDataReview(){const unresolved=[...(state.v2?.unresolvedRecords||[]),...(state.sync_foundation?.quarantine||[]).map(x=>x.record||x)],deferred=state.sync_foundation?.deferredRemote||[],warnings=state.integrity?.warnings||[],aliases=Object.keys(state.sync_foundation?.aliases||{}).length;openDialog('<h2>'+esc(S('Data review','Datu pārskatīšana'))+'</h2><p>'+esc(unresolved.length+' '+S('unassigned records','nepiesaistīti ieraksti')+' · '+deferred.length+' '+S('waiting for related records','gaida saistītus ierakstus')+' · '+aliases+' '+S('preserved identity aliases','saglabāti identitāšu aizstājvārdi'))+'</p>'+unresolved.map(record=>'<details class="card"><summary data-user-content>'+esc(record.payload?.name||record.entity_type||S('Record','Ieraksts'))+'</summary><pre class="data-review-json">'+esc(JSON.stringify(record,null,2))+'</pre></details>').join('')+(warnings.length?'<pre class="data-review-json">'+esc(JSON.stringify(warnings,null,2))+'</pre>':'')+'<div class="dialog-actions"><button class="secondary" onclick="gp.downloadBackup()">'+esc(S('Full backup','Pilna rezerves kopija'))+'</button><button onclick="gp.closeDialog()">'+esc(S('Close','Aizvērt'))+'</button></div>');}
+function openDataReview(){
+ const unresolved=[...(state.v2?.unresolvedRecords||[]),...(state.sync_foundation?.quarantine||[]).map(x=>x.record||x)],deferred=state.sync_foundation?.deferredRemote||[],warnings=state.integrity?.warnings||[],aliases=Object.keys(state.sync_foundation?.aliases||{}).length;
+ const details=deferred.map(({record,reason})=>{
+  const refs=Object.entries(record?.payload||{}).filter(([key])=>key.endsWith('SyncId')).map(([key,value])=>key+': '+String(value)).join(' · ');
+  return '<details class="card"><summary>'+esc([record?.entity_type||'Record',reason||'MISSING_PARENT'].join(' · '))+'</summary><p class="small">'+esc(refs||S('A required parent record could not be located.','Neizdevās atrast nepieciešamo saistīto ierakstu.'))+'</p><pre class="data-review-json">'+esc(JSON.stringify({reason,record},null,2))+'</pre></details>';
+ }).join('');
+ const checked=Number(state.sync_foundation?.lastDependencyRecheckAt||0),recheck=deferred.length?'<p class="note">'+esc(S('The app has checked the cloud for missing parent records. Unresolved records are retained without alteration; sync of unrelated records can still succeed. Export a backup before further investigation.','Lietotne pārbaudīja mākoņa datus, meklējot trūkstošos saistītos ierakstus. Neatrisinātie ieraksti saglabāti nemainīti; pārējie ieraksti var tikt sinhronizēti. Pirms izpētes eksportē rezerves kopiju.'))+(checked?' '+esc(S('Last full dependency check: ','Pēdējā pilnā saistību pārbaude: ')+dateTime(checked)):'')+'</p>':'';
+ openDialog('<h2>'+esc(S('Data review','Datu pārskatīšana'))+'</h2><p>'+esc(unresolved.length+' '+S('unassigned records','nepiesaistīti ieraksti')+' · '+deferred.length+' '+S('related-record issues','saistīto ierakstu problēmas')+' · '+aliases+' '+S('preserved identity aliases','saglabāti identitāšu aizstājvārdi'))+'</p>'+recheck+details+unresolved.map(record=>'<details class="card"><summary data-user-content>'+esc(record.payload?.name||record.entity_type||S('Record','Ieraksts'))+'</summary><pre class="data-review-json">'+esc(JSON.stringify(record,null,2))+'</pre></details>').join('')+(warnings.length?'<pre class="data-review-json">'+esc(JSON.stringify(warnings,null,2))+'</pre>':'')+'<div class="dialog-actions"><button class="secondary" onclick="gp.downloadBackup()">'+esc(S('Full backup','Pilna rezerves kopija'))+'</button><button onclick="gp.closeDialog()">'+esc(S('Close','Aizvērt'))+'</button></div>');
+}
 function openSyncConflictReview(){const conflicts=listTrainingSyncConflicts(state);if(!conflicts.length){toast(S('No unresolved conflicts.','Nav neatrisinātu konfliktu.'));return;}window.__gpConflictReview=conflicts;openDialog('<h2>'+esc(S('Review sync conflicts','Pārskatīt sinhronizācijas konfliktus'))+'</h2>'+conflicts.map((conflict,index)=>{const local=conflict.local?.payload,cloud=conflict.remote?.payload,keys=[...new Set([...Object.keys(local||{}),...Object.keys(cloud||{})])].filter(key=>fingerprint(local?.[key])!==fingerprint(cloud?.[key]));const display=value=>value==null?'—':typeof value==='object'?JSON.stringify(value):String(value);const name=local?.name||local?.displayName||local?.workoutName||cloud?.name||cloud?.displayName||cloud?.workoutName||conflict.entityType;return '<section class="card"><h3 data-user-content>'+esc(name)+'</h3><div class="data-table-wrap"><table class="data-table"><thead><tr><th>'+esc(S('Field','Lauks'))+'</th><th>'+esc(S('This device','Šī ierīce'))+'</th><th>'+esc(S('Cloud','Mākonis'))+'</th></tr></thead><tbody>'+keys.map(key=>'<tr><th>'+esc(key)+'</th><td>'+esc(display(local?.[key]))+'</td><td>'+esc(display(cloud?.[key]))+'</td></tr>').join('')+'</tbody></table></div>'+(!local||!cloud?'<p>'+esc(!local?S('Local version is deleted.','Lokālā versija ir dzēsta.'):S('Cloud version is deleted.','Mākoņa versija ir dzēsta.'))+'</p>':'')+'<div class="dialog-actions"><button class="secondary" onclick="gp.chooseSyncConflict('+index+',\'local\')">'+esc(S('Keep local','Paturēt lokālo'))+'</button><button class="secondary" onclick="gp.chooseSyncConflict('+index+',\'cloud\')">'+esc(S('Use cloud','Izmantot mākoni'))+'</button></div></section>';}).join('')+'<div class="dialog-actions"><button onclick="gp.closeDialog()">'+esc(S('Close','Aizvērt'))+'</button></div>');}
 async function chooseSyncConflict(index,choice){const conflict=window.__gpConflictReview?.[index],captured=state;if(!conflict)return;await resolveTrainingSyncConflict(captured,conflict.id,choice,{persist:async value=>{if(value!==state)throw new Error('Workspace changed');await saveState(value);},isCurrent:value=>value===state,expectedLocalRevision:conflict.local.localRevision});closeDialog();render();if(listTrainingSyncConflicts(state).length)openSyncConflictReview();else await performTrainingSync({reason:'manual'});}
 async function eraseScopedData(scope){const original=state,storeScope=stateWorkspace,authVersion=authGeneration(),owner=socialUser()?.id;return workspaceLifecycle.run(async()=>{const guard=()=>{if(state!==original||currentWorkspace()!==storeScope||stateWorkspace!==storeScope||authGeneration()!==authVersion||socialUser()?.id!==owner)throw new Error('Account changed during deletion');};guard();suppressTrainingSyncSchedule=true;let result=null;try{const next=clone(original);if(owner){const status=await getWorkspaceStatus({refresh:true});guard();Object.assign(next.sync_foundation,{workspaceId:status.workspace_id,legacyOwnerId:status.legacy_owner_id,eraseEpoch:status.erase_epoch});result=await eraseMyCloudTraining(scope);guard();}if(scope==='all'){for(const name of ['workout_templates','user_exercises','template_exercises','workout_sessions','session_exercises','performed_sets','tracker_items','tracker_states','tracker_entries'])next[name]=[];next.app_state.nextWorkoutId=null;next.app_state.nextSessionAt=null;}else redactWorkoutHistory(next);next.runtime=null;if(scope==='all'){next.revisions=[];delete next.v2;delete next.integrity;delete next.analysisHistory;}next.app_state.lastInactivityReminderFor=null;if(result)resetAfterCloudErasure(next,result,{scope});else ensureSyncFoundation(next);if(scope==='all')await purgeRecoveryStates({expectedWorkspace:storeScope});else await redactRecoveryHistory({expectedWorkspace:storeScope});guard();await saveState(next,{expectedWorkspace:storeScope});guard();state=next;}catch(error){if(result?.ok){error.cloudErased=true;if(state===original){state.sync_foundation.blocked={code:'LOCAL_ERASE_PENDING',serverEpoch:result.erase_epoch,scope};await saveState(state,{expectedWorkspace:storeScope}).catch(()=>{});}error.message=S('Cloud data was erased; local cleanup needs retry.','Mākoņa dati ir dzēsti; lokālā tīrīšana jāatkārto.')+' '+error.message;}throw error;}finally{suppressTrainingSyncSchedule=false;}});}
