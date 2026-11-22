@@ -15,7 +15,17 @@ function openDb(){
  });return connection;
 }
 export function currentWorkspace(){return workspace;}
-export async function setWorkspace(key){if(typeof key!=='string'||!/^guest$|^account:[a-f0-9-]{36}$/.test(key))throw new Error('Invalid local workspace');await writeQueue.catch(()=>{});workspace=key;observedRevision=null;knownRows=new Map();return loadState();}
+export async function setWorkspace(key){
+ if(typeof key!=='string'||!/^guest$|^account:[a-f0-9-]{36}$/.test(key))throw new Error('Invalid local workspace');
+ await writeQueue.catch(()=>{});
+ // A service worker has no access to window.localStorage/auth. Record only
+ // the currently selected LOCAL workspace, never credentials, so an unused
+ // signed-out account with old pending records cannot block future releases.
+ const d=await openDb(),tx=d.transaction('meta','readwrite'),done=complete(tx);
+ tx.objectStore('meta').put({activeScope:key,changedAt:Date.now()},'__active-workspace__');
+ await done;
+ workspace=key;observedRevision=null;knownRows=new Map();return loadState();
+}
 export async function loadState(){
  const scope=workspace,d=await openDb(),tx=d.transaction(['meta','rows'],'readonly');
  const [meta,records]=await Promise.all([request(tx.objectStore('meta').get(scope)),request(tx.objectStore('rows').index('workspace').getAll(scope))]);

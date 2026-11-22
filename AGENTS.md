@@ -1,3 +1,9 @@
+# Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
+
+**Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.
+
+---
+
 # 2.1.4 current authoritative build and update rules
 
 - Do not infer that user uploaded source from a single HTTP 404. The 2.1.3 PWA ZIP included `deployment-status.json`; the website may serve a partial, stale or differently scoped deployment. Diagnose the served `sw.js`, `release.json`, Pages configuration and site URL.

@@ -1,3 +1,9 @@
+# Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
+
+**Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.
+
+---
+
 ## v2.1.4 release/refresh contract — mandatory
 
 On a normal PWA load or browser refresh, check for a newer verified release automatically; apply it once the current local state is durable, sync and workspace transitions finish, no workout/form is active and open tabs confirm idle. Do not require a Settings button, erase browser storage, silently drop any unsynced changes or force-switch mid-workout. For an older cached 2.1.1 client incapable of running the new code, serve a one-time recovery page from the network without unregistering the worker or clearing IndexedDB. A signed-in refresh must start cloud reconciliation of programme, workout logs and Tracker automatically; retry on reconnect/foreground; preserve conflicts and missing-parent records for review. Android source continues to reuse the same frontend with native OS adapters, but a new APK is required to ship a new bundled release.

@@ -1,6 +1,6 @@
 {
-  "version": "2.1.4",
-  "id": "2.1.4-f79f5e025d34",
+  "version": "2.2.0",
+  "id": "2.2.0-fc561483999d",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "82b34ed20820d6ec1d717abde26c8ab157fcb086392fdca3c3f4ea15319d98a6",
-      "bytes": 400403
+      "sha256": "9ca3d171ff098803eda91e40026518ba4a9593942506c1529c5e019bcd099cdf",
+      "bytes": 410084
     },
     {
       "path": "autoregulation.js",
@@ -39,8 +39,8 @@
     },
     {
       "path": "db.js",
-      "sha256": "0cbd7f017a51c150e83989be2219f6179c7c6d3a2fa8f6b25fddc87f6f14e431",
-      "bytes": 7085
+      "sha256": "8fb5a58dc64922a85267201238f4303f123ec214137f54643f9585aa2c8ee908",
+      "bytes": 7507
     },
     {
       "path": "design-system.css",
@@ -193,6 +193,11 @@
       "bytes": 589
     },
     {
+      "path": "native-reminder-plan.js",
+      "sha256": "3d8757fd58cfa63791a5d137e9c4f11f1ab72dcda40f093ff391ff8c2e986d34",
+      "bytes": 3733
+    },
+    {
       "path": "native-workout-alerts.js",
       "sha256": "599b1821956e76d4c61b9f0617dfd7b7de62748063f5148b909e0f72a31ad407",
       "bytes": 2376
@@ -201,6 +206,16 @@
       "path": "notification-delivery.js",
       "sha256": "2c33adc9c4e24fad5a9b7d5fd1202a9337eb5d6a3ed43cc9e0f0b3f3d1783201",
       "bytes": 1676
+    },
+    {
+      "path": "offline-attach-repository.js",
+      "sha256": "4939cc1ac448fc11475084aef965a8f3f1116a5975c7927ccf3f69b98ccfa561",
+      "bytes": 4708
+    },
+    {
+      "path": "offline-ownership.js",
+      "sha256": "b161f70d421bd6cf5782813acd88847f203e1e89d44a07b0903e4c3cca38a084",
+      "bytes": 5757
     },
     {
       "path": "performance-rules.js",
@@ -318,6 +333,11 @@
       "bytes": 7100
     },
     {
+      "path": "tracker-pace.js",
+      "sha256": "531bead5d3e14222aa67e21b1be815579d0581399755aad969694f5a1cc8dbcf",
+      "bytes": 1322
+    },
+    {
       "path": "training-sync.js",
       "sha256": "835b4b445a66c0e9726f3321b033328abd3b30483757dafdcd8ada88d543b01b",
       "bytes": 31953
@@ -329,8 +349,13 @@
     },
     {
       "path": "ui.css",
-      "sha256": "3a30fe67b352dbc8eef8e0b10a11e2912488b3015367dfd4103cdb561183c004",
-      "bytes": 70157
+      "sha256": "7ed788afe5b821177b2f7a39d467cb56d946f9a1d4000e96327e70ecc788ecb3",
+      "bytes": 70599
+    },
+    {
+      "path": "update-policy.js",
+      "sha256": "3157c7f1697dff87e2f29cad16467d55dd9459fecbc0e358f964c2a155956db5",
+      "bytes": 1563
     },
     {
       "path": "update-rescue-212.js",

@@ -1,3 +1,14 @@
+# Release 2.2.0 — offline ownership, Android-native alerts and guarded updates
+
+- Keep training as **guest offline**; on account sign-in/creation explicitly offer to attach guest training or keep separate. Existing account data is preserved and source guest data is backed up transactionally.
+- Logout **warns** that account-owned programme/history/Tracker becomes inaccessible until re-login. Signed-out training is a different guest profile; switching accounts is prohibited mid-workout.
+- Friends opt-out explanation navigates to the **exact Compare exercises Settings card**; social settings are lower priority than workout setup.
+- PWA updates only on refresh or explicit Update now, when safe; no version switch mid-workout or while enabled-account uploads are pending. Browser refresh and connectivity changes start sync; cloud dependency issues are preserved for review.
+- Android bundles the same PWA UI/logic, but OS-owned alarm receiver, actual WAV sounds, Tracker/motivation alarms, and native permission bridge run independently of the WebView. Settings contains a test-sound action. Obsolete native WebView worker is unregistered without erasing IndexedDB.
+- No SQL migration. Android APK native compilation, real device notification/sounds, PWA live deployment and live account reconciliation **remain unverified**.
+
+---
+
 # What’s new — Gym Progress 2.1.4
 
 ## English — automatic refresh and recovery

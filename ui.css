@@ -347,3 +347,6 @@ button.progress-entry strong,button.progress-entry .progress-entry-value{color:v
 .comparison-settings-card .setting-toggle-row{margin:0;min-width:0}
 .comparison-settings-card .setting-toggle-copy{min-width:0}
 .friend-comparison-body>.note{margin-top:0}
+
+/* An idle, verified PWA update may be accepted without entering Settings. */
+.update-ready-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px max(18px,calc((100vw - var(--page-width)) / 2 + 18px));background:var(--surface2);border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.4}.update-ready-banner button{flex:0 0 auto;min-height:35px;padding:5px 12px;font-size:12px}

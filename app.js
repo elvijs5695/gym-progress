@@ -7,6 +7,8 @@ import {WORKOUT_DAY_NAME_MAX,EXERCISE_NAME_MAX,editableNameAllowed} from './name
 import {redactWorkoutHistory} from './data-erasure.js';
 import {captureRecommendationTarget,currentRecommendationTarget,recommendationWeight,recommendationReps} from './recommendation-guard.js';
 import {createWorkspaceLifecycle} from './workspace-lifecycle.js';
+import {attachOfflineTraining,hasOfflineTraining,offlineTrainingCounts} from './offline-ownership.js';
+import {loadOfflineSnapshot,loadScopedSnapshot,commitOfflineAttachment} from './offline-attach-repository.js';
 import {csvRows,detailedExport,csvCell} from './export-data.js';
 import {exportTextFile} from './file-export.js';
 import {createBackup,parseBackup,inspectState,assertPreserved,clone,fingerprint} from './data-contract.js';
@@ -33,22 +35,26 @@ import {ensureSyncFoundation} from './sync-foundation.js';
 import {metaForLocal} from './sync-codec.js';
 import {getTrainingSyncPreview,runTrainingSync,enabledSyncDomains,syncStatusLabel,listTrainingSyncConflicts,resolveTrainingSyncConflict,resetAfterCloudErasure} from './training-sync.js';
 import {checkForWaitingRelease,inspectPublishedRelease,readWorkerRelease} from './release-update.js';
+import {updateGate} from './update-policy.js';
 
 import {deliverPwaNotification} from './notification-delivery.js';
 import {advanceRestAudioCue} from './rest-audio-cues.js';
 import {workoutAlarmPlan,syncNativeWorkoutAlarms} from './native-workout-alerts.js';
+import {trackerPace as sharedTrackerPace} from './tracker-pace.js';
+import {nativeReminderPlan,syncNativeReminderPlan} from './native-reminder-plan.js';
 import {buildProgressExerciseOptions} from './progress-options.js';
 import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sourceForProgressMetric} from './progress-analytics.js';
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.1.4';
+const APP_VERSION='2.2.0';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
 const statusRoot=$('#status-root');
 let state=null;
+let offlineDataAvailable=false,offlineAttachmentOfferedFor=null;
 let route={name:'home',id:null};
 let ui={selectedWorkoutId:null,expandedWorkoutId:null,progressExercise:'',progressRange:'3m',progressMetric:'WEIGHT',customStart:'',customEnd:'',toast:null,toastStartedAt:0,toastDuration:INFO_MESSAGE_MS,movedWorkoutId:null,transitionMessage:null,transitionStartedAt:0,transitionDuration:INFO_MESSAGE_MS,setStatusMessage:null,restExpand:false,timelineDays:null,timelineEndMs:null,advancedExercise:false,trackerExpanded:false,logLimit:40};
 let socialUi={profile:null,friends:[],requests:[],notifications:[],feed:[],timeline:[],loading:false,loaded:false,hasMore:true,beforeAt:null,beforeId:null,unseen:false,friendsExpanded:false,timelineDays:null,timelineEndMs:null,compareFriendId:null,compareExercises:[],compareExerciseId:null,comparePoints:[],compareExpanded:false,comparisonPref:{allowed:false,revision:0,loaded:false}};
@@ -63,20 +69,30 @@ let trackerRenderedDate=trackerTodayKey();
 let trackerVisualBucket=-1;
 const sentTrackerReminderKeys=new Set();
 const TRACKER_NOTIFICATIONS_KEY='gym-progress-tracker-notifications-enabled';
-function trackerNotificationsEnabled(){return localStorage.getItem(TRACKER_NOTIFICATIONS_KEY)!=='0';}
+function trackerNotificationsEnabled(){return localStorage.getItem(TRACKER_NOTIFICATIONS_KEY)==='1';}
 function notificationPermissionState(){const native=globalThis.GymProgressAndroid;try{if(native&&typeof native.notificationPermission==='function')return native.notificationPermission();}catch{}return typeof Notification==='undefined'?'unavailable':Notification.permission;}
 let nativeWorkoutAlertStatus='browser';
 function androidAlarmAccessStatus(){const bridge=globalThis.GymProgressAndroid;try{return bridge?.alarmAccessStatus?.()||'not-android';}catch{return 'unavailable';}}
+function syncAndroidReminders(){
+ if(!state||workspaceTransition||writeBlocked)return;
+ const plan=nativeReminderPlan(state,{scope:stateWorkspace,trackerEnabled:trackerNotificationsEnabled()&&notificationPermissionState()==='granted',language:languageCode(state)});
+ syncNativeReminderPlan(plan);
+}
 function syncWorkoutAlarmPlan(){
  if(!state||workspaceTransition||writeBlocked)return;
  try{
   const rt=runtime(),ctx=rt?.phase==='TIMED_SET'?currentActiveContext():null;
   const plan=workoutAlarmPlan(rt,ctx?.e,ctx?.set,state.app_state.soundEnabled!==false,languageCode(state));
-  nativeWorkoutAlertStatus=syncNativeWorkoutAlarms(plan);
+  nativeWorkoutAlertStatus=syncNativeWorkoutAlarms(plan);syncAndroidReminders();
  }catch(error){console.warn('Native workout alert sync unavailable',error);nativeWorkoutAlertStatus='bridge-error';}
 }
 function nativeAlertOwnsCue(){return nativeWorkoutAlertStatus==='scheduled'||nativeWorkoutAlertStatus==='delivered';}
-function refreshAndroidAlerts(){syncWorkoutAlarmPlan();if(route.name==='settings')render();}
+function refreshAndroidAlerts(){syncWorkoutAlarmPlan();if(route.name==='settings')render();if(document.querySelector('.tracker-notification-row'))openTrackerSettings();}
+function testAndroidSound(){
+ if(!globalThis.GymProgressAndroid?.playCue){toast(S('Native sound test is available in the Android app.','Skaņas tests ir pieejams Android lietotnē.'));return;}
+ globalThis.GymProgressAndroid.playCue('ready');
+ toast(S('Played test cue. If you did not hear it, check your Android alarm volume and sound settings.','Atskaņots tests. Ja to nedzirdēji, pārbaudi Android signālu skaļumu.'));
+}
 function requestBackgroundAlerts(){
  const native=globalThis.GymProgressAndroid;if(!native)return;
  if(notificationPermissionState()!=='granted'){native.requestNotifications?.();toast(S('Allow Android notifications, then enable precise workout alarms.','Atļauj Android paziņojumus, pēc tam precīzos treniņa signālus.'),5500);return;}
@@ -268,29 +284,7 @@ function trackerAmount(item){const row=(state.tracker_states||[]).find(x=>String
 function trackerState(item){const today=trackerTodayKey();let row=(state.tracker_states||[]).find(x=>String(x.itemId)===String(item.id));if(!row){row={itemId:item.id,localDate:today,amount:0};state.tracker_states.push(row);}else if(String(row.localDate)!==today){state.tracker_entries=state.tracker_entries||[];const archiveId='day:'+String(item.id)+':'+String(row.localDate);if(!state.tracker_entries.some(x=>x.id===archiveId))state.tracker_entries.push({...clone(row),id:archiveId});row.localDate=today;row.amount=0;}return row;}
 function rollTrackerStatesToToday(){const before=fingerprint(state.tracker_states);for(const item of state.tracker_items||[])trackerState(item);return before!==fingerprint(state.tracker_states);}
 function trackerUnit(item){return translateUI(String(item.unit||'').trim(),languageCode(state));}
-function trackerPace(item,at=new Date()){
-  const parseTime=v=>{const [h,m]=String(v||'').split(':').map(Number);return (Number.isFinite(h)?h:0)*60+(Number.isFinite(m)?m:0);};
-  const start=parseTime(item.productiveStart||'08:00'),end=Math.max(start+1,parseTime(item.productiveEnd||'22:00')),cur=at.getHours()*60+at.getMinutes(),span=end-start;
-  const target=Math.max(.01,Number(item.targetAmount||0)),increment=Math.max(.01,Number(item.increment||1)),steps=Math.max(1,Math.ceil((target-1e-9)/increment));
-  const timeFraction=Math.max(0,Math.min(1,(cur-start)/span));
-  let dueSteps=0,slot=0;
-  if(cur>=end){dueSteps=steps;slot=steps>span/60?6:steps;}
-  else if(cur>start){
-    const elapsed=cur-start;
-    if(steps>span/60){
-      // Dense targets use six equal checkpoints across the configured productive window.
-      const checkpointCount=6,checkpointSpan=span/checkpointCount;
-      const checkpoint=Math.min(checkpointCount,Math.floor(elapsed/checkpointSpan+1e-9));
-      dueSteps=checkpoint>0?Math.floor((steps*checkpoint)/checkpointCount+1e-9):0;slot=checkpoint;
-    }else{
-      // Each increment owns an equal time window; the last one is due at the configured end time.
-      const interval=span/steps;dueSteps=Math.floor(elapsed/interval+1e-9);slot=dueSteps;
-    }
-  }
-  dueSteps=Math.max(0,Math.min(steps,dueSteps));
-  const dueAmount=cur>=end?target:Math.min(target,dueSteps*increment);
-  return{start,end,cur,target,increment,steps,dueSteps,dueAmount,slot,timeFraction};
-}
+function trackerPace(item,at=new Date()){return sharedTrackerPace(item,at);}
 function trackerBehind(item,at=new Date()){const amount=trackerAmount(item),pace=trackerPace(item,at);return amount+1e-6<pace.target&&amount+1e-6<pace.dueAmount;}
 function trackerTimeFraction(item,at=new Date()){return trackerPace(item,at).timeFraction;}
 function refreshTrackerTimeVisuals(at=new Date()){if(route.name!=='home')return;document.querySelectorAll('.tracker-row[data-tracker-id]').forEach(row=>{const item=(state.tracker_items||[]).find(x=>String(x.id)===row.dataset.trackerId);if(!item)return;const amount=trackerAmount(item),target=Math.max(.01,Number(item.targetAmount||0)),done=amount+1e-6>=target,behind=!done&&trackerBehind(item,at),marker=row.querySelector('.tracker-progress-now');row.classList.toggle('done',done);row.classList.toggle('behind',behind);if(marker)marker.style.left=`${trackerTimeFraction(item,at)*100}%`;});}
@@ -364,11 +358,12 @@ async function requestNotificationPermission(){
  if(!('Notification'in window)){toast(S('Notifications are not available here.','Paziņojumi šeit nav pieejami.'));return;}
  const result=await Notification.requestPermission();toast(result==='granted'?S('Notifications enabled','Paziņojumi ieslēgti'):S('Notifications not enabled','Paziņojumi nav ieslēgti'));render();
 }
-async function checkMotivationReminders(){const a=state?.app_state;if(!a?.motivationEnabled)return;let changed=false;const t=now();if(!activeSession()){const last=latestRecordedSessionAt();if(last!=null&&t>=last+Number(a.inactivityReminderHours||72)*3600000&&a.lastInactivityReminderFor!==last){const days=Math.round(Number(a.inactivityReminderHours||72)/24);if(await showBrowserNotification('Ready for another session?',`It’s been ${days} ${days===1?'day':'days'} since your last recorded workout.`,'gym-inactivity')){a.lastInactivityReminderFor=last;changed=true;}}}const nextAt=a.nextSessionAt==null?null:Number(a.nextSessionAt);if(nextAt!=null){const {evening,morning}=nextReminderTimes(nextAt);if(t>=evening&&t<morning&&a.nextEveningReminderFor!==nextAt){if(await showBrowserNotification('Gym tomorrow','Your next session is planned for tomorrow.','gym-next-evening')){a.nextEveningReminderFor=nextAt;changed=true;}}if(t>=morning&&a.nextMorningReminderFor!==nextAt){if(await showBrowserNotification(t>nextAt?'Planned session is due':'Gym today',t>nextAt?'Your planned gym session is now overdue.':'Your next session is planned for today.','gym-next-morning')){a.nextMorningReminderFor=nextAt;changed=true;}}}if(changed)await persist();}
+async function checkMotivationReminders(){if(globalThis.GymProgressAndroid)return;const a=state?.app_state;if(!a?.motivationEnabled)return;let changed=false;const t=now();if(!activeSession()){const last=latestRecordedSessionAt();if(last!=null&&t>=last+Number(a.inactivityReminderHours||72)*3600000&&a.lastInactivityReminderFor!==last){const days=Math.round(Number(a.inactivityReminderHours||72)/24);if(await showBrowserNotification('Ready for another session?',`It’s been ${days} ${days===1?'day':'days'} since your last recorded workout.`,'gym-inactivity')){a.lastInactivityReminderFor=last;changed=true;}}}const nextAt=a.nextSessionAt==null?null:Number(a.nextSessionAt);if(nextAt!=null){const {evening,morning}=nextReminderTimes(nextAt);if(t>=evening&&t<morning&&a.nextEveningReminderFor!==nextAt){if(await showBrowserNotification('Gym tomorrow','Your next session is planned for tomorrow.','gym-next-evening')){a.nextEveningReminderFor=nextAt;changed=true;}}if(t>=morning&&a.nextMorningReminderFor!==nextAt){if(await showBrowserNotification(t>nextAt?'Planned session is due':'Gym today',t>nextAt?'Your planned gym session is now overdue.':'Your next session is planned for today.','gym-next-morning')){a.nextMorningReminderFor=nextAt;changed=true;}}}if(changed)await persist();}
 
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
+ {version:'2.2.0',key:'offline-account-native-reminders-safe-upgrades',importance:10,en:'Offline training can now be attached to your account explicitly; signing out keeps account data private. Android has native background workout sounds and Tracker reminders. PWA updates wait until training is complete and local changes are synced.',lv:'Bezsaistes treniņus tagad var apzināti piesaistīt kontam; izrakstoties konta dati paliek privāti. Android pievienoti fona treniņu signāli un Tracker atgādinājumi. PWA atjauninājumi gaida treniņa pabeigšanu un datu sinhronizāciju.'},
  {version:'2.1.1',key:'friends-settings-cardio-android',importance:4,en:'Add friend now appears at the end of the expanded Friends card. Exercise comparison consent is managed in Settings, and cardio summaries put average heart rate before RPE.',lv:'Drauga pievienošana atrodas izvērstās Draugu kartītes beigās. Vingrinājumu salīdzināšanas atļauja ir Iestatījumos, un kardio kopsavilkumā vidējais pulss ir pirms RPE.'},
  {version:'2.1.2',key:'release-and-sync-recovery',importance:8,en:'Refresh now checks for verified app updates and syncs all training data automatically. Missing related cloud records can be reviewed in Data review. Exercise comparison has moved below workout settings.',lv:'Pārlādēšana tagad automātiski pārbauda lietotnes atjauninājumus un sinhronizē treniņu datus. Trūkstošos saistītos ierakstus var pārskatīt Datu pārskatā. Vingrinājumu salīdzināšana pārvietota zem treniņu iestatījumiem.'},
  {version:'2.1.0',key:'consent-workout-integrity',importance:6,en:'Strength comparison is now an account-level opt-in with immediate withdrawal. Workout-step Undo/Redo, zero-weight entry, Tracker history and data validation have been strengthened.',lv:'Spēka salīdzināšana tagad ir konta izvēle ar tūlītēju datu atsaukšanu. Uzlabota treniņa darbību atsaukšana/atjaunošana, nulles svara ievade, Tracker vēsture un datu pārbaude.'},
@@ -438,12 +433,12 @@ async function init(){
  state=loaded?normalize(loaded):normalize(initial);stateWorkspace=currentWorkspace();
  if(socialSignedIn())state.sync_foundation.accountId=socialUser().id;
  ui.selectedWorkoutId=state.app_state.nextWorkoutId;
- accountBootstrapStatus=socialSignedIn()?'loading':'ready';render();
+ accountBootstrapStatus=socialSignedIn()?'loading':'ready';syncWorkoutAlarmPlan();render();
  if(loaded&&fingerprint(state)!==fingerprint(loaded))await saveState(state);
  if(state.runtime?.phase==='CARDIO_ENTRY'){route={name:'active',id:null};render();openCardioEntry();}
  void loadPerformanceRules().then(()=>render()).catch(reportAppError);
  if(socialConfigured()){void refreshReferenceData().then(changed=>{if(changed)render();}).catch(()=>{});if(socialSignedIn()){const owner=socialUser().id;getMyProfile().then(x=>{if(socialUser()?.id!==owner)return;socialUi.profile=x;render();}).catch(()=>{});void refreshSocialBadge();}}
- if('serviceWorker'in navigator)void registerServiceWorker();
+ if(!globalThis.GymProgressAndroid&&'serviceWorker'in navigator)void registerServiceWorker();
  if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
  tickHandle=setInterval(()=>void tick().catch(reportAppError),1000);
  backgroundHandles.push(setInterval(()=>void refreshSocialBadge(),30000),setInterval(()=>void resumeCloudSync('interval'),300000));
@@ -455,7 +450,7 @@ async function init(){
  window.addEventListener('online',()=>resumeApp('online',true));
  window.addEventListener('gp:auth-changed',()=>void switchAccountWorkspace().catch(reportAppError));
  window.addEventListener('pagehide',()=>{if(state&&!writeBlocked&&!workspaceTransition&&currentWorkspace()===stateWorkspace)void persist().catch(()=>{});});
- if(socialSignedIn())void bootstrapAccountHistory().catch(reportAppError);
+ if(socialSignedIn()){void bootstrapAccountHistory().catch(reportAppError);void refreshOfflineAttachmentStatus().then(()=>{if(route.name==='settings')render();});}
 }
 
 function accountDisplayLabel(){return socialSignedIn()?(socialUi.profile?.display_name||String(socialUser()?.email||S('Account','Konts')).split('@')[0]):S('Log in','Pieslēgties');}
@@ -464,7 +459,7 @@ function shell(content,{topbar:customTopbar=null,navBar=true}={}){
  const titles={home:S('Home','Sākums'),logs:S('Logs','Žurnāls'),progress:S('Progress','Progress'),friends:S('Friends','Draugi'),settings:S('Settings','Iestatījumi')};
  const header=customTopbar||'<div class="topbar main-header"><h1 class="topbar-title">'+esc(titles[route.name]||'Gym Progress')+'</h1><div class="topbar-actions">'+accountChip()+'</div></div>';
  // Header height must not change with section navigation. The active-session notice is separate.
- return '<div class="app-shell"><div class="persistent-head">'+header+'</div>'+(route.name!=='active'?activeSessionBanner():'')+'<main class="view with-top '+(route.name==='home'?'home-view':'')+'">'+content+'</main>'+(navBar?bottomNav():'')+'</div>';
+ return '<div class="app-shell"><div class="persistent-head">'+header+'</div>'+(route.name!=='active'?activeSessionBanner():'')+(route.name==='home'?updateReadyBanner():'')+'<main class="view with-top '+(route.name==='home'?'home-view':'')+'">'+content+'</main>'+(navBar?bottomNav():'')+'</div>';
 }
 function mainNavIcon(name){
   const icons={
@@ -770,8 +765,33 @@ function rebuildRuntime(sessionId){
 }
 
 async function changeMaxRampSets(delta){state.app_state.maxRampUpSets=Math.max(0,Math.min(6,Number(state.app_state.maxRampUpSets||3)+Number(delta)));await persist();render();}
-function openTrackerSettings(){const items=(state.tracker_items||[]).slice().sort((a,b)=>(a.position||0)-(b.position||0)),notifyOn=trackerNotificationsEnabled(),permission=typeof Notification==='undefined'?'unavailable':Notification.permission;openDialog(`<h2 data-i18n="Tracker">Tracker</h2><label class="setting-toggle-row tracker-notification-row"><span class="setting-toggle-copy"><strong data-i18n="Tracker notifications">Tracker notifications</strong><small>${esc(translateUI(permission==='denied'?'Blocked in browser settings':notifyOn?'On · pace-aware daily reminders':'Off',languageCode(state)))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" ${notifyOn&&permission!=='denied'?'checked':''} ${permission==='unavailable'?'disabled':''} onchange="gp.setTrackerNotifications(this.checked)"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label><div class="note support-copy" data-i18n="Reminders are spread through each item’s productive day and are skipped while you are ahead of plan.">Reminders are spread through each item’s productive day and are skipped while you are ahead of plan.</div><div id="tracker-settings-list">${items.map(i=>`<div class="tracker-setting-line"><div class="min-zero"><span class="tracker-setting-name">${esc(i.name)}</span>${i.enabled===false?`<span class="small" data-i18n="· disabled"> · disabled</span>`:''}</div><span>${formatNumber(i.targetAmount,{maximumFractionDigits:4})}${i.unit?` ${esc(trackerUnit(i))}`:''}</span><button class="ghost tiny-btn" onclick="gp.editTrackerItem('${i.id}')" data-i18n="Edit">Edit</button><button class="ghost tiny-btn danger-text" onclick="gp.deleteTrackerItem('${i.id}')" data-i18n="Delete">Delete</button></div>`).join('')||"<div class=\"small\" data-interface-text>No items yet.</div>"}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()" data-i18n="Close">Close</button><button onclick="gp.editTrackerItem('')" data-i18n="+ Item">+ Item</button></div>`);}
-async function setTrackerNotifications(enabled){if(!enabled){localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'0');sentTrackerReminderKeys.clear();toast(translateUI('Tracker notifications off',languageCode(state)));openTrackerSettings();return;}if(typeof Notification==='undefined'){toast(translateUI('Browser notifications are not available here',languageCode(state)));return;}let permission=Notification.permission;if(permission!=='granted')permission=await Notification.requestPermission();if(permission==='granted'){localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'1');sentTrackerReminderKeys.clear();toast(translateUI('Tracker notifications on',languageCode(state)));}else{localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'0');toast(permission==='denied'?S('Notifications are blocked in browser settings','Paziņojumi ir bloķēti pārlūkprogrammas iestatījumos'):S('Tracker notifications not enabled','Tracker paziņojumi nav ieslēgti'));}openTrackerSettings();}
+function openTrackerSettings(){const items=(state.tracker_items||[]).slice().sort((a,b)=>(a.position||0)-(b.position||0)),notifyOn=trackerNotificationsEnabled(),permission=notificationPermissionState();openDialog(`<h2 data-i18n="Tracker">Tracker</h2><label class="setting-toggle-row tracker-notification-row"><span class="setting-toggle-copy"><strong data-i18n="Tracker notifications">Tracker notifications</strong><small>${esc(translateUI(permission==='denied'?'Blocked in system notification settings':notifyOn?'On · pace-aware daily reminders':'Off',languageCode(state)))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" ${notifyOn&&permission==='granted'?'checked':''} ${permission==='unavailable'?'disabled':''} onchange="gp.setTrackerNotifications(this.checked)"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label><div class="note support-copy" data-i18n="Reminders are spread through each item’s productive day and are skipped while you are ahead of plan.">Reminders are spread through each item’s productive day and are skipped while you are ahead of plan.</div><div id="tracker-settings-list">${items.map(i=>`<div class="tracker-setting-line"><div class="min-zero"><span class="tracker-setting-name">${esc(i.name)}</span>${i.enabled===false?`<span class="small" data-i18n="· disabled"> · disabled</span>`:''}</div><span>${formatNumber(i.targetAmount,{maximumFractionDigits:4})}${i.unit?` ${esc(trackerUnit(i))}`:''}</span><button class="ghost tiny-btn" onclick="gp.editTrackerItem('${i.id}')" data-i18n="Edit">Edit</button><button class="ghost tiny-btn danger-text" onclick="gp.deleteTrackerItem('${i.id}')" data-i18n="Delete">Delete</button></div>`).join('')||"<div class=\"small\" data-interface-text>No items yet.</div>"}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()" data-i18n="Close">Close</button><button onclick="gp.editTrackerItem('')" data-i18n="+ Item">+ Item</button></div>`);}
+async function setTrackerNotifications(enabled){
+ if(!enabled){localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'0');sentTrackerReminderKeys.clear();syncAndroidReminders();toast(translateUI('Tracker notifications off',languageCode(state)));openTrackerSettings();return;}
+ const native=globalThis.GymProgressAndroid;
+ if(native){
+  if(notificationPermissionState()!=='granted'){
+   localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'0');
+   localStorage.setItem('gym-progress-tracker-permission-pending','1');
+   native.requestNotifications?.();toast(S('Allow notifications in Android to enable Tracker reminders.','Atļauj Android paziņojumus, lai ieslēgtu Tracker atgādinājumus.'));
+   openTrackerSettings();return;
+  }
+ }else if(typeof Notification==='undefined'){toast(translateUI('Browser notifications are not available here',languageCode(state)));return;}
+ else {let permission=Notification.permission;if(permission!=='granted')permission=await Notification.requestPermission();if(permission!=='granted'){toast(S('Tracker notifications not enabled','Tracker paziņojumi nav ieslēgti'));openTrackerSettings();return;}}
+ localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'1');sentTrackerReminderKeys.clear();syncAndroidReminders();toast(translateUI('Tracker notifications on',languageCode(state)));openTrackerSettings();
+}
+function nativeNotificationPermissionResult(result='resume'){
+ if(!globalThis.GymProgressAndroid)return;
+ const pending=localStorage.getItem('gym-progress-tracker-permission-pending')==='1';
+ if(pending&&notificationPermissionState()==='granted'){
+   localStorage.removeItem('gym-progress-tracker-permission-pending');localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'1');
+   toast(S('Tracker notifications enabled.','Tracker paziņojumi ieslēgti.'));
+ }else if(pending&&result==='denied'){
+   localStorage.removeItem('gym-progress-tracker-permission-pending');localStorage.setItem(TRACKER_NOTIFICATIONS_KEY,'0');
+   toast(S('Notifications were not enabled. Open Android settings to grant permission.','Paziņojumi nav ieslēgti. Atļauju var piešķirt Android iestatījumos.'));
+ }
+ syncAndroidReminders();refreshAndroidAlerts();
+}
 function deleteTrackerItem(id){const item=(state.tracker_items||[]).find(x=>x.id===id);if(!item)return;confirmDialog(translateUI('Delete tracker item?',languageCode(state)),`${item.name} will be removed from Tracker. Existing backup data is not otherwise changed.`,translateUI('Delete',languageCode(state)),async()=>{const hasHistory=(state.tracker_entries||[]).some(x=>String(x.itemId)===String(id));
     if(hasHistory){item.enabled=false;item.archived=true;}else{state.tracker_items=state.tracker_items.filter(x=>x.id!==id);state.tracker_states=(state.tracker_states||[]).filter(x=>String(x.itemId)!==String(id));}
     await persist();closeDialog();render();openTrackerSettings();},true);}
@@ -797,13 +817,13 @@ function adjustTracker(id,direction){
 }
 function setTrackerAmount(id){const item=state.tracker_items.find(x=>x.id===id);if(!item)return;const current=trackerAmount(item),unit=trackerUnit(item);formDialog(`${S('Set','Iestatīt')} ${esc(item.name)}`,`<label class="field">${esc(S('Current amount','Pašreizējais daudzums'))}${unit?` (${esc(unit)})`:''}</label><input id="tr-current-amount" type="number" min="0" step="${unit?Math.max(.01,Number(item.increment||1)):1}" value="${current}">`,translateUI('Save',languageCode(state)),async()=>{const row=trackerState(item),value=Number($('#tr-current-amount').value);row.amount=Math.max(0,Number.isFinite(value)?value:current);await persist();closeDialog();render();});}
 function trackerExpected(item,at=new Date()){return trackerPace(item,at).dueAmount;}
-async function checkTrackerReminders(){if(!trackerNotificationsEnabled()||notificationPermissionState()!=='granted')return;const d=new Date();for(const item of state.tracker_items.filter(x=>x.enabled!==false&&x.archived!==true)){const pace=trackerPace(item,d),actual=trackerAmount(item);if(pace.cur<pace.start||pace.slot<=0||actual+1e-6>=pace.target||actual+1e-6>=pace.dueAmount)continue;const key=`tracker/${trackerTodayKey()}/${item.id}/${pace.slot}`;if(sentTrackerReminderKeys.has(key))continue;const delivered=await showBrowserNotification(`Gym Progress · ${item.name}`,`${formatNumber(actual)}/${formatNumber(item.targetAmount)}${item.unit?` ${trackerUnit(item)}`:''} · ${S('By now','Līdz šim')}: ${formatNumber(pace.dueAmount)}/${formatNumber(item.targetAmount)}`,key);if(!delivered)continue;if(sentTrackerReminderKeys.size>200)sentTrackerReminderKeys.clear();sentTrackerReminderKeys.add(key);beepPattern('reminder');}}
+async function checkTrackerReminders(){if(globalThis.GymProgressAndroid)return;if(!trackerNotificationsEnabled()||notificationPermissionState()!=='granted')return;const d=new Date();for(const item of state.tracker_items.filter(x=>x.enabled!==false&&x.archived!==true)){const pace=trackerPace(item,d),actual=trackerAmount(item);if(pace.cur<pace.start||pace.slot<=0||actual+1e-6>=pace.target||actual+1e-6>=pace.dueAmount)continue;const key=`tracker/${trackerTodayKey()}/${item.id}/${pace.slot}`;if(sentTrackerReminderKeys.has(key))continue;const delivered=await showBrowserNotification(`Gym Progress · ${item.name}`,`${formatNumber(actual)}/${formatNumber(item.targetAmount)}${item.unit?` ${trackerUnit(item)}`:''} · ${S('By now','Līdz šim')}: ${formatNumber(pace.dueAmount)}/${formatNumber(item.targetAmount)}`,key);if(!delivered)continue;if(sentTrackerReminderKeys.size>200)sentTrackerReminderKeys.clear();sentTrackerReminderKeys.add(key);beepPattern('reminder');}}
 
 function renderSettings(){
   const a=state.app_state,syncLabel=syncStatusLabel(state),syncUser=socialUser()?.email||'',syncEnabled=enabledSyncDomains(state);
   const content=`
   <div class="card stack"><div class="title" data-i18n="Language">Language</div><div class="segmented"><button class="${a.languageCode==='en'?'active':''}" onclick="gp.setLanguage('en')">English</button><button class="${a.languageCode==='lv'?'active':''}" onclick="gp.setLanguage('lv')">Latviešu</button></div></div>
-  <div class="card stack account-settings-card"><div><div class="title">${esc(S('Account','Konts'))}</div><div class="subtitle">${esc(socialSignedIn()?(syncUser||accountDisplayLabel()):S('Not signed in','Nav pieslēgts'))}</div></div><button class="secondary full" onclick="gp.openAccount()">${esc(socialSignedIn()?S('Account settings / sign out','Konta iestatījumi / iziet'):S('Log in','Pieslēgties'))}</button>${socialSignedIn()?`<div class="divider"></div><div class="title">${esc(S('Sync','Sinhronizācija'))}</div><div class="small">${esc(translateUI(syncLabel,languageCode(state)))} · ${esc(S('Programme','Programma'))}: ${syncEnabled.includes('programme')?S('On','Ieslēgta'):S('Off','Izslēgta')} · ${esc(S('Workout history','Treniņu vēsture'))}: ${syncEnabled.includes('workout_log')?S('On','Ieslēgta'):S('Off','Izslēgta')} · Tracker: ${syncEnabled.includes('tracker')?S('On','Ieslēgta'):S('Off','Izslēgta')}</div><button class="secondary full" onclick="gp.openTrainingSyncReview()">${esc(S('Review & sync now','Pārskatīt un sinhronizēt'))}</button>`:''}</div>
+  <div class="card stack account-settings-card"><div><div class="title">${esc(S('Account','Konts'))}</div><div class="subtitle">${esc(socialSignedIn()?(syncUser||accountDisplayLabel()):S('Not signed in','Nav pieslēgts'))}</div></div><button class="secondary full" onclick="gp.openAccount()">${esc(socialSignedIn()?S('Account settings / sign out','Konta iestatījumi / iziet'):S('Log in','Pieslēgties'))}</button>${socialSignedIn()&&offlineDataAvailable?`<button class="secondary full" onclick="gp.maybeOfferOfflineAttachment(true)">${esc(S('Attach offline training','Pievienot bezsaistes treniņus'))}</button>`:''}${socialSignedIn()?`<div class="divider"></div><div class="title">${esc(S('Sync','Sinhronizācija'))}</div><div class="small">${esc(translateUI(syncLabel,languageCode(state)))} · ${esc(S('Programme','Programma'))}: ${syncEnabled.includes('programme')?S('On','Ieslēgta'):S('Off','Izslēgta')} · ${esc(S('Workout history','Treniņu vēsture'))}: ${syncEnabled.includes('workout_log')?S('On','Ieslēgta'):S('Off','Izslēgta')} · Tracker: ${syncEnabled.includes('tracker')?S('On','Ieslēgta'):S('Off','Izslēgta')}</div><button class="secondary full" onclick="gp.openTrainingSyncReview()">${esc(S('Review & sync now','Pārskatīt un sinhronizēt'))}</button>`:''}</div>
 
   <div class="section-title" data-i18n="Training">Training</div>
   <div class="card clickable" onclick="gp.nav('programme')"><div class="card-row"><div class="grow"><div class="title" data-i18n="Programme">Programme</div></div>${navChevron()}</div></div>
@@ -820,13 +840,13 @@ function renderSettings(){
   <div class="card"><button class="secondary full" onclick="gp.editDifficulty()" data-i18n="Difficulty levels">Difficulty levels</button></div>
   <div class="card stack"><div class="card-row"><div class="grow"><div class="title" data-i18n="Motivation &amp; reminders">Motivation & reminders</div><div class="subtitle" data-i18n="Optional inactivity and next-session reminders">Optional inactivity and next-session reminders</div></div><input style="width:auto" type="checkbox" ${a.motivationEnabled?'checked':''} onchange="gp.toggleMotivation(this.checked)"></div>${a.motivationEnabled?`${settingStepper('No workout for (days)',Math.round(a.inactivityReminderHours/24),"gp.changeInactivityDays(-1)","gp.changeInactivityDays(1)")}<div class="reminder-time-grid"><label><span class="field" data-i18n="Evening-before reminder">Evening-before reminder</span><input type="time" value="${esc(a.eveningReminderTime)}" onchange="gp.setReminderTime('evening',this.value)"></label><label><span class="field" data-i18n="Workout-day reminder">Workout-day reminder</span><input type="time" value="${esc(a.morningReminderTime)}" onchange="gp.setReminderTime('morning',this.value)"></label></div>${['default','denied'].includes(notificationPermissionState())?`<button class="secondary full" onclick="gp.requestNotificationPermission()">${esc(S('Allow notifications','Atļaut paziņojumus'))}</button>`:''}`:''}</div>
   <div class="section-title" data-i18n="Display">Display</div><div class="card">${themePickerHTML(languageCode(state))}</div><div class="card"><label class="setting-toggle-row"><span>${esc(S('Sound notifications','Skaņas paziņojumi'))}</span><input type="checkbox" ${a.soundEnabled!==false?'checked':''} onchange="gp.setSound(this.checked)"></label></div>
-  ${globalThis.GymProgressAndroid?`<div class="card stack native-workout-alerts"><div class="title">${esc(S('Locked-screen workout alerts','Treniņa signāli pie bloķēta ekrāna'))}</div><div class="small">${esc(S('Android schedules rest warnings, 3–2–1 countdown, rest completion and timed/cardio targets independently of the app screen. Requires notification and exact-alarm access.','Android plāno atpūtas brīdinājumu, 3–2–1 atskaiti, atpūtas beigas un laika/kardio mērķus neatkarīgi no ekrāna. Nepieciešamas paziņojumu un precīzo signālu atļaujas.'))}</div><div class="small"><strong>${esc(S('Notifications','Paziņojumi'))}:</strong> ${esc(notificationPermissionState()==='granted'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><div class="small"><strong>${esc(S('Exact alarms','Precīzie signāli'))}:</strong> ${esc(androidAlarmAccessStatus()==='ready'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><button type="button" class="secondary full" onclick="gp.requestBackgroundAlerts()">${esc(S('Set up Android background alerts','Iestatīt Android fona signālus'))}</button></div>`:''}
+  ${globalThis.GymProgressAndroid?`<div class="card stack native-workout-alerts"><div class="title">${esc(S('Locked-screen workout alerts','Treniņa signāli pie bloķēta ekrāna'))}</div><div class="small">${esc(S('Android schedules rest warnings, 3–2–1 countdown, rest completion and timed/cardio targets independently of the app screen. Requires notification and exact-alarm access.','Android plāno atpūtas brīdinājumu, 3–2–1 atskaiti, atpūtas beigas un laika/kardio mērķus neatkarīgi no ekrāna. Nepieciešamas paziņojumu un precīzo signālu atļaujas.'))}</div><div class="small"><strong>${esc(S('Notifications','Paziņojumi'))}:</strong> ${esc(notificationPermissionState()==='granted'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><div class="small"><strong>${esc(S('Exact alarms','Precīzie signāli'))}:</strong> ${esc(androidAlarmAccessStatus()==='ready'?S('Allowed','Atļauti'):S('Permission required','Nepieciešama atļauja'))}</div><button type="button" class="secondary full" onclick="gp.requestBackgroundAlerts()">${esc(S('Set up Android background alerts','Iestatīt Android fona signālus'))}</button><button type="button" class="secondary full" onclick="gp.testAndroidSound()">${esc(S('Test Android sound','Pārbaudīt Android skaņu'))}</button></div>`:''}
   <div class="card"><div class="card-row"><div class="grow"><div class="title" data-i18n="Keep screen awake">Keep screen awake</div><div class="subtitle" data-i18n="Keep the display on while a workout is active">Keep the display on while a workout is active</div></div><input style="width:auto" type="checkbox" ${a.keepScreenAwake?'checked':''} onchange="gp.toggleAwake(this.checked)"></div></div>
   <div class="section-title">${esc(S('Social preferences','Sociālie iestatījumi'))}</div>
-  <div class="card stack comparison-settings-card"><div class="title">${esc(S('Compare exercises','Salīdzināt vingrinājumus'))}</div><label class="setting-toggle-row"><span class="setting-toggle-copy"><strong>${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}</strong><small>${esc(S('Only accepted friends can compare selected exercises when both accounts opt in. Turning this off immediately withdraws your shared comparison points.','Tikai apstiprināti draugi var salīdzināt izvēlētos vingrinājumus, ja abi konti ir devuši atļauju. Izslēdzot, kopīgotie salīdzinājuma dati tiek nekavējoties atsaukti.'))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" onchange="gp.setComparisonSharing(this.checked)" ${socialUi.comparisonPref?.allowed?'checked':''} ${socialSignedIn()&&socialUi.comparisonPref?.loaded?'':'disabled'} aria-label="${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label>${!socialSignedIn()?`<div class="small">${esc(S('Sign in to manage comparison sharing.','Pieslēdzies, lai pārvaldītu salīdzināšanas kopīgošanu.'))}</div>`:!socialUi.comparisonPref?.loaded?`<div class="small" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`:''}</div>
+  <div id="comparison-settings-card" class="card stack comparison-settings-card" tabindex="-1"><div class="title">${esc(S('Compare exercises','Salīdzināt vingrinājumus'))}</div><label class="setting-toggle-row"><span class="setting-toggle-copy"><strong>${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}</strong><small>${esc(S('Only accepted friends can compare selected exercises when both accounts opt in. Turning this off immediately withdraws your shared comparison points.','Tikai apstiprināti draugi var salīdzināt izvēlētos vingrinājumus, ja abi konti ir devuši atļauju. Izslēdzot, kopīgotie salīdzinājuma dati tiek nekavējoties atsaukti.'))}</small></span><span class="setting-toggle-control"><input class="setting-toggle-input" type="checkbox" onchange="gp.setComparisonSharing(this.checked)" ${socialUi.comparisonPref?.allowed?'checked':''} ${socialSignedIn()&&socialUi.comparisonPref?.loaded?'':'disabled'} aria-label="${esc(S('Allow exercise comparison','Atļaut vingrinājumu salīdzināšanu'))}"><span class="setting-toggle-track"><span class="setting-toggle-thumb"></span></span></span></label>${!socialSignedIn()?`<div class="small">${esc(S('Sign in to manage comparison sharing.','Pieslēdzies, lai pārvaldītu salīdzināšanas kopīgošanu.'))}</div>`:!socialUi.comparisonPref?.loaded?`<div class="small" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`:''}</div>
   <div class="section-title" data-i18n="Data">Data</div>
   ${pendingAccountCleanups().length?`<div class="card stack"><div>${esc(S('Cloud account deleted; local cleanup is pending.','Mākoņa konts dzēsts; lokālā tīrīšana vēl jāveic.'))}</div><button class="secondary full" onclick="gp.retryDeletedAccountCleanup()">${esc(S('Retry local cleanup','Atkārtot lokālo tīrīšanu'))}</button></div>`:''}<div class="card stack"><button class="secondary full" onclick="gp.downloadBackup()" data-i18n="Full backup">Full backup</button><button class="secondary full" onclick="gp.pickRestore()" data-i18n="Restore backup">Restore backup</button><button class="secondary full" onclick="gp.downloadCsv()" data-i18n="Export CSV">Export CSV</button><button class="secondary full" onclick="gp.downloadDetailedJson()" data-i18n="Export detailed JSON">Export detailed JSON</button><div class="divider"></div><button class="danger full" onclick="gp.eraseData()" data-i18n="Erase all data">Erase all data</button><button class="secondary full log-erase-btn" onclick="gp.eraseExerciseLogs()" data-i18n="Erase exercise log data">Erase exercise log data</button><input id="restore-file" class="hidden" type="file" accept="application/json,.json" onchange="gp.restoreFile(this.files[0])"></div>
-  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(serviceRegistration?.waiting?S('Apply update','Lietot atjauninājumu'):S('Check for updates','Pārbaudīt atjauninājumus'))}</button>${lastReleaseIssue?`<p class="note" role="status">${esc(S('Update blocked by website deployment: ','Atjauninājums bloķēts vietnes publikācijas dēļ: ')+lastReleaseIssue)}</p>`:''}<button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
+  <div class="card stack"><button class="secondary full" onclick="gp.applyPendingUpdate()">${esc(releaseCandidateVerified&&serviceRegistration?.waiting?S('Update now','Atjaunināt tagad'):S('Check for updates','Pārbaudīt atjauninājumus'))}</button>${lastReleaseIssue?`<p class="note" role="status">${esc(S('Update blocked by website deployment: ','Atjauninājums bloķēts vietnes publikācijas dēļ: ')+lastReleaseIssue)}</p>`:''}<button class="secondary full" onclick="gp.openDataReview()">${esc(S('Data review','Datu pārskatīšana'))}</button><button class="secondary full" onclick="gp.openRecovery()">${esc(S('Recovery copies','Atkopšanas kopijas'))}</button></div><div class="app-version">Gym Progress v${APP_VERSION}</div>`;
   return shell(content);
 }
 
@@ -1775,7 +1795,7 @@ async function tick(){
 }
 async function enableAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')await audioCtx.resume();}catch{}}
 function beepTone(at,freq=720,duration=.16,gain=.22){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(freq,at);g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(gain,at+.015);g.gain.exponentialRampToValueAtTime(.0001,at+duration);o.connect(g);g.connect(audioCtx.destination);o.start(at);o.stop(at+duration+.02);}
-function beepPattern(kind='reminder'){if(state?.app_state?.soundEnabled===false||!audioCtx)return;const t=audioCtx.currentTime+.01;if(kind==='warning30'){beepTone(t,690,.13,.24);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='countdown'){beepTone(t,820,.13,.27);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='ready'){beepTone(t,940,.68,.32);if(navigator.vibrate)navigator.vibrate(240);return;}beepTone(t,650,.18,.22);if(navigator.vibrate)navigator.vibrate(90);}
+function beepPattern(kind='reminder'){if(state?.app_state?.soundEnabled===false)return;const native=globalThis.GymProgressAndroid;if(native?.playCue){try{native.playCue(kind);return;}catch(error){console.warn('Native audio failed',error);}}if(!audioCtx)return;const t=audioCtx.currentTime+.01;if(kind==='warning30'){beepTone(t,690,.13,.24);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='countdown'){beepTone(t,820,.13,.27);if(navigator.vibrate)navigator.vibrate(75);return;}if(kind==='ready'){beepTone(t,940,.68,.32);if(navigator.vibrate)navigator.vibrate(240);return;}beepTone(t,650,.18,.22);if(navigator.vibrate)navigator.vibrate(90);}
 function beep(count=1){for(let i=0;i<count;i++)beepPattern('reminder');}
 async function requestWakeLock(){if(!state?.app_state.keepScreenAwake||document.hidden)return;const native=globalThis.GymProgressAndroid;if(native&&typeof native.setKeepScreenAwake==='function'){native.setKeepScreenAwake(true);return;}if(!('wakeLock'in navigator))return;try{wakeLock=await navigator.wakeLock.request('screen');}catch{}}
 async function releaseWakeLock(){const native=globalThis.GymProgressAndroid;if(native&&typeof native.setKeepScreenAwake==='function')native.setKeepScreenAwake(false);try{await wakeLock?.release();}catch{}wakeLock=null;}
@@ -1881,7 +1901,7 @@ function renderFriendComparison(){
  const exerciseOpts=(socialUi.compareExercises||[]).map(x=>{const id=x.canonical_exercise_id||x.canonicalExerciseId,name=canonicalName(canonicalExerciseById(id),languageCode(state))||(languageCode(state)==='lv'?x.name_lv:x.name_en)||x.name||x.name_en||x.name_lv||id;return `<option value="${id}" ${id===socialUi.compareExerciseId?'selected':''}>${esc(name)}</option>`;}).join('');
  let body;
  if(!pref.loaded){body=`<div class="note" role="status">${esc(S('Loading comparison preference…','Ielādē salīdzināšanas iestatījumu…'))}</div>`;}
- else if(!pref.allowed){body=`<div class="note">${esc(S('Exercise comparison is disabled. Enable Compare exercises in Settings to compare progress with friends.','Vingrinājumu salīdzināšana ir izslēgta. Lai salīdzinātu progresu ar draugiem, ieslēdz to Iestatījumos.'))}</div><button type="button" class="secondary full" onclick="gp.nav('settings')">${esc(S('Open Settings','Atvērt iestatījumus'))}</button>`;}
+ else if(!pref.allowed){body=`<div class="note">${esc(S('Exercise comparison is disabled. Enable Compare exercises in Settings to compare progress with friends.','Vingrinājumu salīdzināšana ir izslēgta. Lai salīdzinātu progresu ar draugiem, ieslēdz to Iestatījumos.'))}</div><button type="button" class="secondary full" onclick="gp.openComparisonSettings()">${esc(S('Open Settings','Atvērt iestatījumus'))}</button>`;}
  else if(!socialUi.friends.length){body=`<div class="note">${esc(S('Add a friend using the Friends card above to compare exercise progress.','Lai salīdzinātu vingrinājumu progresu, pievieno draugu augstāk redzamajā Draugu kartītē.'))}</div>`;}
  else{
   body=`<div class="small">${esc(S('Choose a friend to see mutually eligible catalogue exercises.','Izvēlies draugu, lai redzētu savstarpēji salīdzināmos kataloga vingrinājumus.'))}</div>`;
@@ -1997,6 +2017,18 @@ function socialTimelineWindow(){
 }
 function compactSocialTimelineSpan(days){if(days<45)return`${Math.max(1,Math.round(days))} ${S('d','d.')}`;if(days<730)return`${Math.max(1,Math.round(days/30))} ${S('mo','mēn.')}`;const y=days/365;return`${formatNumber(y,{maximumFractionDigits:y<10?1:0})} ${S('yr','g.')}`;}
 function socialTimelineDate(ms){return new Intl.DateTimeFormat(localeFor(languageCode(state)),{day:'numeric',month:'short',year:socialUi.timelineDays>330?'2-digit':undefined}).format(new Date(ms));}
+function focusComparisonSettingsCard(){
+ const card=document.getElementById('comparison-settings-card');if(route.name!=='settings'||!card)return;
+ card.scrollIntoView({behavior:'smooth',block:'center'});card.focus({preventScroll:true});
+ card.classList.add('settings-target-highlight');setTimeout(()=>card.classList.remove('settings-target-highlight'),1900);
+}
+function openComparisonSettings(){
+ nav('settings');
+ // One immediate focus, then re-focus after the asynchronously fetched cloud
+ // consent preference re-renders Settings. Never strand the user at its top.
+ requestAnimationFrame(focusComparisonSettingsCard);
+ setTimeout(focusComparisonSettingsCard,350);
+}
 function renderFriendsTimeline(){
   const me={user_id:socialUser()?.id,display_name:socialUi.profile?.display_name||S('You','Tu')};const people=[me,...socialUi.friends.filter(f=>f.user_id!==me.user_id)],win=socialTimelineWindow();
   const rows=people.map(p=>{const dots=socialUi.timeline.filter(e=>e.user_id===p.user_id).map(e=>{const at=new Date(e.occurred_at).getTime(),visible=Number.isFinite(at)&&at>=win.start&&at<=win.end,x=visible?Math.max(0,Math.min(100,(at-win.start)/win.span*100)):0;return `<span class="friend-timeline-dot difficulty ${esc(socialEffortKey(e.effort))}" data-at="${Number.isFinite(at)?at:''}" style="left:clamp(6px, ${x}%, calc(100% - 6px));${visible?'':'display:none'}" aria-hidden="true"></span>`;}).join('');return `<div class="friend-timeline-row"><div class="friend-timeline-name">${esc(p.user_id===me.user_id?S('You','Tu'):p.display_name)}</div><div class="friend-timeline-track">${dots}</div></div>`;}).join('');
@@ -2100,6 +2132,7 @@ async function socialVerifyCode(){
   if(!currentEmailOtpDialog(flow,version)||flow.stage!=='code'||!input)return;
   const token=input.value.trim(),email=flow.email;
   if(!token||!email){toast(S('Enter the complete email code.','Ievadi pilnu e-pasta kodu.'));return;}
+  if(state.runtime){toast(S('Finish or discard your workout before changing accounts.','Pirms konta maiņas pabeidz vai atcel treniņu.'),7000);return;}
   const operation=++flow.operation;
   try{
     await persist();if(!currentEmailOtpDialog(flow,version,operation))return;
@@ -2107,16 +2140,68 @@ async function socialVerifyCode(){
     if(socialUser()?.id!==authenticated.user.id)return;
     // A successful verification commits an account switch. Its expected auth
     // generation advances; dialog cancellation must not clear that valid session.
-    flow.authVersion=authVersion;await switchAccountWorkspace();
+    flow.authVersion=authVersion;closeDialog();await switchAccountWorkspace();
     if(socialUser()?.id!==authenticated.user.id)return;
-    closeDialog();const completionVersion=dialogVersion;
+    const completionVersion=dialogVersion;
     const profile=await getMyProfile().catch(()=>null);
     if(dialogVersion!==completionVersion||authGeneration()!==authVersion||socialUser()?.id!==authenticated.user.id)return;
-    socialUi.profile=profile;render();void refreshSocialBadge();
+    socialUi.profile=profile;render();void refreshSocialBadge();void maybeOfferOfflineAttachment().catch(reportAppError);
   }catch(error){if(currentEmailOtpDialog(flow,version,operation)&&error?.name!=='EmailOtpCancelledError')toast(socialErrorMessage(error));}
 }
 
-async function socialSignOut(){confirmDialog(S('Sign out?','Iziet no konta?'),S('This account’s local data remains in its own workspace.','Šī konta lokālie dati paliek tā darbvietā.'),S('Sign out','Iziet'),async()=>{await persist().catch(reportAppError);await signOutSocial();await switchAccountWorkspace();closeDialog();nav('home');});}
+
+/** Account and guest data are separate owners. Joining them is always an
+ * explicit, reviewable action and never a side effect of authentication. */
+async function refreshOfflineAttachmentStatus(){
+ try{const guest=await loadOfflineSnapshot();offlineDataAvailable=!!guest&&hasOfflineTraining(guest.state);return guest;}
+ catch(error){console.warn('Offline profile could not be inspected',error);offlineDataAvailable=false;return null;}
+}
+async function maybeOfferOfflineAttachment(force=false){
+ if(!socialSignedIn()||state?.runtime||workspaceTransition||writeBlocked)return;
+ const guest=await refreshOfflineAttachmentStatus();if(!guest||!hasOfflineTraining(guest.state))return;
+ const owner=socialUser()?.id,identity=owner+'|'+guest.revision;
+ if(!force&&identity===offlineAttachmentOfferedFor)return;
+ offlineAttachmentOfferedFor=identity;
+ const counts=offlineTrainingCounts(guest.state);
+ const message=S(
+  `You have offline training (${counts.workout_templates} programme days, ${counts.workout_sessions} workouts, ${counts.tracker_items} Tracker items). Attach a copy to this account? The account's existing data will be preserved.`,
+  `Ir bezsaistes dati (${counts.workout_templates} programmas dienas, ${counts.workout_sessions} treniņi, ${counts.tracker_items} Tracker ieraksti). Pievienot tos šim kontam? Esošie konta dati tiks saglabāti.`);
+ openDialog(`<h2>${esc(S('Attach offline training?','Pievienot bezsaistes treniņus?'))}</h2><p>${esc(message)}</p><p class="small">${esc(S('Not now keeps both profiles separate. You can attach later from Account settings.','Ne tagad saglabā profilus atsevišķi. Vēlāk varēsi pievienot konta iestatījumos.'))}</p><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Keep separate','Atstāt atsevišķi'))}</button><button onclick="gp.attachOfflineNow()">${esc(S('Attach offline data','Pievienot datus'))}</button></div>`);
+}
+async function attachOfflineNow(){
+ if(!socialSignedIn()||state.runtime||workspaceTransition||writeBlocked){toast(S('Finish the active workout before attaching data.','Pabeidz treniņu pirms datu pievienošanas.'));return;}
+ const owner=socialUser().id,scope='account:'+owner,expectedAuth=authGeneration();
+ closeDialog();
+ try{
+  // No other account sync may write while the guest/account transaction is built.
+  if(trainingSyncInFlight)await trainingSyncInFlight;
+  await persist();await flushSaves();
+  await workspaceLifecycle.run(async()=>{
+   const guard=()=>{if(socialUser()?.id!==owner||authGeneration()!==expectedAuth||currentWorkspace()!==scope||stateWorkspace!==scope||state.runtime)throw new Error('Account or workout changed during attachment.');};
+   guard();writeBlocked=true;
+   try{
+    const [account,guest]=await Promise.all([loadScopedSnapshot(scope),loadOfflineSnapshot()]);
+    guard();if(!guest||!hasOfflineTraining(guest.state))return;
+    if(!account)throw new Error('Account workspace unavailable. Sign in again.');
+    const transfer=attachOfflineTraining(account.state,guest.state);
+    const empty=defaults();Object.assign(empty.app_state,originalDevicePreferences(guest.state));
+    await commitOfflineAttachment({accountScope:scope,accountRevision:account.revision,guestRevision:guest.revision,guestFingerprint:transfer.sourceFingerprint,merged:transfer.state,emptyGuest:empty,recoveryKey:'offline-before-attach-'+transfer.transferId});
+    guard();offlineDataAvailable=false;offlineAttachmentOfferedFor=null;
+   }finally{writeBlocked=false;}
+  });
+  // Refresh observed IndexedDB revision after the atomic two-workspace commit;
+  // this also automatically resumes account sync of newly imported records.
+  await switchAccountWorkspace();
+  toast(S('Offline training attached; cloud sync will continue automatically.','Bezsaistes treniņi pievienoti; mākoņa sinhronizācija turpinās automātiski.'),6000);
+ }catch(error){console.error('Offline attachment failed',error);toast(S('Offline data was not discarded. ','Bezsaistes dati netika dzēsti. ')+String(error?.message||error),8500);}
+}
+async function socialSignOut(){
+ if(state.runtime){toast(S('Finish or discard the current workout before signing out.','Pabeidz vai atcel iesākto treniņu pirms iziešanas.'),7000);return;}
+ const pending=Object.values(state.sync_foundation?.records||{}).filter(x=>x.pending&&!x.suppressed).length;
+ const warning=S('This account’s programme, history and Tracker will become unavailable after sign-out until you log into the same account again. Offline workouts recorded while signed out will belong to a separate guest profile. Account data is not deleted.',
+   'Šī konta programma, vēsture un Tracker pēc iziešanas nebūs pieejami, līdz atkal pieslēgsies šim kontam. Bezsaistē izveidotie dati būs atsevišķā viesu profilā. Konta dati netiks dzēsti.');
+ confirmDialog(S('Sign out of this account?','Iziet no šī konta?'),warning+(pending?' '+S(`${pending} local changes are still pending cloud sync and will be retained on this device.`,`${pending} vietējās izmaiņas vēl gaida sinhronizāciju; tās tiks saglabātas ierīcē.`):''),S('Sign out','Iziet'),async()=>{await persist();await signOutSocial();await switchAccountWorkspace();closeDialog();nav('home');});
+}
 function toggleFriendsList(){socialUi.friendsExpanded=!socialUi.friendsExpanded;render();}
 function openAddFriend(){openDialog(`<h2>${esc(S('Add friend','Pievienot draugu'))}</h2><div class="dialog-copy">${esc(S('Enter the exact e-mail used for their Gym Progress account. E-mail addresses are never shown in the feed.','Ievadi precīzu e-pastu, kas izmantots Gym Progress kontam. E-pasta adreses aktivitāšu plūsmā netiek rādītas.'))}</div><input id="friend-email" type="email" maxlength="254" autocomplete="off" placeholder="friend@example.com"><div id="friend-lookup-result"></div><div class="dialog-actions"><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button><button onclick="gp.lookupSocialFriend()">${esc(S('Look up','Meklēt'))}</button></div>`);}
 async function lookupSocialFriend(){const email=$('#friend-email')?.value.trim();if(!email)return;try{const r=await findFriend(email),root=$('#friend-lookup-result');if(!r){setHTML(root,`<div class="note">${esc(S('No account found.','Konts nav atrasts.'))}</div>`);return;}window.__gpFriendEmail=email;setHTML(root,`<div class="card compact"><strong>${esc(r.display_name)}</strong><div class="small">${esc(r.relationship==='friends'?S('Already friends','Jau draugi'):r.relationship==='outgoing_pending'?S('Request already sent','Uzaicinājums jau nosūtīts'):r.relationship==='incoming_pending'?S('They already invited you','Šis lietotājs jau tevi uzaicināja'):S('Gym Progress account','Gym Progress konts'))}</div>${r.relationship==='none'?`<button class="full" onclick="gp.sendSocialFriendRequest()">${esc(S('Send friend request','Nosūtīt uzaicinājumu'))}</button>`:''}</div>`);}catch(e){toast(socialErrorMessage(e));}}
@@ -2240,27 +2325,35 @@ async function switchAccountWorkspace(){
  $('#dialog-root')?.replaceChildren();document.body.classList.remove('workout-summary-open');route={name:'home',id:null};ui.selectedWorkoutId=state.app_state.nextWorkoutId;render();
  });
  if(socialSignedIn())await bootstrapAccountHistory();
+ await refreshOfflineAttachmentStatus();
 }
 async function setSound(value){state.app_state.soundEnabled=!!value;if(value)void enableAudio();await persist();}
 async function openRecovery(){const copies=await recoveryList();openDialog(`<h2>${esc(S('Recovery copies','Atkopšanas kopijas'))}</h2>${copies.length?copies.map(c=>`<div class="card"><div>${esc(dateTime(c.createdAt))}</div><div class="small">${esc(c.key)}</div><button class="secondary full" onclick="gp.restoreRecovery('${esc(c.key)}')">${esc(S('Review restore','Pārskatīt atjaunošanu'))}</button></div>`).join(''):`<p>${esc(S('No recovery copies.','Nav atkopšanas kopiju.'))}</p>`}<button class="secondary full" onclick="gp.exportOriginalLocal()">${esc(S('Export original app data','Eksportēt sākotnējās lietotnes datus'))}</button><div class="dialog-actions"><button onclick="gp.closeDialog()">${esc(S('Close','Aizvērt'))}</button></div>`);}
 async function exportOriginalLocal(){const original=await readOriginalLocalState();if(!original){toast(S('No original local data found.','Sākotnējie lokālie dati nav atrasti.'));return;}exportTextFile('GymProgress-original-local-backup.json',JSON.stringify(originalLocalBackup(original),null,2));toast(S('Original local data exported.','Sākotnējie lokālie dati eksportēti.'));}
 
 async function restoreRecovery(key){const saved=await loadRecoveryState(key);if(!saved)throw new Error(S('Recovery copy not found','Atkopšanas kopija nav atrasta'));return restoreFile(new Blob([JSON.stringify(createBackup(saved))],{type:'application/json'}));}
-let serviceRegistration=null,serviceRegistrationPromise=null,updateActivationInFlight=false,autoUpdateTimer=null,releaseCheckInFlight=null,lastReleaseCheck=0,releaseCandidateVerified=false,lastReleaseIssue='',lastPublishedRelease='',releaseStartupCheckPending=('serviceWorker' in navigator);
+let updateOnInitialRefresh=!globalThis.GymProgressAndroid,serviceRegistration=null,serviceRegistrationPromise=null,updateActivationInFlight=false,autoUpdateTimer=null,releaseCheckInFlight=null,lastReleaseCheck=0,releaseCandidateVerified=false,lastReleaseIssue='',lastPublishedRelease='',releaseStartupCheckPending=('serviceWorker' in navigator);
 // Update availability is independent of cloud sync *status*. A deferred remote
 // record is not a workout and cannot permanently veto a verified PWA update.
 // Only actual in-flight saves, active workouts, dirty forms, dialogs and other
 // open app windows can prevent activation.
-function updateHasPendingWork(){
- if(!state||state.runtime||writeBlocked||workspaceTransition||accountBootstrapStatus==='loading'||trainingSyncInFlight)return true;
- if(document.querySelector('#dialog-root .dialog-backdrop'))return true;
- if(document.querySelector('input[data-ui-dirty="true"],textarea[data-ui-dirty="true"],select[data-ui-dirty="true"]'))return true;
- return false;
+function updateSafety(){return updateGate({state,authenticated:socialSignedIn(),bootstrapStatus:accountBootstrapStatus,
+ syncInFlight:!!trainingSyncInFlight,writeBlocked,workspaceTransition,
+ dialogOpen:!!document.querySelector('#dialog-root .dialog-backdrop'),
+ dirty:!!document.querySelector('input[data-ui-dirty="true"],textarea[data-ui-dirty="true"],select[data-ui-dirty="true"]')});}
+function updateHasPendingWork(){return !updateSafety().safe;}
+// A verified release discovered while the app is already open is offered
+// non-intrusively. Only an explicit tap activates it; never mid-workout or
+// while local account changes are awaiting upload. No recovery/diagnostic link.
+function updateReadyBanner(){
+ if(globalThis.GymProgressAndroid||!releaseCandidateVerified||!serviceRegistration?.waiting||updateOnInitialRefresh||updateHasPendingWork())return '';
+ return `<div class="update-ready-banner" role="status"><span>${esc(S('A new version is ready.','Ir pieejama jauna versija.'))}</span><button class="secondary" onclick="gp.applyPendingUpdate()">${esc(S('Update now','Atjaunināt tagad'))}</button></div>`;
 }
 function scheduleAutomaticUpdate(){
  if(autoUpdateTimer)clearTimeout(autoUpdateTimer);
- if(!releaseCandidateVerified||!serviceRegistration?.waiting||updateActivationInFlight||updateHasPendingWork())return;
- autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(releaseCandidateVerified&&serviceRegistration?.waiting&&!updateHasPendingWork())void applyPendingUpdate({automatic:true});},500);
+ if(updateOnInitialRefresh&&releaseCandidateVerified&&serviceRegistration?.waiting&&updateHasPendingWork())updateOnInitialRefresh=false;
+ if(!updateOnInitialRefresh||!releaseCandidateVerified||!serviceRegistration?.waiting||updateActivationInFlight||updateHasPendingWork())return;
+ autoUpdateTimer=setTimeout(()=>{autoUpdateTimer=null;if(updateOnInitialRefresh&&releaseCandidateVerified&&serviceRegistration?.waiting&&!updateHasPendingWork()){updateOnInitialRefresh=false;void applyPendingUpdate({automatic:true});}},500);
 }
 // Explicitly ask the browser to fetch sw.js. Merely looking at .waiting is
 // insufficient in Firefox; its update check might not have happened yet.
@@ -2291,7 +2384,7 @@ async function refreshRelease({force=false}={}){
   }else if(result.kind==='error'){
    lastReleaseIssue=result.message;console.warn('App release check failed:',result.message);
   }else lastReleaseIssue='';
-  if(route.name==='settings')render();
+  if((route.name==='home'||route.name==='settings')&&!updateHasPendingWork())render();
   return result;
  })();
  releaseCheckInFlight=task;
@@ -2305,8 +2398,8 @@ async function registerServiceWorker(){
   const show=()=>{
    if(!serviceRegistration?.waiting)return;
    if(!releaseCandidateVerified)return;
-   if(updateHasPendingWork())toast(S('An update is available in Settings.','Iestatījumos ir pieejams atjauninājums.'));
-   else scheduleAutomaticUpdate();
+   if(updateHasPendingWork())toast(S('An update is ready. Finish your workout and sync, then refresh or select Update now in Settings.','Atjauninājums ir gatavs. Pabeidz treniņu un sinhronizē, tad pārlādē vai izvēlies Atjaunināt tagad Iestatījumos.'));
+   else {scheduleAutomaticUpdate();if(route.name==='home'&&!updateOnInitialRefresh)render();}
   };
   // Never activate a pre-existing waiting worker before comparing it with
   // the uncached public release proof.
@@ -2429,7 +2522,7 @@ function openSyncConflictReview(){const conflicts=listTrainingSyncConflicts(stat
 async function chooseSyncConflict(index,choice){const conflict=window.__gpConflictReview?.[index],captured=state;if(!conflict)return;await resolveTrainingSyncConflict(captured,conflict.id,choice,{persist:async value=>{if(value!==state)throw new Error('Workspace changed');await saveState(value);},isCurrent:value=>value===state,expectedLocalRevision:conflict.local.localRevision});closeDialog();render();if(listTrainingSyncConflicts(state).length)openSyncConflictReview();else await performTrainingSync({reason:'manual'});}
 async function eraseScopedData(scope){const original=state,storeScope=stateWorkspace,authVersion=authGeneration(),owner=socialUser()?.id;return workspaceLifecycle.run(async()=>{const guard=()=>{if(state!==original||currentWorkspace()!==storeScope||stateWorkspace!==storeScope||authGeneration()!==authVersion||socialUser()?.id!==owner)throw new Error('Account changed during deletion');};guard();suppressTrainingSyncSchedule=true;let result=null;try{const next=clone(original);if(owner){const status=await getWorkspaceStatus({refresh:true});guard();Object.assign(next.sync_foundation,{workspaceId:status.workspace_id,legacyOwnerId:status.legacy_owner_id,eraseEpoch:status.erase_epoch});result=await eraseMyCloudTraining(scope);guard();}if(scope==='all'){for(const name of ['workout_templates','user_exercises','template_exercises','workout_sessions','session_exercises','performed_sets','tracker_items','tracker_states','tracker_entries'])next[name]=[];next.app_state.nextWorkoutId=null;next.app_state.nextSessionAt=null;}else redactWorkoutHistory(next);next.runtime=null;if(scope==='all'){next.revisions=[];delete next.v2;delete next.integrity;delete next.analysisHistory;}next.app_state.lastInactivityReminderFor=null;if(result)resetAfterCloudErasure(next,result,{scope});else ensureSyncFoundation(next);if(scope==='all')await purgeRecoveryStates({expectedWorkspace:storeScope});else await redactRecoveryHistory({expectedWorkspace:storeScope});guard();await saveState(next,{expectedWorkspace:storeScope});guard();state=next;}catch(error){if(result?.ok){error.cloudErased=true;if(state===original){state.sync_foundation.blocked={code:'LOCAL_ERASE_PENDING',serverEpoch:result.erase_epoch,scope};await saveState(state,{expectedWorkspace:storeScope}).catch(()=>{});}error.message=S('Cloud data was erased; local cleanup needs retry.','Mākoņa dati ir dzēsti; lokālā tīrīšana jāatkārto.')+' '+error.message;}throw error;}finally{suppressTrainingSyncSchedule=false;}});}
 
-window.gp={handleSystemBack,requestBackgroundAlerts,refreshAndroidAlerts,retryInitialSync,exportOriginalLocal,openProgressEntry,retryDeletedAccountCleanup,openDataReview,openSyncConflictReview,chooseSyncConflict,setSound,openRecovery,restoreRecovery,updateCardioDraft,redoLastSet,applyPendingUpdate,cancelSetEntry,beginPreparedExercise,backToExerciseChoice,validateReplacementWeight,toggleCardioNA,dismissUpdateAnnouncement,openAccount,requestDeleteAccount,openTrainingSyncReview,confirmTrainingSync,nav,selectWorkout,toggleWorkoutDetails,requestStart,startWorkout,resume,changeRirThreshold,changeMaxRampSets,changeTargetRirMin,changeTargetRirMax,setRirInputMax,setLanguage,openStarterWizard,starterSelectValue,renderStarterWizard,finishStarterProgramme,starterManualSetup,dismissStarterForNow,toggleAwake,toggleLastSetZeroRirAcceptable,toggleMotivation,changeInactivityDays,setReminderTime,requestNotificationPermission,openTrackerSettings,setTrackerNotifications,deleteTrackerItem,editTrackerItem,adjustTracker,setTrackerAmount,scheduleNextSession,skipNextSession,rescheduleNextSession,editDifficulty,addWorkout,renameWorkout,moveWorkout,deleteWorkout,addExercise,editExercise,exerciseExistingChanged,exerciseNameChanged,exerciseTrackingChanged,exerciseEquipmentChanged,exerciseTypeChanged,setCatalogueLinkForExercise,saveCatalogueLink,unlinkCatalogueExercise,applyCatalogueChoice,exerciseFormChangeLink,exerciseFormUnlink,joinSuperset,splitSuperset,moveExerciseBlock,moveExercise,deleteExercise,deleteSession,moreLogs,setProgressRange,setProgressExercise,setProgressMetric,setCustomStart,setCustomEnd,finishWarmup,startRamp,skipRamp,disableRampPermanently,finishRamp,startTimedSet,finishTimedSet,saveCardioSet,cancelCardioSet,adjustWeight,customWeight,adjustSupersetWeight,customSupersetWeight,toggleSupersetTimed,supersetComplete,adjustSupersetEntryReps,setSupersetRir,saveSupersetSet,skipSupersetSet,skipSuperset,setComplete,adjustEntryReps,setRir,saveSet,finishUnload,shiftRest,skipRest,skipSet,skipExercise,requestPostponeExercise,postponeExercise,requestReplaceExercise,selectReplacement,confirmReplacement,finishStretch,finishAndSave,closeWorkoutCelebration,applyAutoregulation,keepAutoregulationCurrent,applyFutureAdjustment,keepFutureAdjustmentCurrent,shiftFutureAdjustment,shiftProgression,acceptProgressionEdited,shiftProgressionReps,acceptProgressionReps,keepProgressionCurrent,undoLastSet,requestAbort,finishPartialWorkout,discardActiveWorkout,downloadBackup,pickRestore,restoreFile,downloadCsv,downloadDetailedJson,eraseData,eraseExerciseLogs,closeDialog,confirmNow,cancelConfirm,formConfirm,socialSendCode,socialResendCode,socialVerifyCode,socialSignOut,openAddFriend,lookupSocialFriend,sendSocialFriendRequest,acceptSocialRequest,rejectSocialRequest,removeSocialFriend,editSocialName,saveSocialName,deleteSocialEvent,loadMoreFriendsFeed,toggleFriendsList,setComparisonSharing,openFriendComparison,setFriendCompareExercise,toggleFriendComparison,toggleShareCard,updateShareComment,publishShareSummary,closeShareSummary,saveExerciseNote,skipExerciseNote};
+window.gp={nativeNotificationPermissionResult,testAndroidSound,openComparisonSettings,maybeOfferOfflineAttachment,attachOfflineNow,handleSystemBack,requestBackgroundAlerts,refreshAndroidAlerts,retryInitialSync,exportOriginalLocal,openProgressEntry,retryDeletedAccountCleanup,openDataReview,openSyncConflictReview,chooseSyncConflict,setSound,openRecovery,restoreRecovery,updateCardioDraft,redoLastSet,applyPendingUpdate,cancelSetEntry,beginPreparedExercise,backToExerciseChoice,validateReplacementWeight,toggleCardioNA,dismissUpdateAnnouncement,openAccount,requestDeleteAccount,openTrainingSyncReview,confirmTrainingSync,nav,selectWorkout,toggleWorkoutDetails,requestStart,startWorkout,resume,changeRirThreshold,changeMaxRampSets,changeTargetRirMin,changeTargetRirMax,setRirInputMax,setLanguage,openStarterWizard,starterSelectValue,renderStarterWizard,finishStarterProgramme,starterManualSetup,dismissStarterForNow,toggleAwake,toggleLastSetZeroRirAcceptable,toggleMotivation,changeInactivityDays,setReminderTime,requestNotificationPermission,openTrackerSettings,setTrackerNotifications,deleteTrackerItem,editTrackerItem,adjustTracker,setTrackerAmount,scheduleNextSession,skipNextSession,rescheduleNextSession,editDifficulty,addWorkout,renameWorkout,moveWorkout,deleteWorkout,addExercise,editExercise,exerciseExistingChanged,exerciseNameChanged,exerciseTrackingChanged,exerciseEquipmentChanged,exerciseTypeChanged,setCatalogueLinkForExercise,saveCatalogueLink,unlinkCatalogueExercise,applyCatalogueChoice,exerciseFormChangeLink,exerciseFormUnlink,joinSuperset,splitSuperset,moveExerciseBlock,moveExercise,deleteExercise,deleteSession,moreLogs,setProgressRange,setProgressExercise,setProgressMetric,setCustomStart,setCustomEnd,finishWarmup,startRamp,skipRamp,disableRampPermanently,finishRamp,startTimedSet,finishTimedSet,saveCardioSet,cancelCardioSet,adjustWeight,customWeight,adjustSupersetWeight,customSupersetWeight,toggleSupersetTimed,supersetComplete,adjustSupersetEntryReps,setSupersetRir,saveSupersetSet,skipSupersetSet,skipSuperset,setComplete,adjustEntryReps,setRir,saveSet,finishUnload,shiftRest,skipRest,skipSet,skipExercise,requestPostponeExercise,postponeExercise,requestReplaceExercise,selectReplacement,confirmReplacement,finishStretch,finishAndSave,closeWorkoutCelebration,applyAutoregulation,keepAutoregulationCurrent,applyFutureAdjustment,keepFutureAdjustmentCurrent,shiftFutureAdjustment,shiftProgression,acceptProgressionEdited,shiftProgressionReps,acceptProgressionReps,keepProgressionCurrent,undoLastSet,requestAbort,finishPartialWorkout,discardActiveWorkout,downloadBackup,pickRestore,restoreFile,downloadCsv,downloadDetailedJson,eraseData,eraseExerciseLogs,closeDialog,confirmNow,cancelConfirm,formConfirm,socialSendCode,socialResendCode,socialVerifyCode,socialSignOut,openAddFriend,lookupSocialFriend,sendSocialFriendRequest,acceptSocialRequest,rejectSocialRequest,removeSocialFriend,editSocialName,saveSocialName,deleteSocialEvent,loadMoreFriendsFeed,toggleFriendsList,setComparisonSharing,openFriendComparison,setFriendCompareExercise,toggleFriendComparison,toggleShareCard,updateShareComment,publishShareSummary,closeShareSummary,saveExerciseNote,skipExerciseNote};
 
 
 const dispatchCommand=createCommandBus({getState:()=>state,onError:reportAppError});

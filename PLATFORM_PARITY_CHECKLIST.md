@@ -1,3 +1,9 @@
+# Gym Progress 2.2.0 — current release guidance (supersedes historical sections below)
+
+**Use `docs/RELEASE_2_2_0_HANDOVER.md` as the authoritative takeover guide**. It documents the user-approved guest/account ownership model, automatic sync, safe PWA update gate, Android-native reminders/audio, the current test evidence and remaining physical-device gates. Any conflicting 2.1.x paragraphs below are historical notes, **not** current policy. No GitHub connector or production backend changes were used in preparing this candidate.
+
+---
+
 ## v2.1.2 additional acceptance requirement — PWA refresh and sync
 
 The shared app must check for verified PWA updates and run account sync on normal reload/refresh without a button. Real Firefox Android/Windows tests and pending update recovery are unverified. The Android APK bundles its own shared frontend; Android upgrades require a new APK (source UI parity does not imply web deployment auto-updates the native package). Read `docs/AUTO_UPDATE_AND_SYNC.md`.
