@@ -1,6 +1,6 @@
 {
-  "version": "2.1.0",
-  "id": "2.1.0-0b903adc5295",
+  "version": "2.1.4",
+  "id": "2.1.4-f79f5e025d34",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "1736fce24d7e001dc51382dba83721e652ae0ccf67ec1d0f9a348ff68b084b46",
-      "bytes": 386636
+      "sha256": "82b34ed20820d6ec1d717abde26c8ab157fcb086392fdca3c3f4ea15319d98a6",
+      "bytes": 400403
     },
     {
       "path": "autoregulation.js",
@@ -91,6 +91,11 @@
       "path": "export-data.js",
       "sha256": "6e349004d67e43347e026e00c7585127e3bf5798c32c77d75ae424a354f76e1d",
       "bytes": 4226
+    },
+    {
+      "path": "file-export.js",
+      "sha256": "e34a571b00de30c0a8c792c033e9508a1996a79e03eb7a3334bd473364bd8a27",
+      "bytes": 1057
     },
     {
       "path": "form-validation.js",
@@ -188,9 +193,14 @@
       "bytes": 589
     },
     {
+      "path": "native-workout-alerts.js",
+      "sha256": "599b1821956e76d4c61b9f0617dfd7b7de62748063f5148b909e0f72a31ad407",
+      "bytes": 2376
+    },
+    {
       "path": "notification-delivery.js",
-      "sha256": "4514f102876325a0194d157878ecf88012b5d1001847f57f2dcac516587f117a",
-      "bytes": 1269
+      "sha256": "2c33adc9c4e24fad5a9b7d5fd1202a9337eb5d6a3ed43cc9e0f0b3f3d1783201",
+      "bytes": 1676
     },
     {
       "path": "performance-rules.js",
@@ -224,13 +234,18 @@
     },
     {
       "path": "recovery-screen.js",
-      "sha256": "fcf8b36298558c9d6b30b09a5edac024d705d3783b13c3d3e4e8ec92a4ea2a65",
-      "bytes": 1897
+      "sha256": "30622e589fc6f1ae2dd389a01e1fb74226fba683672d166e6f05d6756c9009ed",
+      "bytes": 1759
     },
     {
       "path": "recovery.html",
       "sha256": "587edad2af02636be798778f761f5a9fb4dec63fe38e20ad3adf92aec03710cb",
       "bytes": 962
+    },
+    {
+      "path": "release-update.js",
+      "sha256": "76bb626686750388aceb917cf9915f091c45f44a9dcc611b46b7243e0eafef6e",
+      "bytes": 6622
     },
     {
       "path": "release-version.js",
@@ -241,6 +256,26 @@
       "path": "release-workout.css",
       "sha256": "682277135deef88d3061fcbbb8c79a4fb484d78e63f72b772a1438f5f96131e2",
       "bytes": 4350
+    },
+    {
+      "path": "repair-213.html",
+      "sha256": "958c4eb9ec1e57676f3e52edf671d243f60e59643b5a158d7461d3a90f7e60a4",
+      "bytes": 1500
+    },
+    {
+      "path": "repair-213.js",
+      "sha256": "9a0f7b1a8b31b2b6b97fbbe5322d9d73adb9edd5e79d79b6e5020084be1cc622",
+      "bytes": 8169
+    },
+    {
+      "path": "repair-214.html",
+      "sha256": "eb67c4655d15061f2f336d28266b2ea86a2980e0149b944216b7a0712f3b2059",
+      "bytes": 1500
+    },
+    {
+      "path": "repair-214.js",
+      "sha256": "eaf6766c09c8c938102526b3c63edc56b72106a5c082e7ee3cc022ba0d4f58d0",
+      "bytes": 8607
     },
     {
       "path": "rest-audio-cues.js",
@@ -264,8 +299,8 @@
     },
     {
       "path": "startup.js",
-      "sha256": "98ee6d95b8e44e98d130430267ad79182fc2090583d4cf6ac87f7698a10f98c6",
-      "bytes": 1144
+      "sha256": "5003ac1f8da87c38ce558fdba0a34da6a045fb652a8a99d5c56b4f9d3283f496",
+      "bytes": 1500
     },
     {
       "path": "styles.css",
@@ -284,8 +319,8 @@
     },
     {
       "path": "training-sync.js",
-      "sha256": "9ca017a72704e59884db78ca9ab858b1b5a979c77501c22cc71666d4e7b54b0f",
-      "bytes": 30699
+      "sha256": "835b4b445a66c0e9726f3321b033328abd3b30483757dafdcd8ada88d543b01b",
+      "bytes": 31953
     },
     {
       "path": "ui-components.js",
@@ -294,8 +329,18 @@
     },
     {
       "path": "ui.css",
-      "sha256": "3b6ce03eebb6e9231bf3e8c7a1b5e92f31cddd1c57192e3e270a2d96a08652be",
-      "bytes": 69509
+      "sha256": "3a30fe67b352dbc8eef8e0b10a11e2912488b3015367dfd4103cdb561183c004",
+      "bytes": 70157
+    },
+    {
+      "path": "update-rescue-212.js",
+      "sha256": "f518de2a2e7ecde70ba2b67e74db091276aa5ef16b76c1da4e1529699d3f99d2",
+      "bytes": 3224
+    },
+    {
+      "path": "update-rescue.html",
+      "sha256": "b651a28e3735ac8a3086637ed5954797f262a69b138267e9a04a52a3df7c5bf3",
+      "bytes": 1493
     },
     {
       "path": "vendor/ACORN_LICENSE.txt",

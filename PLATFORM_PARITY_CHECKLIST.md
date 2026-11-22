@@ -1,3 +1,7 @@
+## v2.1.2 additional acceptance requirement — PWA refresh and sync
+
+The shared app must check for verified PWA updates and run account sync on normal reload/refresh without a button. Real Firefox Android/Windows tests and pending update recovery are unverified. The Android APK bundles its own shared frontend; Android upgrades require a new APK (source UI parity does not imply web deployment auto-updates the native package). Read `docs/AUTO_UPDATE_AND_SYNC.md`.
+
 # Platform parity and release checklist
 
 Release: **Gym Progress 2.0.2**. Authoritative requirements: `RELEASE_CONTRACT.md`.
@@ -81,3 +85,19 @@ Potential adapter areas include permissions, installation, native notifications/
 - [ ] Four actual equal-width Cardio Log columns and consistent metric labels are inspected at real phone widths in both themes and languages; UI source rules alone are not evidence.
 - [ ] Original two Auth accounts and training databases survive the full-backup/migrate/verify sequence. No new Supabase project, account duplication or secret committed to Pages.
 - [ ] Android remains unbuilt; do not mark cross-platform parity complete until the same source and real Android tests pass.
+
+
+### v2.1.1 LATEST superseding parity gate — Android + PWA
+
+**Note:** Earlier version-specific checklist entries remain historical evidence, not current UI requirements. The current Friends and cardio order is defined in `RELEASE_CONTRACT.md` v2.1.1 and the latest feedback entry.
+
+- [ ] Friends header has **no plus**; expanded Friends list ends with a **right-aligned `+ Add friend` action**, including empty state.
+- [ ] Settings alone contains account-level **Compare exercises** consent; Friends comparison card says **enable in Settings** when OFF and offers a friend/exercise chooser when ON. Verify actual server withdrawal from another account/device.
+- [ ] Cardio Log metrics 1–4 retain equal widths and show **Avg cardio HR as second, RPE as third**; EN/LV and light/dark at 320/360/390 px.
+- [ ] Android APK packages exact same `dist/` app asset versions and does not embed independently maintained UI or workout rules; record a matching SHA256 release ID and identical user-visible states.
+- [ ] In a **real Android phone**, lock screen during 60-second rest; check warning at 30 seconds, beeps at 3/2/1, long beep and lock-screen notification at zero. No duplicate foreground WebAudio; adjust/skip/cancel rest clears stale alerts.
+- [ ] Timed strength and cardio reach target with a single native long sound and lock-screen notification. Cardio logging must still require user completion (no false automatic finish).
+- [ ] Android shows permission status for notifications and exact alarms. Denial must not be misreported as readiness; test permission recovery, background/Doze, reboot, battery saver, DND and OS restrictions.
+- [ ] Android process reclaimed/backgrounded: OS-native scheduled alarms still work. Force-stop is explicitly excluded as an OS constraint.
+- [ ] Native `Tracker`/motivation reminders with the app closed: **NOT IMPLEMENTED**; do not falsely mark covered by the workout alarm implementation.
+- [ ] Android APK successfully compiled, signed appropriately for the intended upgrade, installed, visual parity tested and acceptance evidence recorded. **PENDING**.

@@ -1,6 +1,10 @@
+## v2.1.4 release/refresh contract — mandatory
+
+On a normal PWA load or browser refresh, check for a newer verified release automatically; apply it once the current local state is durable, sync and workspace transitions finish, no workout/form is active and open tabs confirm idle. Do not require a Settings button, erase browser storage, silently drop any unsynced changes or force-switch mid-workout. For an older cached 2.1.1 client incapable of running the new code, serve a one-time recovery page from the network without unregistering the worker or clearing IndexedDB. A signed-in refresh must start cloud reconciliation of programme, workout logs and Tracker automatically; retry on reconnect/foreground; preserve conflicts and missing-parent records for review. Android source continues to reuse the same frontend with native OS adapters, but a new APK is required to ship a new bundled release.
+
 # Gym Progress release contract
 
-Applies to the production v2 line, beginning with **2.0.0** (updated for **2.1.0**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
+Applies to the production v2 line, beginning with **2.0.0** (updated for **2.1.1**). This contract records the user's release requirements. A later explicit user decision may change them; implementation convenience does not.
 
 ## One app on both platforms
 
@@ -55,3 +59,17 @@ The cumulative update announcement MUST actually be invoked after account bootst
 3. Preserve historical Tracker entries by **archiving** referenced definitions. Undo/Redo for supported ramp/rest/workout-stage transitions may change only the current workout and must never move the original workout-start clock; current 2.1.0 step journal is bounded and in memory, so refresh durability remains pending.
 4. This upgrade must run on the original Supabase **v2** database, not reimport v1. It requires a current full backup (including private schemas), preflight, atomic SQL execution and postflight, preserving Auth, workouts, custom programmes, historical aliases and old import data. No manual table deletion or blind pg_restore to live Supabase.
 5. PWA and later Android must reuse the accepted visual and functional contract. Android parity remains unverified and should not be represented as a completed release. Missing PG, browser or mobile tests must be disclosed.
+
+
+## v2.1.1 — latest explicit decisions (SUPERSEDES older Friends/cardio placement)
+
+1. **Add friend:** show `+ Add friend` only as the last, right-aligned action inside expanded Friends list; not in the top bar or list-card header. The empty list must offer it.
+2. **Comparison consent:** an account-level allow/deny toggle belongs only in **Settings → Compare exercises**. In Friends, keep an expandable comparison card; OFF state explains Settings permission, ON state offers friend/exercise selection. The server-enforced two-user opt-in from v2.1.0 remains mandatory; no client-only override.
+3. **Cardio Log:** Avg cardio HR is the **second** metric, RPE the **third** of four equal-width columns. Keep strength/cardio calculation semantics and effort placement.
+4. **Functional and visual parity:** Android and PWA MUST use the same source for complete application UI, CSS, labels, values, timers, translations, domain/workout logic and release notes. The OS-specific Android native host may add permissions, Android notifications and alarm sound delivery required for native behaviour; it must not redraw or fork the app. Every divergence must be documented and device tested.
+5. **Locked-screen Android alarms:** rest warnings, 3/2/1/0 cues and timed/cardio target notifications **must function with screen locked**. A JavaScript-only timer, foreground WebView or a promise to implement later does not meet this contract. Android-native scheduling, audio playback and visible OS notifications are required. Explicit notification and exact-alarm access are user-granted permissions; app must make incomplete access visible and must not silently treat denial as success.
+6. **Release gate:** source implementation is not certification. No reliable locked-screen/Android claim until actual Android compilation and physical-device lock/background/permission tests pass, with corresponding receipts in the parity checklist. Continue retaining all feedback logs, wishlists, schema/runbook and verification limitations for agent handover.
+
+## Mandatory GitHub Pages publication integrity
+
+A website may only publish a **compiled release** from `dist/`, never raw `pwa/` development files. Source service worker is `pwa/sw.template.js`; the production `dist/sw.js` must embed the exact same manifest as `dist/release.json`, whose `version/id` must equal `dist/VERSION.txt`, with every asset hash and byte count verified by `npm run verify:deploy`. Publishing a raw service worker with `__RELEASE_MANIFEST__` is a release-blocking defect. Branch-root and source-build GitHub Actions publishing routes must not be mixed. Preserve existing local workouts, indexed databases and authentication; publication repair has no SQL migration.

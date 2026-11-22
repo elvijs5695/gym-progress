@@ -1,29 +1,64 @@
 /**
- * Non-destructive update verification. Never activate a waiting worker until
- * its own identity agrees with the live, uncached deployment proof.
- * The deployment-status.json path is intentionally excluded from ALL worker
- * release manifests, including older deployed versions.
+ * Live release verification, independent of the installed cache-first worker.
+ * The service worker embeds a hash manifest and verifies ALL bytes before
+ * installing. deployment-status.json is additional evidence, not a single
+ * point of failure: GitHub Pages may not expose an auxiliary proof despite
+ * serving the release manifest and generated service worker correctly.
  */
 const stringError = e => String(e?.message || e);
 const isHash = v => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v);
 const sha256 = async source => {
- const bytes = new TextEncoder().encode(source);
- const digest = await crypto.subtle.digest('SHA-256',bytes);
+ const bytes=new TextEncoder().encode(source);
+ const digest=await crypto.subtle.digest('SHA-256',bytes);
  return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
 };
-
+const manifestIsValid = m => m && typeof m.version==='string' && /^[0-9]+(?:\.[0-9]+){2}$/.test(m.version) &&
+ typeof m.id==='string' && m.id.startsWith(m.version+'-') && Array.isArray(m.assets) && m.assets.length > 0 &&
+ m.assets.some(a=>a.path==='index.html') && m.assets.some(a=>a.path==='app.js') &&
+ m.assets.every(a=>typeof a.path==='string' && /^[a-zA-Z0-9._/-]+$/.test(a.path) &&
+ !a.path.startsWith('/') && !a.path.split('/').some(part=>!part||part==='.'||part==='..') &&
+ isHash(a.sha256) && Number.isSafeInteger(a.bytes) && a.bytes>=0);
+function embeddedManifest(script){
+ if(script.includes('__RELEASE_MANIFEST__'))throw new Error('Published sw.js contains an unresolved development placeholder');
+ const match=script.match(/(?:^|\n)const RELEASE=([^\n;]+);/);
+ if(!match)throw new Error('Published sw.js does not contain a generated release manifest');
+ let value;
+ try{value=JSON.parse(match[1]);}catch{throw new Error('Published sw.js has an invalid release manifest');}
+ if(!manifestIsValid(value))throw new Error('Published sw.js contains an incomplete or unsafe release manifest');
+ return value;
+}
 export async function inspectPublishedRelease({base='./',fetchImpl=fetch}={}) {
- try {
-  const proofResponse = await fetchImpl(new URL('deployment-status.json',new URL(base,location.href)),{cache:'no-store'});
-  if(!proofResponse.ok)throw new Error('deployment-status.json is missing (HTTP '+proofResponse.status+'). Publish the generated dist/ files, not the unbuilt pwa/ sources.');
-  const proof=await proofResponse.json();
-  if(!proof||typeof proof.version!=='string'||typeof proof.id!=='string'||!proof.id.startsWith(proof.version+'-')||!isHash(proof.serviceWorkerSha256))throw new Error('Invalid or mixed deployed release proof');
-  const workerResponse=await fetchImpl(new URL('sw.js',new URL(base,location.href)),{cache:'no-store'});
-  if(!workerResponse.ok)throw new Error('Published sw.js is missing (HTTP '+workerResponse.status+')');
-  const script=await workerResponse.text();
-  if(script.includes('__RELEASE_MANIFEST__')||!script.includes('const RELEASE={"version":"'+proof.version+'","id":"'+proof.id+'"'))throw new Error('Published sw.js is a development template or belongs to a different release');
-  if(await sha256(script)!==proof.serviceWorkerSha256)throw new Error('Published worker and release proof disagree (mixed deployment)');
-  return {kind:'published',version:proof.version,id:proof.id};
+ try{
+  const root=new URL(base,location.href),url=name=>new URL(name,root);
+  const workerResponse=await fetchImpl(url('sw.js'),{cache:'no-store'});
+  if(!workerResponse.ok)throw new Error('Published sw.js cannot be retrieved (HTTP '+workerResponse.status+')');
+  const script=await workerResponse.text(),embedded=embeddedManifest(script);
+  const releaseResponse=await fetchImpl(url('release.json'),{cache:'no-store'});
+  if(!releaseResponse.ok)throw new Error('Published release.json cannot be retrieved (HTTP '+releaseResponse.status+')');
+  let published;
+  try{published=await releaseResponse.json();}catch{throw new Error('Published release.json is not JSON');}
+  if(!manifestIsValid(published)||JSON.stringify(published)!==JSON.stringify(embedded))
+   throw new Error('Published release.json and sw.js contain different or invalid asset manifests');
+  let proofStatus='missing';
+  try{
+   const proofResponse=await fetchImpl(url('deployment-status.json'),{cache:'no-store'});
+   if(proofResponse.ok){
+    let proof;
+    try{proof=await proofResponse.json();}catch{throw new Error('Published deployment-status.json is invalid JSON');}
+    const workerHash=await sha256(script);
+    if(proof?.version!==published.version||proof?.id!==published.id||proof?.serviceWorkerSha256!==workerHash||proof?.assetCount!==published.assets.length)
+     throw new Error('Published deployment proof disagrees with the service worker or release manifest');
+    proofStatus='verified';
+   }else if(proofResponse.status!==404){
+    throw new Error('Deployment proof HTTP '+proofResponse.status);
+   }
+  }catch(error){
+   // A known-missing optional proof is safe: install itself verifies every
+   // declared asset's SHA-256. A present but invalid or inconsistent proof is NOT safe.
+   if(!String(error?.message||error).includes('Deployment proof HTTP'))throw error;
+   proofStatus='unavailable';
+  }
+  return {kind:'published',version:published.version,id:published.id,proofStatus};
  }catch(error){return {kind:'error',message:stringError(error)};}
 }
 

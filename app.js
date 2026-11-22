@@ -43,7 +43,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.1.3';
+const APP_VERSION='2.1.4';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
