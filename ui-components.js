@@ -390,9 +390,10 @@ export function enhanceDialog(dialogRoot, {onClose,language=locale()} = {}) {
   if(fresh) {
     lastDialog=dialog;
     const selected=dialog.querySelector('[data-dialog-initial-focus],[autofocus]');
-    if(heading) setAttrIfMissing(heading,'tabindex','-1');
-    // Read the title first and avoid opening a mobile keyboard without a request.
-    focus(selected || heading || dialog);
+    // Focus the dialog container (aria-labelledby announces its title). Focusing
+    // the h2 created an unwanted visible selection frame in WebView/Firefox.
+    // Do not auto-open the keyboard for a search field unless explicitly requested.
+    focus(selected || dialog);
   }
 }
 

@@ -1,3 +1,9 @@
+# Current source: Gym Progress 2.2.3
+
+Use `docs/RELEASE_2_2_3_HANDOVER.md` and `docs/RELEASE_2_2_3_ACCEPTANCE.md` before historical handovers. Preserve the carefully tailored shared PWA/Android interface. Latest corrections: composited Tracker fill animation; minimal theme-token status icons; searchable Progress exercise picker; compact evidence-limited trend line; Android release-note startup unblocked; PWA refresh intent survives transient account bootstrap but never interrupts a workout or pending upload. Never treat source-only tests as actual browser/Android audio verification. No GitHub connection or production backend mutation.
+
+---
+
 # Current handover entry — Gym Progress 2.2.1
 
 Newest user requirement: Skipping an exercise must offer optional rest, never jump straight to the next exercise. Rest duration is planned duration or 60 s if unset; skipping an upcoming exercise during an ongoing rest preserves the original clock. Both clients share this state transition. Source tests passed; browser and physical Android QA pending.

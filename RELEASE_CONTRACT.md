@@ -1,3 +1,12 @@
+## 2.2.3 refinements (current; earlier sections remain historical)
+
+- Use a unified design language: shared design tokens and focus-safe controls; a custom searchable picker only where a long exercise list warrants it. Preserve native semantics for small selection sets.
+- A trend summary must never report plateau without adequate personal observations; use individualised progression-history assessment, label low-confidence data as calibrating and avoid diagnosing fitness or health.
+- Do not interrupt an active workout for a PWA update or reload. Persist and sync signed-in records before activating a new version. Transient bootstrap/sync may defer an automatic update requested on refresh; an actual pending upload, workout or unsaved input vetoes a silent delayed update.
+- Release notes should appear on Android independently of service worker capability and must not visibly outline their title. No separate rescue or deployment link in the UI.
+
+---
+
 # Current release contract amendment — Gym Progress 2.2.1
 
 The Android workout must show exactly one ongoing silent status notification, not rest-finished notifications. Sounds must be native-only on Android, with 3 short countdown cues and one long completion cue plus one exercise-entry reminder each minute. PWA and Android share workout/UI logic; remove redundant Home icon from active header while retaining bottom navigation. Previous release text below is historical where contradictory. See `docs/RELEASE_2_2_1_HANDOVER.md`.

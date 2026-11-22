@@ -1,6 +1,6 @@
 {
-  "version": "2.2.2",
-  "id": "2.2.2-b573234cc50b",
+  "version": "2.2.3",
+  "id": "2.2.3-97c3a5762106",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "c6266f62c8c58acdecfffa2c5d8f0249f8e6bb9ea7e71eaccaa97262dfe15ebc",
-      "bytes": 422838
+      "sha256": "eab66e8fa6f3cc0050b15ad47f691818d2c0f6fc2992a1358045e1e896410441",
+      "bytes": 427357
     },
     {
       "path": "autoregulation.js",
@@ -49,8 +49,8 @@
     },
     {
       "path": "design-system.css",
-      "sha256": "a20d60747af27860e1c626de88b1b40c4d141c526e456a6e500f9f2e909cab75",
-      "bytes": 11878
+      "sha256": "258bc06c99bc64022a2c8476478e8572581ce33878b44910c441d10bf8142f52",
+      "bytes": 12444
     },
     {
       "path": "dom-actions.js",
@@ -243,6 +243,11 @@
       "bytes": 3368
     },
     {
+      "path": "progress-trend-summary.js",
+      "sha256": "445cb4b5cdbcdf98f544a69777c9f6e1a67ffdba16b078204decb66f527b3839",
+      "bytes": 1953
+    },
+    {
       "path": "progression-intelligence.js",
       "sha256": "4f7c651aa93c1b8c1319e400d58c9124212a3ddd1f94b83feaf15531a5373b53",
       "bytes": 14252
@@ -349,18 +354,18 @@
     },
     {
       "path": "ui-components.js",
-      "sha256": "498c3885e797fd5798811906742b205769580743ffecddecc1f5e6a0b20a6f09",
-      "bytes": 27748
+      "sha256": "b17cbe8d193ed580e28a28dd0ed1c1235a5841abcf29b56d733883fa84ef411c",
+      "bytes": 27840
     },
     {
       "path": "ui.css",
-      "sha256": "6f8486181fa2f7e205a3a5dd0c304d512560a009b242bc565a9d7282ba447cce",
-      "bytes": 72255
+      "sha256": "92724f4a85c69c9cc39c6ae1b6528eda73ea30ba5e66a5152207ce1a26714bd8",
+      "bytes": 75173
     },
     {
       "path": "update-policy.js",
-      "sha256": "3157c7f1697dff87e2f29cad16467d55dd9459fecbc0e358f964c2a155956db5",
-      "bytes": 1563
+      "sha256": "16e4a7dba508d88e40eb168281bc10bbe7cc48ec025a8d5366c32c70ecf8503f",
+      "bytes": 1685
     },
     {
       "path": "update-rescue-212.js",

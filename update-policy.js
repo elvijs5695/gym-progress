@@ -2,6 +2,8 @@
  * completed upload. Only pending local upload records in enabled domains veto
  * signed-in updates; remote orphans remain in Data review, not this gate.
  */
+export function preserveRefreshUpdateIntent(reason){return reason==='sync-running'||reason==='local-save-or-workspace';}
+
 export function updateGate({state,authenticated=false,bootstrapStatus='ready',syncInFlight=false,writeBlocked=false,workspaceTransition=false,dirty=false,dialogOpen=false}={}){
  if(!state||writeBlocked||workspaceTransition)return {safe:false,reason:'local-save-or-workspace'};
  if(state.runtime)return {safe:false,reason:'active-workout'};

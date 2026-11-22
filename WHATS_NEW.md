@@ -1,3 +1,18 @@
+# Gym Progress 2.2.3 — shared UI polish and safe startup updates
+
+- Tracker amount changes now animate the fill using compositor transforms instead of width/layout recalculation. Rapid +/- taps stay smooth; reduced-motion still disables the effect.
+- Completed and skipped statuses in the rest-day exercise list use minimal SVG marks and the same pastel green/red tokens as the active pulsing marker.
+- Progress has a searchable, in-app exercise picker with complete movement names and clear programme-day context. Long names truncate only in the collapsed trigger; the list shows them without native system-menu scaling. Short form selectors keep accessible native semantics, with consistent dropdown styling.
+- Under the Progress chart, a single compact observational status reuses the existing personalised trend analysis. Low-confidence/insufficient-history results show “Calibrating”, not a fabricated plateau. Cardio does not infer fitness from pace alone.
+- Android's “What's new” no longer waits on a browser-only service-worker check. Dialog focus moves to the dialog itself rather than outlining the heading.
+- On a PWA refresh, transient account bootstrap/synchronisation no longer consumes the automatic-update intent. A workout, pending upload or unsaved edit still prevents a silent version switch; a safe later update can be accepted via the main-tab notice.
+- Log cards do not claim ramp-up was skipped if no ramp-up plan existed. An explicitly skipped planned ramp-up is still labelled.
+- No account schema migration or training-data conversion was added by 2.2.3. The 2.2.2 unique-username SQL migration remains required if not yet applied.
+
+**Source-tested, not phone/Firefox certified.** Android still packages the same compiled visual UI with native audio and reminder services; Android APK and device tests are not included.
+
+---
+
 # Gym Progress 2.2.2 — exercise history, privacy, audio and Settings
 
 - Private Friends discovery through unique public usernames instead of email; a Supabase migration is required. Existing display names are preserved.
