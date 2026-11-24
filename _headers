@@ -1,0 +1,17 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/update-rescue.html
+  Cache-Control: no-store
+/update-rescue-212.js
+  Cache-Control: no-store
+/deployment-status.json
+  Cache-Control: no-store
+/release.json
+  Cache-Control: no-store
