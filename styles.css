@@ -1,4 +1,0 @@
-/* Shared offline stylesheet entry point. */
-@import url('./design-system.css');
-@import url('./ui.css');
-@import url('./release-workout.css');
