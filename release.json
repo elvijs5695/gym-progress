@@ -1,6 +1,6 @@
 {
   "version": "2.2.6",
-  "id": "2.2.6-0a58a4493764",
+  "id": "2.2.6-e6448feb9ba8",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -19,8 +19,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "8a1507213261514823bd90626ae01fffedf360194def29d90d777602d8505842",
-      "bytes": 434574
+      "sha256": "fda3e8c12af672a7cd18f7e585e17dbf71211773c5d525c20e559a6726553af6",
+      "bytes": 436208
     },
     {
       "path": "autoregulation.js",
@@ -359,8 +359,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "602d4b2d02df732e52757a96085bfb5fa7a1878d9e9ab47c31d0c938eeee3a88",
-      "bytes": 75460
+      "sha256": "68756142747eed8937b8096b5cef9b8b39af6b08eec10c544b67c81371b1ff34",
+      "bytes": 75710
     },
     {
       "path": "update-policy.js",
@@ -389,8 +389,8 @@
     },
     {
       "path": "workout-controller.js",
-      "sha256": "576a839db9a1ad8d1d2b2597e5b44eba525067a1be16fe1b292fe226ef4aa7f1",
-      "bytes": 3767
+      "sha256": "f86f1db404838329167bc43d95806f99f4d68466f367fce7dda15d1f5acde290",
+      "bytes": 5475
     },
     {
       "path": "workout-progress-safety.js",
@@ -404,8 +404,8 @@
     },
     {
       "path": "workout-step-history.js",
-      "sha256": "0dc66c3b39e357684d1eb90d7487f1ee7487147508e18252eb13ab363bd844d4",
-      "bytes": 5301
+      "sha256": "f224f5c7c88c6358bdfa18012c84d8b0a78dfa75e4f37175510fe446aa802618",
+      "bytes": 5365
     },
     {
       "path": "workspace-lifecycle.js",

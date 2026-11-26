@@ -7,7 +7,7 @@ export const WORKOUT_STEP_ACTIONS=new Set([
  'beginPreparedExercise','finishWarmup','startRamp','skipRamp','finishRamp',
  'startTimedSet','finishTimedSet','saveCardioSet','cancelCardioSet',
  'setComplete','saveSet','saveSupersetSet','supersetComplete','skipSet','skipExercise',
- 'skipRest','shiftRest','toggleSupersetTimed','adjustWeight','adjustSupersetWeight','disableRampPermanently','finishUnload','finishStretch','toggleSupersetTimed'
+ 'skipRest','skipSupersetSet','skipSuperset','postponeExercise','confirmReplacement','toggleSupersetTimed','disableRampPermanently','finishUnload','finishStretch'
 ]);
 let sessionKey=null,undo=[],redo=[];
 function elapsed(ts,at){return Number.isFinite(Number(ts))?Math.max(0,at-Number(ts)):null;}
@@ -55,7 +55,7 @@ export function restoreWorkoutStep(state,checkpoint,at=Date.now()){
  state.performed_sets=state.performed_sets.filter(x=>!oldIds.has(String(x.sessionExerciseId))).concat(clone(checkpoint.performedSets));
  const savedTemplates=new Map(checkpoint.templateExercises.map(x=>[String(x.id),x]));
  state.template_exercises=state.template_exercises.map(x=>savedTemplates.has(String(x.id))?clone(savedTemplates.get(String(x.id))):x);
- state.runtime=clone(checkpoint.runtime);rebaseRunningClocks(state.runtime,checkpoint,at);
+ state.runtime=clone(checkpoint.runtime);if(state.runtime?.rest)delete state.runtime.rest.autoAdvancing;rebaseRunningClocks(state.runtime,checkpoint,at);
  return true;
 }
 export function resetWorkoutStepHistory(){sessionKey=null;undo=[];redo=[];}

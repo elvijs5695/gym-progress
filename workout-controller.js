@@ -53,3 +53,32 @@ export function validateCardioValues(values,unavailable={}){
   const n=Number(raw);if(!Number.isFinite(n)||n<d.min||n>d.max||(d.integer&&!Number.isInteger(n)))errors[key]=`${d.label}: enter ${d.min}–${d.max}${d.integer?' (whole number)':''}`;else result[key]=n;
  }return {values:result,errors,valid:Object.keys(errors).length===0};
 }
+
+/** Resolve stale REST nextAction against actual pending set rows, preserving
+ * intentional pending set/superset actions but never entering STRETCH early.
+ * Exercises are ordered by the current session order (postpone-safe). */
+export function resolvePendingWorkoutAction(exercises,performedSets,proposed){
+ const exs=Array.isArray(exercises)?exercises:[],sets=Array.isArray(performedSets)?performedSets:[];
+ const pendingByExercise=new Map();
+ for(const row of sets)if(row.status==='PENDING'){const key=String(row.sessionExerciseId);
+   if(!pendingByExercise.has(key))pendingByExercise.set(key,new Set());
+   pendingByExercise.get(key).add(Number(row.setNumber));
+ }
+ const available=(i)=>i>=0&&i<exs.length&&pendingByExercise.has(String(exs[i].id));
+ const index=Number(proposed?.exerciseIndex);
+ if(proposed&&Number.isInteger(index)&&available(index)){
+   if(proposed.type==='EXERCISE')return proposed;
+   if(['SET','SUPERSET'].includes(proposed.type)){
+     const pending=pendingByExercise.get(String(exs[index].id));
+     const rows=sets.filter(row=>String(row.sessionExerciseId)===String(exs[index].id));
+     const row=rows.sort((a,b)=>Number(a.setNumber)-Number(b.setNumber))[proposed.setIndex];
+     if(row?.status==='PENDING'&&pending.has(Number(row.setNumber))){
+       if(proposed.type!=='SUPERSET')return proposed;
+       const lead=exs[index];const peers=exs.filter(e=>e.supersetGroupId&&e.supersetGroupId===lead.supersetGroupId);
+       if(peers.length>=2&&peers.every(peer=>pendingByExercise.get(String(peer.id))?.has(Number(row.setNumber))))return proposed;
+     }
+   }
+ }
+ const i=exs.findIndex((_,idx)=>available(idx));
+ return i<0?{type:'STRETCH'}:{type:'EXERCISE',exerciseIndex:i};
+}
