@@ -83,6 +83,8 @@
     refreshCapabilities
   });
   Object.defineProperty(globalThis, 'GymProgressAndroid', {value: adapter, writable: false, configurable: false});
+  // Native-only motion profile; browsers and installed PWAs retain their existing timing.
+  if (document.documentElement?.dataset) document.documentElement.dataset.gpPlatform = 'android';
   void refreshCapabilities().catch(() => {});
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) void refreshCapabilities().catch(() => {});

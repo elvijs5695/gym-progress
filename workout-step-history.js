@@ -2,7 +2,8 @@
 // The WORKOUT clock is read exclusively from workout_session.startedAt and is NEVER
 // rebased by undo/redo. Only local working-stage clocks are rebased.
 import {clone,fingerprint} from './data-contract.js';
-export const WORKOUT_STEP_LIMIT=24;
+import {createWorkoutDecisionDelta,applyWorkoutDecisionDelta,compactWorkoutJournal,validWorkoutJournal,WORKOUT_JOURNAL_FORMAT,WORKOUT_JOURNAL_MAX_ACTIONS} from './workout-decision-delta.js';
+export const WORKOUT_STEP_LIMIT=WORKOUT_JOURNAL_MAX_ACTIONS;
 export const WORKOUT_STEP_ACTIONS=new Set([
  'beginPreparedExercise','finishWarmup','startRamp','skipRamp','finishRamp',
  'startTimedSet','finishTimedSet','saveCardioSet','cancelCardioSet',
@@ -22,7 +23,12 @@ export function captureWorkoutStep(state,at=Date.now()){
   session:s,sessionExercises:ex,performedSets:sets,
   // A completed working set may change its corresponding programme template;
   // never copy or restore unrelated workout templates.
-  templateExercises:(state.template_exercises||[]).filter(x=>templateIds.has(String(x.id)))});
+  templateExercises:(state.template_exercises||[]).filter(x=>templateIds.has(String(x.id))),
+  // Retain identity provenance for replacements made during the current session.
+  // The IDs alone tell Undo whether an unreferenced identity was just created;
+  // full records are included only for identities this session references.
+  userExerciseIds:(state.user_exercises||[]).map(x=>String(x.id)),
+  userExercises:(state.user_exercises||[]).filter(x=>ex.some(e=>e.userExerciseId!=null&&String(e.userExerciseId)===String(x.id)))});
 }
 function rebaseRunningClocks(runtime,checkpoint,at){
  const source=checkpoint.runtime,oldAt=checkpoint.capturedAt;
@@ -48,47 +54,96 @@ export function restoreWorkoutStep(state,checkpoint,at=Date.now()){
  const current=state.workout_sessions.find(x=>String(x.id)===String(sid));
  if(!current)return false;
  const startedAt=current.startedAt;
- const oldIds=new Set(state.session_exercises.filter(x=>String(x.sessionId)===String(sid)).map(x=>String(x.id)));
+ const currentExercises=state.session_exercises.filter(x=>String(x.sessionId)===String(sid));
+ const oldIds=new Set(currentExercises.map(x=>String(x.id)));
+ const currentUserIds=new Set(currentExercises.map(x=>x.userExerciseId).filter(x=>x!=null).map(String));
+ const priorIdentityIds=new Set(checkpoint.userExerciseIds||[]);
  state.workout_sessions=state.workout_sessions.map(x=>String(x.id)===String(sid)?clone(checkpoint.session):x);
  state.workout_sessions.find(x=>String(x.id)===String(sid)).startedAt=startedAt;
  state.session_exercises=state.session_exercises.filter(x=>String(x.sessionId)!==String(sid)).concat(clone(checkpoint.sessionExercises));
  state.performed_sets=state.performed_sets.filter(x=>!oldIds.has(String(x.sessionExerciseId))).concat(clone(checkpoint.performedSets));
  const savedTemplates=new Map(checkpoint.templateExercises.map(x=>[String(x.id),x]));
  state.template_exercises=state.template_exercises.map(x=>savedTemplates.has(String(x.id))?clone(savedTemplates.get(String(x.id))):x);
+ // A replacement can create a new global user-exercise identity. Undo must
+ // remove it ONLY if it was created since the checkpoint AND no other
+ // programme/session refers to it; never delete a pre-existing catalogue item.
+ if(Array.isArray(checkpoint.userExerciseIds)){
+   const referenced=new Set([...state.template_exercises,...state.session_exercises]
+     .map(x=>x.userExerciseId).filter(x=>x!=null).map(String));
+   state.user_exercises=(state.user_exercises||[]).filter(x=>{
+     const id=String(x.id);return !currentUserIds.has(id)||priorIdentityIds.has(id)||referenced.has(id);
+   });
+ }
+ const existingUsers=new Set((state.user_exercises||[]).map(x=>String(x.id)));
+ for(const user of checkpoint.userExercises||[])if(!existingUsers.has(String(user.id))){
+   state.user_exercises.push(clone(user));existingUsers.add(String(user.id));
+ }
  state.runtime=clone(checkpoint.runtime);if(state.runtime?.rest)delete state.runtime.rest.autoAdvancing;rebaseRunningClocks(state.runtime,checkpoint,at);
  return true;
 }
-export function resetWorkoutStepHistory(){sessionKey=null;undo=[];redo=[];}
-export function recordWorkoutStep(action,before,after){
+/**
+ * The action journal is LOCAL workspace metadata, persisted in the same
+ * IndexedDB transaction as its workout snapshot. It is not a Supabase entity.
+ * Old sessions without a journal retain the programme-position fallback.
+ */
+export function hydrateWorkoutStepHistory(state){
+ sessionKey=null;undo=[];redo=[];
+ const sid=state?.runtime?.sessionId;
+ if(sid==null){if(state)delete state.local_workout_journal;return false;}
+ const stored=state.local_workout_journal;
+ if(!validWorkoutJournal(stored,sid)){
+  if(state)delete state.local_workout_journal;
+  return false;
+ }
+ sessionKey=String(sid);undo=clone(stored.undo);redo=clone(stored.redo);return true;
+}
+function syncJournal(state){
+ if(!state||sessionKey==null)return;
+ const journal=compactWorkoutJournal({format:WORKOUT_JOURNAL_FORMAT,sessionId:sessionKey,undo:clone(undo),redo:clone(redo)});
+ undo=journal.undo;redo=journal.redo;
+ state.local_workout_journal=journal;
+}
+export function resetWorkoutStepHistory(state=null){
+ sessionKey=null;undo=[];redo=[];
+ if(state)delete state.local_workout_journal;
+}
+export function recordWorkoutStep(action,before,after,state=null){
  if(!WORKOUT_STEP_ACTIONS.has(action)||!before||!after||String(before.sessionId)!==String(after.sessionId))return false;
  const key=String(after.sessionId);
  if(key!==sessionKey){sessionKey=key;undo=[];redo=[];}
- // Pure value equality ignoring the capture clock; routine timer motion is not
- // itself an undoable workout decision.
+ // Do not turn the passing of time into a user Undo step.
  const simplified=x=>({...x,capturedAt:0});
  if(fingerprint(simplified(before))===fingerprint(simplified(after)))return false;
- undo.push({action,before,after});if(undo.length>WORKOUT_STEP_LIMIT)undo.shift();redo=[];return true;
+ const delta=createWorkoutDecisionDelta(before,after);
+ if(!delta)return false;
+ undo.push({action,delta});redo=[];
+ compactWorkoutJournal({undo,redo});
+ if(state)syncJournal(state);
+ return true;
 }
-/** Add a recovered programme step (skip or completed set) to Redo.
- * A lost in-memory journal must not force Redo to jump between timestamps. */
-export function rememberRecoveredProgrammeUndo(before,after,action='skipExercise'){
+/** Reconstruct a manually undone legacy action so Redo survives a reload. */
+export function rememberRecoveredProgrammeUndo(before,after,action='skipExercise',state=null){
  if(!before||!after||String(before.sessionId)!==String(after.sessionId))return false;
  const key=String(after.sessionId);
  if(sessionKey!==key){sessionKey=key;undo=[];redo=[];}
- redo.push({action,before:after,after:before});
- if(redo.length>WORKOUT_STEP_LIMIT)redo.shift();
+ const delta=createWorkoutDecisionDelta(after,before);
+ if(!delta)return false;
+ redo.push({action,delta});compactWorkoutJournal({undo,redo});
+ if(state)syncJournal(state);
  return true;
 }
 export function canUndoWorkoutStep(state){return !!undo.length&&String(state?.runtime?.sessionId)===sessionKey;}
 export function canRedoWorkoutStep(state){return !!redo.length&&String(state?.runtime?.sessionId)===sessionKey;}
 export function undoWorkoutStep(state,at=Date.now()){
  if(!canUndoWorkoutStep(state))return null;
- const step=undo.at(-1);if(!restoreWorkoutStep(state,step.before,at))return null;
- undo.pop();redo.push(step);return step.action;
+ const step=undo.at(-1);
+ if(!applyWorkoutDecisionDelta(state,step.delta,'before',at))return null;
+ undo.pop();redo.push(step);syncJournal(state);return step.action;
 }
 export function redoWorkoutStep(state,at=Date.now()){
  if(!canRedoWorkoutStep(state))return null;
- const step=redo.at(-1);if(!restoreWorkoutStep(state,step.after,at))return null;
- redo.pop();undo.push(step);return step.action;
+ const step=redo.at(-1);
+ if(!applyWorkoutDecisionDelta(state,step.delta,'after',at))return null;
+ redo.pop();undo.push(step);syncJournal(state);return step.action;
 }
 export function stepHistorySize(){return {undo:undo.length,redo:redo.length};}

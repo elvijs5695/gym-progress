@@ -16,6 +16,9 @@ function redactSyncHistory(sync,{legacy=false}={}){
 }
 export function redactWorkoutHistory(state){
  state.workout_sessions=[];state.session_exercises=[];state.performed_sets=[];state.runtime=null;
+ // The new local Undo journal contains past set identities/values; it must
+ // be erased from current AND recovery snapshots when logs are deleted.
+ delete state.local_workout_journal;
  state.revisions=(state.revisions||[]).filter(record=>record.kind!=='undo_set'&&!record.before?.workout_sessions&&!isHistory(record));
  delete state.analysisHistory;
  if(state.v2){for(const field of ['rawCanonical','unresolvedRecords','conversionWarnings'])if(Array.isArray(state.v2[field]))state.v2[field]=state.v2[field].filter(record=>!isHistory(record));state.v2.historyErasedAt=Date.now();}

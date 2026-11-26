@@ -62,6 +62,28 @@ export function exerciseMetrics(state,e){
   const avgRir=rirs.length?rirs.reduce((a,b)=>a+b,0)/rirs.length:null;
   return {...cardio,volume,avgRir,effectiveRirAvg:avgRir,completedSets:complete.length,strengthCompletedSets:repBased?complete.length:0,effortRecordedSets:rirs.length,volumeRecordedSets:measured.length,bestE1rm,maxWeight,maxReps,totalDurationSeconds,failureCount,actionableFailureCount,analysisVersion:'GYM_PROGRESS_METRICS_V2'};
 }
+/** Compare *prescribed* programme composition, never how the user executed it.
+ * A skipped/failed/incomplete set is not a programme edit. Likewise, moving an
+ * exercise later within a live session or changing weight/reps during normal
+ * progression must not trigger a misleading shared-card asterisk.
+ * A different exercise (including a deliberate replacement) or a changed
+ * prescribed number of sets is a material comparison change.
+ * Sort to ignore in-session ordering while retaining duplicate occurrences.
+ * Superset UUIDs are deliberately excluded: they are not volume operands.
+ */
+export function programmeCompositionSignature(state,session){
+ const members=sessionExercises(state,session?.id).map(e=>{
+  const identity=e.programmeExerciseId!=null?`programme:${e.programmeExerciseId}`:
+   e.templateExerciseId!=null?`template:${e.templateExerciseId}`:
+   e.userExerciseId!=null?`user:${e.userExerciseId}`:
+   e.canonicalExerciseId!=null?`canonical:${e.canonicalExerciseId}`:
+   `name:${String(e.name||'').trim().toLocaleLowerCase('en')}`;
+  const planned=Number(e.targetSets);
+  const prescribedSets=Number.isInteger(planned)&&planned>0?planned:exerciseSets(state,e.id).length;
+  return JSON.stringify([identity,prescribedSets,trackingModeOf(e),e.equipment??null,e.dumbbellLoad??null]);
+ });
+ return JSON.stringify(members.sort());
+}
 /** Whole workout-DAY strength load, not matched-exercise progression.
  * Compare consecutive completed sessions of the same workout template, even
  * when its exercises/sets have changed. Cardio/bodyweight-rep volume must not
@@ -80,11 +102,7 @@ export function dayVolumeProgress(state,current){
    const measurable=sessionExercises(state,session.id).filter(e=>trackingModeOf(e)===TrackingMode.WEIGHT_REPS).map(e=>exerciseMetrics(state,e));
    return {volume:finiteSum(measurable.map(m=>m.volume)),sets:measurable.reduce((n,m)=>n+m.volumeRecordedSets,0)};
  };
- const structure=session=>JSON.stringify(sessionExercises(state,session.id).map(e=>[
-   e.programmeExerciseId??null,e.userExerciseId??null,e.canonicalExerciseId??null,
-   e.trackingMode??null,e.equipment??null,e.dumbbellLoad??null,e.position??null,e.supersetGroupId??null,
-   exerciseSets(state,e.id).filter(set=>set.status==='COMPLETE').length
- ]));
+ const structure=session=>programmeCompositionSignature(state,session);
  const actual=strengthLoad(current),historical=strengthLoad(previous);
  const result={percent:null,structureChanged:structure(current)!==structure(previous),previousSessionId:previous.id,
    currentVolume:actual.volume,previousVolume:historical.volume};

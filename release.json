@@ -1,6 +1,6 @@
 {
-  "version": "2.2.8",
-  "id": "2.2.8-a064082ae120",
+  "version": "2.2.11",
+  "id": "2.2.11-f6c602c88d7f",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -9,8 +9,8 @@
     },
     {
       "path": "android-native-bridge.js",
-      "sha256": "6aec3706176dc2d4ba872378b8e7bb0af0b757b42a3b64113b3c7323d0e574e3",
-      "bytes": 4436
+      "sha256": "b5ffb46642c46ce3c5eec34e2d19f36552bfe7042e5d8249a9ef0792c716eaae",
+      "bytes": 4625
     },
     {
       "path": "app-config.js",
@@ -19,8 +19,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "b73c44c47fb76f39b3b925f4ff8f911bbe4b1bc077fc271bad034f66c39ca3f2",
-      "bytes": 443838
+      "sha256": "62cf4db61a881382c17234bb9de7238032f4ca7421a99406b56216a8e161f48f",
+      "bytes": 448182
     },
     {
       "path": "autoregulation.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "data-erasure.js",
-      "sha256": "5f62a47f0906c144a1112dcf028ab37631d7202fb86beec04076b27aedf6f86a",
-      "bytes": 2483
+      "sha256": "338afaf755971846d1ccb8cabb18d643919676eff54f5d7ef6d7cf6d7a03003e",
+      "bytes": 2669
     },
     {
       "path": "db.js",
@@ -119,8 +119,8 @@
     },
     {
       "path": "i18n.js",
-      "sha256": "89078db83c01695d3adb6ea3df4baf86ea954f78920c38d60548bee00b04042d",
-      "bytes": 54928
+      "sha256": "ace14c10a70610993a6095e481e498971d7b4fb7872640279e29086fabbbf3d0",
+      "bytes": 54998
     },
     {
       "path": "icons/apple-touch-icon.png",
@@ -169,8 +169,8 @@
     },
     {
       "path": "metrics.js",
-      "sha256": "f50113ab3007d002111c82ce7c275e4447e2d080f08a1959e06ab3f67878c308",
-      "bytes": 12795
+      "sha256": "f69cf5d58b3fc22776be65b27c6724312436fd43b627fdff2b6473db0a8d13ee",
+      "bytes": 13866
     },
     {
       "path": "name-policy.js",
@@ -199,8 +199,8 @@
     },
     {
       "path": "offline-ownership.js",
-      "sha256": "b161f70d421bd6cf5782813acd88847f203e1e89d44a07b0903e4c3cca38a084",
-      "bytes": 5757
+      "sha256": "2ba3c5ca6a54770bb869425d9448067fb365b01a5f4e0da5aebb5610d5fd9b2c",
+      "bytes": 6179
     },
     {
       "path": "performance-rules.js",
@@ -364,13 +364,13 @@
     },
     {
       "path": "ui.css",
-      "sha256": "6ae6d4c70af5d71b3280e89a1794acfb9c3242feadb91585b3a8b170a2eec0c1",
-      "bytes": 75860
+      "sha256": "50201c13c2fe80986a2e711c779247cde5f6690c1834b6aa54611ac9738963b9",
+      "bytes": 76277
     },
     {
       "path": "update-policy.js",
-      "sha256": "a5eff51f6201a34d0dbaf1b480a83b1ca9e4f0b15bd713121ebc67cd1da28ee4",
-      "bytes": 1701
+      "sha256": "6fe0eca584af4ba68e9562cb51d5668dc6c6e27c32f275711c360459841cac7a",
+      "bytes": 1772
     },
     {
       "path": "update-rescue-212.js",
@@ -394,8 +394,13 @@
     },
     {
       "path": "workout-controller.js",
-      "sha256": "f86f1db404838329167bc43d95806f99f4d68466f367fce7dda15d1f5acde290",
-      "bytes": 5475
+      "sha256": "aea5577e53982f4ebbf2d097d3b05cf049505eae4e280e7384b8898f8a41cf86",
+      "bytes": 5474
+    },
+    {
+      "path": "workout-decision-delta.js",
+      "sha256": "60dc7883b4e18cd6e41a97f1e376ef0b5ff8d5b4ea8223d922ea841739ad5644",
+      "bytes": 9533
     },
     {
       "path": "workout-programme-undo.js",
@@ -414,8 +419,13 @@
     },
     {
       "path": "workout-step-history.js",
-      "sha256": "018b7601e7015f12c3b67a743ecfe14d23a4f76439acc4531de98f7018fdd01d",
-      "bytes": 5886
+      "sha256": "6da297b868004caba017cd526dcc174e0d1c3b8034ead0e92424c8f96930fd7d",
+      "bytes": 8729
+    },
+    {
+      "path": "workout-superset-groups.js",
+      "sha256": "0bc3745888b6ab8f4ad37315ffcddc82726b09ccd025e7524c0203d3ea8d379e",
+      "bytes": 3575
     },
     {
       "path": "workspace-lifecycle.js",

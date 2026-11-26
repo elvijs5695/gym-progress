@@ -6,7 +6,7 @@ export function preserveRefreshUpdateIntent(reason){return reason==='sync-runnin
 
 export function updateGate({state,authenticated=false,bootstrapStatus='ready',syncInFlight=false,writeBlocked=false,workspaceTransition=false,dirty=false,dialogOpen=false}={}){
  if(!state||writeBlocked||workspaceTransition)return {safe:false,reason:'local-save-or-workspace'};
- if(state.runtime)return {safe:false,reason:'active-workout'};
+ if(state.runtime||(state.workout_sessions||[]).some(session=>session.status==='ACTIVE'))return {safe:false,reason:'active-workout'};
  if(dirty||dialogOpen)return {safe:false,reason:'unsaved-input'};
  if(syncInFlight||authenticated&&bootstrapStatus!=='ready')return {safe:false,reason:'sync-running'};
  if(authenticated){

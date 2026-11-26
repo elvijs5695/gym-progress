@@ -1,4 +1,5 @@
 import {clone,fingerprint} from './data-contract.js';
+import {validSupersetMembers} from './workout-superset-groups.js';
 export const WORKOUT_ENGINE_VERSION='2.0.0';
 
 /** Standard rest after skipping an exercise. The countdown is optional and
@@ -65,7 +66,7 @@ export function resolvePendingWorkoutAction(exercises,performedSets,proposed){
    pendingByExercise.get(key).add(Number(row.setNumber));
  }
  const available=(i)=>i>=0&&i<exs.length&&pendingByExercise.has(String(exs[i].id));
- const index=Number(proposed?.exerciseIndex);
+ const index=proposed?.exerciseIndex;
  if(proposed&&Number.isInteger(index)&&available(index)){
    if(proposed.type==='EXERCISE')return proposed;
    if(['SET','SUPERSET'].includes(proposed.type)){
@@ -74,8 +75,8 @@ export function resolvePendingWorkoutAction(exercises,performedSets,proposed){
      const row=rows.sort((a,b)=>Number(a.setNumber)-Number(b.setNumber))[proposed.setIndex];
      if(row?.status==='PENDING'&&pending.has(Number(row.setNumber))){
        if(proposed.type!=='SUPERSET')return proposed;
-       const lead=exs[index];const peers=exs.filter(e=>e.supersetGroupId&&e.supersetGroupId===lead.supersetGroupId);
-       if(peers.length>=2&&peers.every(peer=>pendingByExercise.get(String(peer.id))?.has(Number(row.setNumber))))return proposed;
+       const lead=exs[index],peers=validSupersetMembers(exs,lead);
+       if(peers&&peers.every(peer=>pendingByExercise.get(String(peer.id))?.has(Number(row.setNumber))))return proposed;
      }
    }
  }
