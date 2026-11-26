@@ -69,6 +69,16 @@ export function recordWorkoutStep(action,before,after){
  if(fingerprint(simplified(before))===fingerprint(simplified(after)))return false;
  undo.push({action,before,after});if(undo.length>WORKOUT_STEP_LIMIT)undo.shift();redo=[];return true;
 }
+/** Add a recovered programme step (skip or completed set) to Redo.
+ * A lost in-memory journal must not force Redo to jump between timestamps. */
+export function rememberRecoveredProgrammeUndo(before,after,action='skipExercise'){
+ if(!before||!after||String(before.sessionId)!==String(after.sessionId))return false;
+ const key=String(after.sessionId);
+ if(sessionKey!==key){sessionKey=key;undo=[];redo=[];}
+ redo.push({action,before:after,after:before});
+ if(redo.length>WORKOUT_STEP_LIMIT)redo.shift();
+ return true;
+}
 export function canUndoWorkoutStep(state){return !!undo.length&&String(state?.runtime?.sessionId)===sessionKey;}
 export function canRedoWorkoutStep(state){return !!redo.length&&String(state?.runtime?.sessionId)===sessionKey;}
 export function undoWorkoutStep(state,at=Date.now()){

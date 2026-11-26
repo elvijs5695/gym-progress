@@ -1,6 +1,7 @@
-import {WORKOUT_STEP_ACTIONS,captureWorkoutStep,recordWorkoutStep,canUndoWorkoutStep,canRedoWorkoutStep,undoWorkoutStep,redoWorkoutStep,resetWorkoutStepHistory} from './workout-step-history.js';
+import {WORKOUT_STEP_ACTIONS,captureWorkoutStep,recordWorkoutStep,canUndoWorkoutStep,canRedoWorkoutStep,undoWorkoutStep,redoWorkoutStep,resetWorkoutStepHistory,rememberRecoveredProgrammeUndo} from './workout-step-history.js';
 import {markTimedTargetReached,recordedTimedDuration,markRestReady,canReplaceWholeExercise} from './workout-progress-safety.js';
 import {paintTrackerFill} from './tracker-fill-animation.js';
+import {previousProgrammeDecision,restoreSkippedProgrammeDecision} from './workout-programme-undo.js';
 import {readOriginalLocalState,originalDevicePreferences,originalLocalBackup} from './legacy-local.js';
 import {compareVersions} from './release-version.js';
 import {pendingAccountCleanups,markAccountCleanup,clearAccountCleanup} from './account-cleanup.js';
@@ -54,7 +55,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.2.6';
+const APP_VERSION='2.2.7';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -72,6 +73,7 @@ function socialNotifiedIds(){try{return new Set(JSON.parse(localStorage.getItem(
 function markSocialNotificationDelivered(id){const seen=socialNotifiedIds();seen.add(id);localStorage.setItem(SOCIAL_NOTIFIED_KEY,JSON.stringify([...seen].slice(-300)));}
 let tickHandle=null,wakeLock=null,audioCtx=null,lastReminderKey='';const backgroundHandles=[];
 let trackerRenderedDate=trackerTodayKey();
+let trackerHomeSignature=null;
 let trackerVisualBucket=-1;
 const sentTrackerReminderKeys=new Set();
 const TRACKER_NOTIFICATIONS_KEY='gym-progress-tracker-notifications-enabled';
@@ -331,6 +333,49 @@ function trackerPace(item,at=new Date()){return sharedTrackerPace(item,at);}
 function trackerBehind(item,at=new Date()){const amount=trackerAmount(item),pace=trackerPace(item,at);return amount+1e-6<pace.target&&amount+1e-6<pace.dueAmount;}
 function trackerTimeFraction(item,at=new Date()){return trackerPace(item,at).timeFraction;}
 function refreshTrackerTimeVisuals(at=new Date()){if(route.name!=='home')return;document.querySelectorAll('.tracker-row[data-tracker-id]').forEach(row=>{const item=(state.tracker_items||[]).find(x=>String(x.id)===row.dataset.trackerId);if(!item)return;const amount=trackerAmount(item),target=Math.max(.01,Number(item.targetAmount||0)),done=amount+1e-6>=target,behind=!done&&trackerBehind(item,at),marker=row.querySelector('.tracker-progress-now');row.classList.toggle('done',done);row.classList.toggle('behind',behind);if(marker)marker.style.left=`${trackerTimeFraction(item,at)*100}%`;});}
+function trackerHomeStructureSignature(){
+  return JSON.stringify({language:languageCode(state),date:trackerTodayKey(),items:(state.tracker_items||[])
+    .filter(x=>x.enabled!==false).slice().sort((a,b)=>(a.position||0)-(b.position||0))
+    .map(x=>[String(x.id),x.name,x.targetAmount,x.unit,x.increment,x.position,x.productiveStart,x.productiveEnd])});
+}
+/**
+ * Re-render the page without ever detaching the live Tracker node. A CSS
+ * transition on a detached/re-created element restarts halfway through, which
+ * caused the visible mid-bar hitch. Fresh markup is parsed by the existing
+ * safe template interpreter, and all other page regions still update.
+ */
+function updateHomeKeepingTracker(html){
+  if(route.name!=='home'||!trackerHomeSignature||trackerHomeSignature!==trackerHomeStructureSignature())return false;
+  const oldShell=appEl.querySelector(':scope > .app-shell');
+  const oldMain=oldShell?.querySelector(':scope > main.home-view');
+  const oldCard=oldMain?.querySelector(':scope > .tracker-card');
+  if(!oldCard)return false;
+  const staging=document.createElement('div');setHTML(staging,html);
+  const newShell=staging.querySelector(':scope > .app-shell');
+  const newMain=newShell?.querySelector(':scope > main.home-view');
+  const newCard=newMain?.querySelector(':scope > .tracker-card');
+  if(!newShell||!newMain||!newCard||!newMain.contains(newCard)||oldCard.parentNode!==oldMain)return false;
+  // Card is a direct child of main in the home template. Never move it.
+  const children=[...newMain.children];const anchor=children.indexOf(newCard);
+  if(anchor<0)return false;
+  for(const child of [...oldMain.children])if(child!==oldCard)child.remove();
+  children.forEach((child,index)=>{if(child===newCard)return;if(index<anchor)oldMain.insertBefore(child,oldCard);else oldMain.appendChild(child);});
+  oldMain.className=newMain.className;
+  const shellChildren=[...newShell.children];
+  const mainIndex=shellChildren.indexOf(newMain);
+  if(mainIndex<0)return false;
+  for(const child of [...oldShell.children])if(child!==oldMain)child.remove();
+  // Do not append/move oldMain even within its own parent: Chromium restarts
+  // descendants' CSS transitions when an ancestor is reinserted.
+  shellChildren.forEach((child,index)=>{
+    if(child===newMain)return;
+    if(index<mainIndex)oldShell.insertBefore(child,oldMain);
+    else oldShell.appendChild(child);
+  });
+  // Synchronise amounts from any background sync without resetting the fill.
+  for(const item of state.tracker_items||[])if(item.enabled!==false)refreshTrackerRow(item);
+  return true;
+}
 function renderTrackerCard(){const items=(state.tracker_items||[]).filter(x=>x.enabled!==false).slice().sort((a,b)=>(a.position||0)-(b.position||0));if(!items.length)return `<div class="card tracker-card tracker-card-accent"><div class="row between"><div><div class="title" data-i18n="Tracker">Tracker</div></div><button class="icon-btn tracker-settings-btn" onclick="gp.openTrackerSettings()" aria-label="Tracker settings">${mainNavIcon('settings')}</button></div><div class="note" data-i18n="Add water, protein, supplements or any daily target.">Add water, protein, supplements or any daily target.</div></div>`;const at=new Date();return `<div class="card tracker-card tracker-card-accent"><div class="row between"><div><div class="title" data-i18n="Tracker">Tracker</div></div><button class="icon-btn tracker-settings-btn" onclick="gp.openTrackerSettings()" aria-label="Tracker settings">${mainNavIcon('settings')}</button></div><div class="tracker-list">${items.map(item=>{const amount=trackerAmount(item),target=Math.max(.01,Number(item.targetAmount||0)),unit=trackerUnit(item),done=amount>=target,behind=!done&&trackerBehind(item,at),fill=Math.max(0,Math.min(1,amount/target)),timeFraction=trackerTimeFraction(item,at);return `<div class="tracker-row ${done?'done':''} ${behind?'behind':''}" data-tracker-id="${esc(String(item.id))}"><div class="tracker-progress-zone"><div class="tracker-progress-bg"><span class="tracker-progress-fill" style="transform:scaleX(${fill})"></span><span class="tracker-progress-now" style="left:${timeFraction*100}%"></span></div><div class="tracker-row-main"><div class="grow min-zero tracker-name">${esc(item.name)}</div><button class="tracker-amount-button" onclick="gp.setTrackerAmount('${item.id}')">${formatNumber(amount,{maximumFractionDigits:4})}/${formatNumber(item.targetAmount||0,{maximumFractionDigits:4})}${unit?` ${esc(unit)}`:''}</button></div></div><div class="tracker-controls"><button class="tracker-step-btn" onclick="gp.adjustTracker('${item.id}',-1)" aria-label="Decrease">−</button><button class="tracker-step-btn" onclick="gp.adjustTracker('${item.id}',1)" aria-label="Increase">+</button></div></div>`;}).join('')}</div></div>`;}
 
 function supersetPairForExercise(exs,e){if(!e?.supersetGroupId)return null;const pair=exs.filter(x=>x.supersetGroupId===e.supersetGroupId).sort((a,b)=>a.position-b.position);return pair.length===2?pair:null;}
@@ -406,7 +451,8 @@ async function checkMotivationReminders(){if(globalThis.GymProgressAndroid)retur
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
- {version:'2.2.6',key:'workout-timer-safety',importance:12,en:'Timed sets and finished rests now wait for explicit confirmation, including after screen lock. Undo supports replacement before any set has been recorded, with individual superset members kept paired. Performance advice identifies its exercise and Tracker uses compositor animation.',lv:'Laika piegājieni un beigusies atpūta tagad gaida tavu apstiprinājumu arī pēc ekrāna bloķēšanas. Pēc atsaukšanas var aizstāt vingrinājumu, ja tā piegājieni vēl nav reģistrēti; superseta pāris saglabājas. Pielāgošanas ieteikumos redzams vingrinājuma nosaukums, un Tracker animācija notiek grafiskajā kompozitorā.'},
+ {version:'2.2.7',key:'tracker-programme-undo',importance:14,en:'Tracker fill now remains mounted during Home updates and uses one uninterrupted transform transition. Undo recovers skipped exercises in programme order even after its in-memory action stack is lost.',lv:'Tracker josla vairs netiek pārzīmēta animācijas vidū, un animāciju vada viena transformācijas pāreja. Undo atjauno izlaistos vingrinājumus programmas secībā arī pēc darbību vēstures atmiņā zuduma.'},
+ {version:'2.2.6',key:'workout-timer-safety',importance:12,en:'Timed sets require explicit completion, while finished rests advance automatically, even after screen lock. Undo supports replacement before any set has been recorded, with individual superset members kept paired. Performance advice identifies its exercise and Tracker uses compositor animation.',lv:'Laika piegājienu pabeigšana ir jāapstiprina, bet atpūtas beigas pāriet automātiski arī pēc ekrāna bloķēšanas. Pēc atsaukšanas var aizstāt vingrinājumu, ja tā piegājieni vēl nav reģistrēti; superseta pāris saglabājas. Pielāgošanas ieteikumos redzams vingrinājuma nosaukums, un Tracker animācija notiek grafiskajā kompozitorā.'},
  {version:'2.2.5',key:'security-boundaries',importance:11,en:'Stronger protection for shared training data, restricted Android native permissions, and safer server data limits. Your existing workouts and calculations are unchanged.',lv:'Pastiprināta kopīgoto treniņu datu aizsardzība, ierobežotas Android sistēmas funkciju atļaujas un drošāki servera datu apjoma limiti. Esošie treniņi un aprēķini nav mainīti.'},
  {version:'2.2.4',key:'private-diagnostics-reports-volume',importance:10,en:'Volume progress now compares the total recorded strength load for a workout day, with a note when its composition changed. Historical sync anomalies are handled privately; Data review has been removed. You can report a problem or send feedback from Settings, with optional privacy-limited diagnostics.',lv:'Apjoma progress tagad salīdzina visu treniņa dienas reģistrēto spēka slodzi; par izmaiņām treniņa sastāvā tiek pievienota piezīme. Vēsturiskās sinhronizācijas anomālijas paliek iekšējā diagnostikā; Datu pārskats ir noņemts. Iestatījumos var ziņot par problēmu vai nosūtīt atsauksmi, pēc izvēles pievienojot ierobežotu diagnostiku.'},
  {version:'2.2.2',key:'usernames-stable-history-android-audio',importance:9,en:'Friend discovery now uses unique usernames rather than e-mail. Historical exercise records retain their identity when relinked. Volume progress compares matching exercises after programme changes. Workout audio, warm-up cues, rest overview, upcoming supersets, settings organisation and Android rest status have been improved.',lv:'Draugus var meklēt pēc unikāla lietotājvārda, nevis e-pasta. Vēsturiskie vingrinājumu ieraksti pēc kataloga sasaistes nemainās. Apjoma progress salīdzina atbilstošus vingrinājumus arī pēc programmas izmaiņām. Uzlabotas treniņa skaņas, iesildīšanās signāli, atpūtas pārskats, supersetu priekšskatījums, iestatījumu izkārtojums un Android atpūtas statuss.'},
@@ -541,7 +587,9 @@ function render(){
         html=shell(`<div class="card sync-restore-card"><div class="note">${esc(S('Cloud history could not be loaded. Your records have not been replaced.','Neizdevās ielādēt mākoņa vēsturi. Ieraksti nav aizstāti.'))}</div><button class="secondary full" onclick="gp.retryInitialSync()">${esc(S('Retry sync','Atkārtot sinhronizāciju'))}</button></div>`);
       else html=renderHome();
   }
-  setHTML(appEl,html);
+  const retainedTracker=updateHomeKeepingTracker(html);
+  if(!retainedTracker)setHTML(appEl,html);
+  trackerHomeSignature=route.name==='home'&&appEl.querySelector('.tracker-card')?trackerHomeStructureSignature():null;
   const lang=languageCode(state);document.documentElement.lang=lang;enhanceUI(appEl,{language:lang,scope:`${route.name}:${route.id??''}:${state.runtime?.phase??''}`});restoreUIState(appEl,uiSnapshot);
   updateLiveClocks();
   if(route.name==='active')afterActiveRender();
@@ -1318,7 +1366,7 @@ function renderRestTaskList(exs,rt){
 }
 function renderActive(){
   const {rt,s,e,sets,set}=currentActiveContext();if(!rt||!s)return shell(`<div class="empty" data-i18n="No active workout.">No active workout.</div>`,{navBar:false});
-  const canUndo=canUndoWorkoutStep(state)||!!lastCompletedWorkoutSet(),canRedo=canRedoWorkoutStep(state)||!!currentRedoRevision(),finalPhase=rt.phase==='FINAL';
+  const canUndo=canUndoWorkoutStep(state)||!!previousProgrammeDecision(state),canRedo=canRedoWorkoutStep(state)||!!currentRedoRevision(),finalPhase=rt.phase==='FINAL';
   const header=simpleActiveHeaderState({rt,s,e,sets,set,exs:sessionExercises(state,s.id)}),progress=Math.round(workoutProgressFraction()*1000)/10;
   const control=(kind,action,label,enabled=true)=>`<button class="icon-btn workout-history-control" onclick="${action}" aria-label="${esc(label)}" title="${esc(label)}" ${enabled?'':'disabled'}>${workoutControlIcon(kind)}</button>`;
   const fullStageLabel=[header.stage,header.current].filter(Boolean).join(' · ');
@@ -1850,9 +1898,9 @@ function clearPostSetPrompts(){
  window.__gpProgressionExercise=null;window.__gpProgressionGuard=null;window.__gpFutureAdjustment=null;
 }
 function lastCompletedWorkoutSet(){
- const rt=runtime();if(!rt)return null;
- const ids=new Set(sessionExercises(state,rt.sessionId).map(e=>e.id));
- return state.performed_sets.filter(set=>ids.has(set.sessionExerciseId)&&set.status==='COMPLETE').sort((a,b)=>(b.completedAt||0)-(a.completedAt||0)||Number(b.id)-Number(a.id))[0]||null;
+ const decision=previousProgrammeDecision(state);
+ if(decision?.type!=='COMPLETE')return null;
+ return state.performed_sets.find(set=>String(set.id)===String(decision.setId)&&set.status==='COMPLETE')||null;
 }
 function currentRedoRevision(){
  const rt=runtime();if(!rt)return null;
@@ -1867,6 +1915,25 @@ function undoLastSet(){
    clearPostSetPrompts();closeDialog();const action=undoWorkoutStep(state);if(!action)return;await persist();render();toast(S('Workout step undone · Redo available','Treniņa solis atsaukts · Pieejama atkārtošana'));
   });return;
  }
+ const previous=previousProgrammeDecision(state);
+ if(previous?.type==='SKIPPED'){
+   const session=runtime()?.sessionId;
+   const e=getSessionExercise(previous.exerciseId);
+   confirmDialog(S('Undo skipped exercise?','Atjaunot izlaisto vingrinājumu?'),
+     S(`Return to ${sessionDisplayName(e)} in the programme without changing completed workout records.`,
+       `Atgriezties pie ${sessionDisplayName(e)} treniņa secībā, nemainot pabeigtos piegājienus.`),
+     S('Undo','Atsaukt'),async()=>{
+       if(runtime()?.sessionId!==session){closeDialog();return;}
+       const current=previousProgrammeDecision(state);
+       if(!current||current.type!=='SKIPPED'||String(current.setId)!==String(previous.setId)){closeDialog();return;}
+       const before=captureWorkoutStep(state);
+       if(!restoreSkippedProgrammeDecision(state,previous,now())){closeDialog();return;}
+       const after=captureWorkoutStep(state);
+       rememberRecoveredProgrammeUndo(before,after);
+       clearPostSetPrompts();closeDialog();await persist();render();
+       toast(S('Skipped exercise restored · Redo available','Izlaistais vingrinājums atjaunots · Pieejams Redo'));
+     });return;
+ }
  const set=lastCompletedWorkoutSet();if(!set)return;
  const sessionId=runtime().sessionId,capturedState=state,version=localGeneration;
  const e=getSessionExercise(set.sessionExerciseId),label=`${sessionDisplayName(e)} · ${S('set','piegājiens')} ${set.setNumber}`;
@@ -1877,12 +1944,14 @@ function undoLastSet(){
 }
 async function applyUndoLastSet(){
   captureWorkoutNoteDraft();
+  const programmeBefore=captureWorkoutStep(state);
   const before=workoutCheckpoint(state),rt=runtime();if(!rt)return;const exs=sessionExercises(state,rt.sessionId),ids=new Set(exs.map(e=>e.id));
   const last=lastCompletedWorkoutSet();if(!last)return;
   clearPostSetPrompts();
   const e=getSessionExercise(last.sessionExerciseId),targets=[{e,set:last}];if(e?.supersetGroupId){const pair=supersetPairForExercise(exs,e),other=pair?.find(x=>x.id!==e.id),otherSet=other?exerciseSets(state,other.id).find(x=>x.setNumber===last.setNumber&&x.status==='COMPLETE'&&Math.abs(Number(x.completedAt||0)-Number(last.completedAt||0))<1500):null;if(other&&otherSet)targets.push({e:other,set:otherSet});}
   for(const target of targets){const te=target.e.progressionAccepted&&target.e.templateExerciseId!=null?state.template_exercises.find(x=>x.id===target.e.templateExerciseId):null;if(te){te.initialWeightKg=target.e.plannedWeightKg;if(target.e.nextReps!=null)te.reps=target.e.targetReps;}Object.assign(target.set,{actualReps:null,actualWeightKg:null,rir:null,failure:false,actualRestSeconds:null,actualDurationSeconds:null,distanceKm:null,averageHeartRateBpm:null,averagePowerWatts:null,sessionRpe:null,status:'PENDING',completedAt:null});target.e.endedAt=null;target.e.unloadStartedAt=null;target.e.unloadEndedAt=null;target.e.unloadSkipped=false;target.e.status='ACTIVE';target.e.progressionOffered=false;target.e.progressionAccepted=false;target.e.nextWeightKg=null;target.e.nextReps=null;}
-  const lead=targets.map(x=>x.e).sort((a,b)=>a.position-b.position)[0],ei=exs.findIndex(x=>x.id===lead.id),sets=exerciseSets(state,lead.id),si=sets.findIndex(x=>x.setNumber===last.setNumber);rt.currentExerciseIndex=Math.max(0,ei);rt.currentSetIndex=Math.max(0,si);const previous=before.performed_sets.find(item=>item.id===sets[Math.max(0,si)]?.id);rt.workingWeight=previous?.actualWeightKg??sets[Math.max(0,si)]?.plannedWeightKg??lead.plannedWeightKg;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();rt.entry=null;rt.supersetEntry=null;rt.supersetTimed={};rt.rest=null;rt.nextAction=null;delete rt.deferredRestSetId;delete rt.cardioDraft;delete rt.unloadQueue;delete rt.unloadContinuation;appendRevision(state,'undo_set',before,null,{afterFingerprint:fingerprint(workoutCheckpoint(state))});await persist();render();toast(targets.length>1?S('Superset set undone · Redo available','Superpiegājiens atsaukts · Pieejama atkārtošana'):S('Last set undone · Redo available','Pēdējais piegājiens atsaukts · Pieejama atkārtošana'));
+  const lead=targets.map(x=>x.e).sort((a,b)=>a.position-b.position)[0],ei=exs.findIndex(x=>x.id===lead.id),sets=exerciseSets(state,lead.id),si=sets.findIndex(x=>x.setNumber===last.setNumber);rt.currentExerciseIndex=Math.max(0,ei);rt.currentSetIndex=Math.max(0,si);const previous=before.performed_sets.find(item=>item.id===sets[Math.max(0,si)]?.id);rt.workingWeight=previous?.actualWeightKg??sets[Math.max(0,si)]?.plannedWeightKg??lead.plannedWeightKg;rt.phase='SET';rt.phaseStartedAt=now();rt.reminderStartedAt=now();rt.entry=null;rt.supersetEntry=null;rt.supersetTimed={};rt.rest=null;rt.nextAction=null;delete rt.deferredRestSetId;delete rt.cardioDraft;delete rt.unloadQueue;delete rt.unloadContinuation;appendRevision(state,'undo_set',before,null,{afterFingerprint:fingerprint(workoutCheckpoint(state))});
+  rememberRecoveredProgrammeUndo(programmeBefore,captureWorkoutStep(state),'saveSet');await persist();render();toast(targets.length>1?S('Superset set undone · Redo available','Superpiegājiens atsaukts · Pieejama atkārtošana'):S('Last set undone · Redo available','Pēdējais piegājiens atsaukts · Pieejama atkārtošana'));
 }
 
 function requestAbort(){openDialog(`<h2>${esc(S('End workout early?','Pabeigt treniņu agrāk?'))}</h2><div class="dialog-copy">${esc(S('Save partial workout keeps completed sets and marks the remaining work as skipped. Discard workout removes this session from Logs and Progress.','Saglabājot daļēju treniņu, pabeigtie piegājieni paliek, bet atlikušie tiek atzīmēti kā izlaisti. Atmetot treniņu, tas tiek noņemts no Žurnāla un Progresa.'))}</div><div class="dialog-actions abort-actions"><button onclick="gp.finishPartialWorkout()">${esc(S('Save partial workout','Saglabāt daļēju treniņu'))}</button><button class="danger" onclick="gp.discardActiveWorkout()">${esc(S('Discard workout','Atmest treniņu'))}</button><button class="secondary" onclick="gp.closeDialog()">${esc(S('Cancel','Atcelt'))}</button></div>`);}

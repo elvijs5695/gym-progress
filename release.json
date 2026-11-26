@@ -1,6 +1,6 @@
 {
-  "version": "2.2.6",
-  "id": "2.2.6-e6448feb9ba8",
+  "version": "2.2.7",
+  "id": "2.2.7-2015d4aeb2cd",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -19,8 +19,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "fda3e8c12af672a7cd18f7e585e17dbf71211773c5d525c20e559a6726553af6",
-      "bytes": 436208
+      "sha256": "1ae79a4fabc7494757dab45dc7dafaf6db80597aad4ccf0042779dd0bf6366a6",
+      "bytes": 440900
     },
     {
       "path": "autoregulation.js",
@@ -339,8 +339,8 @@
     },
     {
       "path": "tracker-fill-animation.js",
-      "sha256": "393593153bb839621149ebab234cc39d40d96d4e696195ba598fa10a32e18f1e",
-      "bytes": 1397
+      "sha256": "a5d15ea953777e3433c143b54aa6df8845852a776d884a00e4101f93aeab47d6",
+      "bytes": 943
     },
     {
       "path": "tracker-pace.js",
@@ -359,8 +359,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "68756142747eed8937b8096b5cef9b8b39af6b08eec10c544b67c81371b1ff34",
-      "bytes": 75710
+      "sha256": "5f507f327ba6438c8fe7be6266c4c33a51725353ea32e71976a3d9e27fc4dbf6",
+      "bytes": 75733
     },
     {
       "path": "update-policy.js",
@@ -393,6 +393,11 @@
       "bytes": 5475
     },
     {
+      "path": "workout-programme-undo.js",
+      "sha256": "0bc655186aff65c715e508a3f5177d657c2640733c1ab054c359a8d2af97446d",
+      "bytes": 4282
+    },
+    {
       "path": "workout-progress-safety.js",
       "sha256": "10cc9dcef9e4551e16cd9a7988315ff920d1583c3f86dd3bce0d42062c50117f",
       "bytes": 1319
@@ -404,8 +409,8 @@
     },
     {
       "path": "workout-step-history.js",
-      "sha256": "f224f5c7c88c6358bdfa18012c84d8b0a78dfa75e4f37175510fe446aa802618",
-      "bytes": 5365
+      "sha256": "018b7601e7015f12c3b67a743ecfe14d23a4f76439acc4531de98f7018fdd01d",
+      "bytes": 5886
     },
     {
       "path": "workspace-lifecycle.js",
