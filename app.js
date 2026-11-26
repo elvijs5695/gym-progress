@@ -1,6 +1,7 @@
 import {WORKOUT_STEP_ACTIONS,captureWorkoutStep,recordWorkoutStep,canUndoWorkoutStep,canRedoWorkoutStep,undoWorkoutStep,redoWorkoutStep,resetWorkoutStepHistory,rememberRecoveredProgrammeUndo} from './workout-step-history.js';
 import {markTimedTargetReached,recordedTimedDuration,markRestReady,canReplaceWholeExercise} from './workout-progress-safety.js';
 import {paintTrackerFill} from './tracker-fill-animation.js';
+import {sharedProgressStructureChanged,showSharedProgressCaveat} from './shared-progress-context.js';
 import {previousProgrammeDecision,restoreSkippedProgrammeDecision} from './workout-programme-undo.js';
 import {readOriginalLocalState,originalDevicePreferences,originalLocalBackup} from './legacy-local.js';
 import {compareVersions} from './release-version.js';
@@ -18,7 +19,7 @@ import {createBackup,parseBackup,inspectState,assertPreserved,clone,fingerprint}
 import {setHTML,configureActions} from './dom-actions.js';
 import {initUI,captureUIState,enhanceUI,restoreUIState,enhanceDialog,themePickerHTML,deferWhileComposing,themeColour} from './ui-components.js';
 import {capturedDuration,freezeCardio,resumeCardio,appendRevision,workoutCheckpoint,restoreCheckpoint,createCommandBus,beginSkippedExerciseRest,resolvePendingWorkoutAction} from './workout-controller.js';
-import {loadState,saveState,wipeState,setWorkspace,currentWorkspace,saveRecoveryState,loadRecoveryState,recoveryList,flushSaves,purgeRecoveryStates,redactRecoveryHistory,StaleWorkspaceError} from './db.js';
+import {loadState,saveState,saveTrackerRow,wipeState,setWorkspace,currentWorkspace,saveRecoveryState,loadRecoveryState,recoveryList,flushSaves,purgeRecoveryStates,redactRecoveryHistory,StaleWorkspaceError} from './db.js';
 import {alternativeRelation,alternativePriority} from './exercise-alternatives.js';
 import {restoreCachedReferenceData,refreshReferenceData} from './exercise-reference-cache.js';
 import {EXERCISES,ExerciseType,RampMode,Equipment,DumbbellLoad,bestMatch,byKey,equipmentFor,dumbbellLoadFor,recommendRamp,warmupFamily,snapSelectable,stepSelectable,gradingIncrement,progressionIncrement,suggestedNextWeight,reducedSelectableWeight} from './exercise-library.js';
@@ -55,7 +56,7 @@ import {exerciseHistoryRows,progressMetricValue as domainProgressMetricValue,sou
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>Date.now();
-const APP_VERSION='2.2.7';
+const APP_VERSION='2.2.8';
 const INFO_MESSAGE_MS=3000;
 const uid=(arr)=>arr.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
 const appEl=$('#app');
@@ -451,6 +452,7 @@ async function checkMotivationReminders(){if(globalThis.GymProgressAndroid)retur
 const UPDATE_ANNOUNCEMENT_KEY='gym-progress-pwa-update-brief-version';
 const LAST_SEEN_APP_VERSION_KEY='gym-progress-pwa-last-seen-version';
 const UPDATE_FEATURES=[
+ {version:'2.2.8',key:'android-tracker-shared-context',importance:15,en:'Android Tracker changes now persist as small, revision-checked writes instead of copying all workout history per tap. Shared workout progress shows a programme-change caveat when comparison structure changed.',lv:'Android Tracker izmaiņas tagad saglabā nelielos, versijas pārbaudītos ierakstos, nevis katrā pieskārienā kopējot visu treniņu vēsturi. Kopīgotajam progresam parādās piezīme par mainītu programmu, ja izmainījusies salīdzinājuma struktūra.'},
  {version:'2.2.7',key:'tracker-programme-undo',importance:14,en:'Tracker fill now remains mounted during Home updates and uses one uninterrupted transform transition. Undo recovers skipped exercises in programme order even after its in-memory action stack is lost.',lv:'Tracker josla vairs netiek pārzīmēta animācijas vidū, un animāciju vada viena transformācijas pāreja. Undo atjauno izlaistos vingrinājumus programmas secībā arī pēc darbību vēstures atmiņā zuduma.'},
  {version:'2.2.6',key:'workout-timer-safety',importance:12,en:'Timed sets require explicit completion, while finished rests advance automatically, even after screen lock. Undo supports replacement before any set has been recorded, with individual superset members kept paired. Performance advice identifies its exercise and Tracker uses compositor animation.',lv:'Laika piegājienu pabeigšana ir jāapstiprina, bet atpūtas beigas pāriet automātiski arī pēc ekrāna bloķēšanas. Pēc atsaukšanas var aizstāt vingrinājumu, ja tā piegājieni vēl nav reģistrēti; superseta pāris saglabājas. Pielāgošanas ieteikumos redzams vingrinājuma nosaukums, un Tracker animācija notiek grafiskajā kompozitorā.'},
  {version:'2.2.5',key:'security-boundaries',importance:11,en:'Stronger protection for shared training data, restricted Android native permissions, and safer server data limits. Your existing workouts and calculations are unchanged.',lv:'Pastiprināta kopīgoto treniņu datu aizsardzība, ierobežotas Android sistēmas funkciju atļaujas un drošāki servera datu apjoma limiti. Esošie treniņi un aprēķini nav mainīti.'},
@@ -902,16 +904,46 @@ function refreshTrackerRow(item){
   const fill=el.querySelector('.tracker-progress-fill');paintTrackerFill(fill,amount/target,{reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true});
   const label=el.querySelector('.tracker-amount-button');if(label)label.textContent=`${formatNumber(amount,{maximumFractionDigits:4})}/${formatNumber(item.targetAmount||0,{maximumFractionDigits:4})}${unit?' '+unit:''}`;
 }
-function adjustTracker(id,direction){
-  const item=state.tracker_items.find(x=>x.id===id);if(!item)return;
-  const row=trackerState(item),step=trackerUnit(item)?Math.max(.01,Number(item.increment||1)):1;
-  row.amount=Math.max(0,Math.round((Number(row.amount||0)+Number(direction)*step)*10000)/10000);
-  // Paint synchronously, BEFORE IndexedDB serialisation of large historical state.
-  refreshTrackerRow(item);
-  // Yield a frame before serialising the IndexedDB snapshot so the first tap paints.
-  setTimeout(()=>{void persist().catch(error=>{console.error('Tracker save failed; value remains in memory',error);toast(S('Could not save Tracker change','Neizdevās saglabāt Tracker izmaiņu'));});},0);
+function persistTrackerRow(row,archiveEntry=null){
+  if(writeBlocked||workspaceTransition||currentWorkspace()!==stateWorkspace){
+    toast(S('Tracker change cannot be saved while switching accounts.','Tracker izmaiņu nevar saglabāt konta maiņas laikā.'));
+    return Promise.resolve();
+  }
+  // Capture the row at the tap, in order. A later tap cannot alter the snapshot
+  // or cause an older full-database save to overwrite the latest Tracker value.
+  return saveTrackerRow(row,{expectedWorkspace:stateWorkspace,archiveEntry}).then(()=>{
+    if(!updateActivationInFlight)scheduleTrainingSync();
+    // Update native reminders only AFTER the fast write and the fill transition.
+    scheduleTrackerNativeReminderUpdate();
+    return true;
+  }).catch(error=>{
+    if(error instanceof StaleWorkspaceError)writeBlocked=true;
+    console.error('Tracker save failed; value remains in memory',error);
+    toast(S('Could not save Tracker change','Neizdevās saglabāt Tracker izmaiņu'));
+    return false;
+  });
 }
-function setTrackerAmount(id){const item=state.tracker_items.find(x=>x.id===id);if(!item)return;const current=trackerAmount(item),unit=trackerUnit(item);formDialog(`${S('Set','Iestatīt')} ${esc(item.name)}`,`<label class="field">${esc(S('Current amount','Pašreizējais daudzums'))}${unit?` (${esc(unit)})`:''}</label><input id="tr-current-amount" type="number" min="0" step="${unit?Math.max(.01,Number(item.increment||1)):1}" value="${current}">`,translateUI('Save',languageCode(state)),async()=>{const row=trackerState(item),value=Number($('#tr-current-amount').value);row.amount=Math.max(0,Number.isFinite(value)?value:current);await persist();closeDialog();render();});}
+let trackerNativeReminderTimer=null;
+function scheduleTrackerNativeReminderUpdate(){
+  if(trackerNativeReminderTimer)clearTimeout(trackerNativeReminderTimer);
+  trackerNativeReminderTimer=setTimeout(()=>{
+    trackerNativeReminderTimer=null;
+    if(!workspaceTransition&&!writeBlocked)syncWorkoutAlarmPlan();
+  },450);
+}
+function adjustTracker(id,direction){
+  if(writeBlocked||workspaceTransition||currentWorkspace()!==stateWorkspace)return;
+  const item=state.tracker_items.find(x=>x.id===id);if(!item)return;
+  const archiveCount=state.tracker_entries?.length||0;
+  const row=trackerState(item),archived=(state.tracker_entries||[]).length>archiveCount?state.tracker_entries.at(-1):null;
+  const step=trackerUnit(item)?Math.max(.01,Number(item.increment||1)):1;
+  row.amount=Math.max(0,Math.round((Number(row.amount||0)+Number(direction)*step)*10000)/10000);
+  // Only a tiny Tracker row is snapshotted. Avoid blocking Android WebView's
+  // compositor with a clone/fingerprint pass across the entire workout history.
+  refreshTrackerRow(item);
+  void persistTrackerRow(row,archived);
+}
+function setTrackerAmount(id){const item=state.tracker_items.find(x=>x.id===id);if(!item)return;const current=trackerAmount(item),unit=trackerUnit(item);formDialog(`${S('Set','Iestatīt')} ${esc(item.name)}`,`<label class="field">${esc(S('Current amount','Pašreizējais daudzums'))}${unit?` (${esc(unit)})`:''}</label><input id="tr-current-amount" type="number" min="0" step="${unit?Math.max(.01,Number(item.increment||1)):1}" value="${current}">`,translateUI('Save',languageCode(state)),async()=>{const archiveCount=state.tracker_entries?.length||0,row=trackerState(item),archived=(state.tracker_entries||[]).length>archiveCount?state.tracker_entries.at(-1):null,value=Number($('#tr-current-amount').value);row.amount=Math.max(0,Number.isFinite(value)?value:current);if(!await persistTrackerRow(row,archived))return;closeDialog();render();});}
 function trackerExpected(item,at=new Date()){return trackerPace(item,at).dueAmount;}
 async function checkTrackerReminders(){if(globalThis.GymProgressAndroid)return;if(!trackerNotificationsEnabled()||notificationPermissionState()!=='granted')return;const d=new Date();for(const item of state.tracker_items.filter(x=>x.enabled!==false&&x.archived!==true)){const pace=trackerPace(item,d),actual=trackerAmount(item);if(pace.cur<pace.start||pace.slot<=0||actual+1e-6>=pace.target||actual+1e-6>=pace.dueAmount)continue;const key=`tracker/${trackerTodayKey()}/${item.id}/${pace.slot}`;if(sentTrackerReminderKeys.has(key))continue;const delivered=await showBrowserNotification(`Gym Progress · ${item.name}`,`${formatNumber(actual)}/${formatNumber(item.targetAmount)}${item.unit?` ${trackerUnit(item)}`:''} · ${S('By now','Līdz šim')}: ${formatNumber(pace.dueAmount)}/${formatNumber(item.targetAmount)}`,key);if(!delivered)continue;if(sentTrackerReminderKeys.size>200)sentTrackerReminderKeys.clear();sentTrackerReminderKeys.add(key);beepPattern('reminder');}}
 
@@ -2268,6 +2300,16 @@ function bindFriendsTimeline(){
   updateFriendsTimelineDom();
 }
 function cleanSocialComment(value){const text=String(value??'').trim();return !text||text.toLowerCase()==='null'?null:text;}
+/** Same volume-comparison caveat as the workout log, carried by the
+ * published card's own snapshot. Do not infer it from another user's data.
+ * Legacy cards have null metadata and must not be labelled 'unchanged'. */
+function socialProgressHtml(e){
+ if(e?.progress_percent==null)return '';
+ const marker=showSharedProgressCaveat(e),unknown=e.progress_structure_changed==null;
+ const note=marker?S('Workout composition or recorded set count changed.','Mainījies treniņa sastāvs vai reģistrēto piegājienu skaits.'):
+   unknown?S('Comparison context was not recorded.','Salīdzinājuma apstākļi nav saglabāti.'):null;
+ return `<div class="social-progress">${esc(S('Progress','Progress'))}: ${esc(fmtPct(Number(e.progress_percent)))}${note?`<span class="social-progress-note">* ${esc(note)}</span>`:''}</div>`;
+}
 function renderSocialEvent(e){
   const own=e.user_id===socialOwnerId();
   const record=e.event_type!=='workout_summary';
@@ -2276,7 +2318,7 @@ function renderSocialEvent(e){
   let body='';
   if(!record){
     const ex=Array.isArray(e.exercise_names)?e.exercise_names.join(', '):'';
-    body=`<div class="social-event-main"><strong>${esc(e.workout_name||'')}</strong><span>${esc(formatDuration(Number(e.duration_seconds||0)*1000))} · ${esc(socialEffortLabel(e.effort))}</span></div>${ex?`<div class="small">${esc(ex)}</div>`:''}${e.progress_percent!=null?`<div class="social-progress">${esc(S('Progress','Progress'))}: ${esc(fmtPct(Number(e.progress_percent)))}</div>`:''}`;
+    body=`<div class="social-event-main"><strong>${esc(e.workout_name||'')}</strong><span>${esc(formatDuration(Number(e.duration_seconds||0)*1000))} · ${esc(socialEffortLabel(e.effort))}</span></div>${ex?`<div class="small">${esc(ex)}</div>`:''}${socialProgressHtml(e)}`;
   }else{
     const value=e.record_kind==='weight'?formatKg(Number(e.record_value)):e.record_kind==='duration'?formatDuration(Number(e.record_value)*1000):`${Number(e.record_value)} ${S('reps','atk.')}`;
     body=`<div class="social-record"><strong>${esc(e.exercise_name||'')}</strong><span>${esc(e.record_kind==='weight'?S('New weight record','Jauns svara rekords'):e.record_kind==='duration'?S('Cardio activity','Kardio aktivitāte'):S('New rep record','Jauns atkārtojumu rekords'))}: <b>${esc(value)}</b>${e.increase_percent!=null?` · ${esc(fmtPct(Number(e.increase_percent)))}`:''}</span></div>`;
@@ -2464,7 +2506,7 @@ function deleteSocialEvent(id){
 function showTimelineEvent(id){
   const e=socialUi.feed.find(x=>x.id===id)||socialUi.timeline.find(x=>x.id===id);if(!e)return;
   const feed=socialUi.feed.find(x=>x.id===id);if(feed){openDialog(renderSocialEvent(feed)+`<div class="dialog-actions"><button onclick="gp.closeDialog()">${esc(S('Close','Aizvērt'))}</button></div>`);return;}
-  const own=e.user_id===socialOwnerId(),progress=e.progress_percent!=null?`<div class="social-progress">${esc(S('Progress','Progress'))}: ${esc(fmtPct(Number(e.progress_percent)))}</div>`:'';
+  const own=e.user_id===socialOwnerId(),progress=socialProgressHtml(e);
   openDialog(`<h2>${esc(e.workout_name||S('Shared workout','Kopīgots treniņš'))}</h2><div class="small">${esc(own?S('You','Tu'):e.display_name)} · ${esc(dateTime(new Date(e.occurred_at).getTime()))}</div><div class="dialog-copy">${esc(socialEffortLabel(e.effort))}</div>${progress}<div class="dialog-actions">${own?`<button class="danger" onclick="gp.deleteSocialEvent('${e.id}')">${esc(S('Delete shared record','Dzēst kopīgoto ierakstu'))}</button>`:''}<button onclick="gp.closeDialog()">${esc(S('Close','Aizvērt'))}</button></div>`);
 }
 
@@ -2475,7 +2517,7 @@ function previousExerciseSets(userExerciseId,currentSessionId){
 }
 function buildShareCards(sessionId){
   const s=getSession(sessionId);if(!s)return[];const metrics=sessionMetrics(state,s),diff=workoutLogEffort(s,metrics),exs=sessionExercises(state,s.id);
-  const cards=[{key:`workout-${crypto.randomUUID()}`,type:'workout_summary',title:s.workoutName,subtitle:`${formatDuration((s.endedAt||s.startedAt)-s.startedAt)} · ${socialEffortLabel(diff.key)}`,details:exs.map(e=>sessionDisplayName(e)).join(', '),selected:false,comment:'',event:{client_event_id:crypto.randomUUID(),event_type:'workout_summary',occurred_at:new Date(s.endedAt||Date.now()).toISOString(),workout_name:s.workoutName,duration_seconds:Math.max(0,Math.round(((s.endedAt||s.startedAt)-s.startedAt)/1000)),effort:diff.key,progress_percent:metrics.progressPercent,exercise_names:exs.map(e=>sessionDisplayName(e))}}];
+  const cards=[{key:`workout-${crypto.randomUUID()}`,type:'workout_summary',title:s.workoutName,subtitle:`${formatDuration((s.endedAt||s.startedAt)-s.startedAt)} · ${socialEffortLabel(diff.key)}`,details:exs.map(e=>sessionDisplayName(e)).join(', '),selected:false,comment:'',event:{client_event_id:crypto.randomUUID(),event_type:'workout_summary',occurred_at:new Date(s.endedAt||Date.now()).toISOString(),workout_name:s.workoutName,duration_seconds:Math.max(0,Math.round(((s.endedAt||s.startedAt)-s.startedAt)/1000)),effort:diff.key,progress_percent:metrics.progressPercent,progress_structure_changed:sharedProgressStructureChanged(metrics),exercise_names:exs.map(e=>sessionDisplayName(e))}}];
   for(const e of exs){
     if(e.trackingMode===TrackingMode.CARDIO){
       const cardioSets=exerciseSets(state,e.id).filter(x=>x.status==='COMPLETE'&&Number(x.actualDurationSeconds)>0);
@@ -2508,7 +2550,7 @@ async function showWorkoutFinishCelebration(sessionId,finishedAt){
  document.body.append(overlay);setTimeout(()=>overlay.remove(),5600);
 }
 function showWorkoutShareSummary(sessionId,finishedAt){window.__gpShareDraft={sessionId,finishedAt,cards:buildShareCards(sessionId)};renderShareSummary();}
-function renderShareSummary({preserveScroll=false}={}){const d=window.__gpShareDraft;if(!d)return;document.body.classList.add('workout-summary-open');let root=$('#dialog-root');if(!root){document.body.insertAdjacentHTML('beforeend','<div id="dialog-root"></div>');root=$('#dialog-root');}const previous=root.querySelector('.share-summary-dialog'),savedScroll=preserveScroll?Number(previous?.scrollTop||0):0,savedPageY=preserveScroll?window.scrollY:0;const signed=socialSignedIn(),conclusion=workoutConclusionHtml(d.sessionId);const cards=d.cards.map((c,i)=>`<div class="share-summary-card ${signed?'clickable-share-card':''} ${c.selected?'selected':''}" ${signed?`onclick="gp.toggleShareCard(${i})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();gp.toggleShareCard(${i})}"`:''}><div class="row between"><div><div class="title">${esc(c.title)}</div><div class="small">${esc(c.subtitle||'')}</div></div><button class="share-toggle ${c.selected?'on':''}" onclick="event.stopPropagation();gp.toggleShareCard(${i})" ${signed?'':'disabled'} aria-label="${esc(S('Share','Kopīgot'))}" title="${esc(S('Share','Kopīgot'))}"><svg class="share-check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5 9.4 17.4 19.5 7.3"/></svg></button></div>${c.details?`<div class="note">${esc(c.details)}</div>`:''}${signed?`<div class="share-comment-reveal ${c.selected?'open':''}" aria-hidden="${!c.selected}"><input class="share-comment" autocapitalize="sentences" maxlength="500" placeholder="${esc(S('Optional comment','Komentārs (nav obligāts)'))}" value="${esc(c.comment||'')}" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" oninput="gp.updateShareComment(${i},this.value)"></div>`:''}</div>`).join('');setHTML(root,`<div class="dialog-backdrop share-summary-backdrop"><div class="dialog share-summary-dialog">${conclusion}<div class="share-section-head"><div class="title share-section-title">${esc(S('Share','Kopīgot'))}</div><div class="small">${esc(signed?S('Nothing is shared automatically.','Nekas netiek kopīgots automātiski.'):S('Sign in under Friends to share future workouts.','Pieslēdzies sadaļā Draugi, lai kopīgotu turpmākos treniņus.'))}</div></div><div class="share-card-stack">${cards}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeShareSummary()">${esc(S('Done','Pabeigts'))}</button>${signed?`<button onclick="gp.publishShareSummary()" ${d.cards.some(c=>c.selected)?'':'disabled'}>${esc(S('Publish selected','Publicēt izvēlēto'))}</button>`:''}</div></div></div>`);if(preserveScroll)requestAnimationFrame(()=>{const dialog=root.querySelector('.share-summary-dialog');if(dialog)dialog.scrollTop=savedScroll;window.scrollTo(0,savedPageY);});}
+function renderShareSummary({preserveScroll=false}={}){const d=window.__gpShareDraft;if(!d)return;document.body.classList.add('workout-summary-open');let root=$('#dialog-root');if(!root){document.body.insertAdjacentHTML('beforeend','<div id="dialog-root"></div>');root=$('#dialog-root');}const previous=root.querySelector('.share-summary-dialog'),savedScroll=preserveScroll?Number(previous?.scrollTop||0):0,savedPageY=preserveScroll?window.scrollY:0;const signed=socialSignedIn(),conclusion=workoutConclusionHtml(d.sessionId);const cards=d.cards.map((c,i)=>`<div class="share-summary-card ${signed?'clickable-share-card':''} ${c.selected?'selected':''}" ${signed?`onclick="gp.toggleShareCard(${i})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();gp.toggleShareCard(${i})}"`:''}><div class="row between"><div><div class="title">${esc(c.title)}</div><div class="small">${esc(c.subtitle||'')}</div></div><button class="share-toggle ${c.selected?'on':''}" onclick="event.stopPropagation();gp.toggleShareCard(${i})" ${signed?'':'disabled'} aria-label="${esc(S('Share','Kopīgot'))}" title="${esc(S('Share','Kopīgot'))}"><svg class="share-check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5 9.4 17.4 19.5 7.3"/></svg></button></div>${c.details?`<div class="note">${esc(c.details)}</div>`:''}${c.type==='workout_summary'?socialProgressHtml(c.event):''}${signed?`<div class="share-comment-reveal ${c.selected?'open':''}" aria-hidden="${!c.selected}"><input class="share-comment" autocapitalize="sentences" maxlength="500" placeholder="${esc(S('Optional comment','Komentārs (nav obligāts)'))}" value="${esc(c.comment||'')}" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" oninput="gp.updateShareComment(${i},this.value)"></div>`:''}</div>`).join('');setHTML(root,`<div class="dialog-backdrop share-summary-backdrop"><div class="dialog share-summary-dialog">${conclusion}<div class="share-section-head"><div class="title share-section-title">${esc(S('Share','Kopīgot'))}</div><div class="small">${esc(signed?S('Nothing is shared automatically.','Nekas netiek kopīgots automātiski.'):S('Sign in under Friends to share future workouts.','Pieslēdzies sadaļā Draugi, lai kopīgotu turpmākos treniņus.'))}</div></div><div class="share-card-stack">${cards}</div><div class="dialog-actions"><button class="secondary" onclick="gp.closeShareSummary()">${esc(S('Done','Pabeigts'))}</button>${signed?`<button onclick="gp.publishShareSummary()" ${d.cards.some(c=>c.selected)?'':'disabled'}>${esc(S('Publish selected','Publicēt izvēlēto'))}</button>`:''}</div></div></div>`);if(preserveScroll)requestAnimationFrame(()=>{const dialog=root.querySelector('.share-summary-dialog');if(dialog)dialog.scrollTop=savedScroll;window.scrollTo(0,savedPageY);});}
 function toggleShareCard(i){
  const d=window.__gpShareDraft;if(!d?.cards[i])return;
  const card=d.cards[i],selected=card.selected=!card.selected;

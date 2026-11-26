@@ -122,11 +122,18 @@ export async function listNotifications(limit=20){return rpc('social_list_notifi
 export async function acceptFriendRequest(id){return rpc('social_accept_friend_request',{p_request_id:id});}
 export async function rejectFriendRequest(id){return rpc('social_reject_friend_request',{p_request_id:id});}
 export async function removeFriend(id){return rpc('social_remove_friend',{p_friend_id:id});}
-export async function getFeed(beforeAt=null,beforeId=null,limit=20){return rpc('social_feed',{p_before_at:beforeAt,p_before_id:beforeId,p_limit:limit});}
-export async function getTimeline(sinceIso){return rpc('social_timeline',{p_since:sinceIso});}
+// 2.2.8 adds a nullable comparison-context flag to the feed. Older Supabase
+// installations may still have the original RPC; use it for READS only. New
+// progress cards with this flag require the additive 2.2.8 DB migration.
+function missingRpc(error){return error?.code==='PGRST202'||(error?.status===404&&/function|schema cache/i.test(String(error?.message||'')));}
+async function socialRpcWithLegacy(name,args){
+ try{return await rpc(name+'_v228',args);}catch(error){if(!missingRpc(error))throw error;return rpc(name,args);}
+}
+export async function getFeed(beforeAt=null,beforeId=null,limit=20){return socialRpcWithLegacy('social_feed',{p_before_at:beforeAt,p_before_id:beforeId,p_limit:limit});}
+export async function getTimeline(sinceIso){return socialRpcWithLegacy('social_timeline',{p_since:sinceIso});}
 export async function hasUnseen(){return !!(await rpc('social_has_unseen'));}
 export async function markSeen(){return rpc('social_mark_seen');}
-const SOCIAL_EVENT_KEYS=['client_event_id','user_id','event_type','occurred_at','comment','workout_name','duration_seconds','effort','progress_percent','exercise_names','exercise_name','record_kind','record_value','previous_value','record_unit','increase_percent'];
+const SOCIAL_EVENT_KEYS=['client_event_id','user_id','event_type','occurred_at','comment','workout_name','duration_seconds','effort','progress_percent','progress_structure_changed','exercise_names','exercise_name','record_kind','record_value','previous_value','record_unit','increase_percent'];
 function normalizedSocialEvent(e,uid){
   const source={...e,user_id:uid};
   return Object.fromEntries(SOCIAL_EVENT_KEYS.map(key=>[key,source[key]??null]));
@@ -135,7 +142,20 @@ export async function publishEvents(events){
   if(!events?.length)return [];
   await getWorkspaceStatus();const uid=socialOwnerId();if(!uid)throw new Error('Account workspace is not connected.');
   const body=events.map(e=>normalizedSocialEvent(e,uid));
-  return authedFetch('/rest/v1/activity_events?on_conflict=user_id,client_event_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
+  const post=rows=>authedFetch('/rest/v1/activity_events?on_conflict=user_id,client_event_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(rows)});
+  try{return await post(body);}catch(error){
+    // During an unupgraded database, keep sharing usable for ordinary cards,
+    // but NEVER silently publish a changed-programme percentage without its
+    // caveat: that would knowingly mislead the recipient.
+    const unavailable=['PGRST204','42703'].includes(String(error?.code))&&
+      /progress_structure_changed/i.test(String(error?.message||''));
+    if(!unavailable)throw error;
+    if(body.some(row=>row.progress_structure_changed===true)){
+      const blocked=new Error('Database update 2.2.8 is required before sharing changed-programme progress. No record was published.');
+      blocked.code='GP_SHARE_CONTEXT_MIGRATION_REQUIRED';throw blocked;
+    }
+    return post(body.map(({progress_structure_changed,...legacy})=>legacy));
+  }
 }
 export async function deleteEvent(id){return authedFetch(`/rest/v1/activity_events?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});}
 

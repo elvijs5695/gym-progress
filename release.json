@@ -1,6 +1,6 @@
 {
-  "version": "2.2.7",
-  "id": "2.2.7-2015d4aeb2cd",
+  "version": "2.2.8",
+  "id": "2.2.8-a064082ae120",
   "assets": [
     {
       "path": "account-cleanup.js",
@@ -19,8 +19,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "1ae79a4fabc7494757dab45dc7dafaf6db80597aad4ccf0042779dd0bf6366a6",
-      "bytes": 440900
+      "sha256": "b73c44c47fb76f39b3b925f4ff8f911bbe4b1bc077fc271bad034f66c39ca3f2",
+      "bytes": 443838
     },
     {
       "path": "autoregulation.js",
@@ -49,8 +49,8 @@
     },
     {
       "path": "db.js",
-      "sha256": "8fb5a58dc64922a85267201238f4303f123ec214137f54643f9585aa2c8ee908",
-      "bytes": 7507
+      "sha256": "b543c78668a8f2bd76a0234f7e1d9ed2188fff97e56f842a77018dd5e63ce8bd",
+      "bytes": 10278
     },
     {
       "path": "design-system.css",
@@ -298,9 +298,14 @@
       "bytes": 1459
     },
     {
+      "path": "shared-progress-context.js",
+      "sha256": "e7f47301727d1beb4b65a7819a4200d037b6574726daa5402e0f40012747d725",
+      "bytes": 578
+    },
+    {
       "path": "social-api.js",
-      "sha256": "b50e6b6f87dddd4950d0cd82a2890d82eb0f2ab7c0a99fb2b1e264d3ff620a8c",
-      "bytes": 15914
+      "sha256": "f22459ab5e85c068b3c8a6207da4a6c1415275914d8f04a40c1fca39f212f0ff",
+      "bytes": 17313
     },
     {
       "path": "social-config.js",
@@ -359,8 +364,8 @@
     },
     {
       "path": "ui.css",
-      "sha256": "5f507f327ba6438c8fe7be6266c4c33a51725353ea32e71976a3d9e27fc4dbf6",
-      "bytes": 75733
+      "sha256": "6ae6d4c70af5d71b3280e89a1794acfb9c3242feadb91585b3a8b170a2eec0c1",
+      "bytes": 75860
     },
     {
       "path": "update-policy.js",

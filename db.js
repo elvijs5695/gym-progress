@@ -35,6 +35,50 @@ export async function loadState(){
  for(const name of Object.keys(COLLECTIONS)){const positions=new Map((meta.order?.[name]||[]).map((x,i)=>[x,i]));state[name].sort((a,b)=>(positions.get(String(a[COLLECTIONS[name]]))??0)-(positions.get(String(b[COLLECTIONS[name]]))??0));}return state;
 }
 export function saveState(value,{expectedWorkspace=workspace}={}){if(expectedWorkspace!==workspace)return Promise.reject(new Error('Workspace changed before save'));const scope=expectedWorkspace,snapshot=clone(value);const job=writeQueue.catch(()=>{}).then(()=>writeSnapshot(scope,snapshot));writeQueue=job;return job;}
+/**
+ * Tracker hot path: write only one tiny row instead of structuredClone-ing and
+ * fingerprinting the entire historical workout database on every + / - tap.
+ * Uses the SAME writeQueue and revision check as full saveState: no lost updates,
+ * workspace mixing, or out-of-order writes. Never writes from a stale tab.
+ */
+export function saveTrackerRow(value,{expectedWorkspace=workspace,archiveEntry=null}={}){
+ if(expectedWorkspace!==workspace)return Promise.reject(new Error('Workspace changed before Tracker save'));
+ if(!value||value.itemId==null)return Promise.reject(new Error('Missing Tracker item ID'));
+ const scope=expectedWorkspace,record=clone(value),archived=archiveEntry?clone(archiveEntry):null;
+ const job=writeQueue.catch(()=>{}).then(()=>writeTrackerRow(scope,record,archived));
+ writeQueue=job;
+ return job;
+}
+async function writeTrackerRow(scope,record,archived=null){
+ if(scope!==workspace)throw new Error('Account changed before Tracker save');
+ const d=await openDb(),tx=d.transaction(['meta','rows'],'readwrite'),done=complete(tx);
+ const metaStore=tx.objectStore('meta'),rows=tx.objectStore('rows'),current=await request(metaStore.get(scope));
+ if((current?.revision||0)!==(observedRevision??0)){
+  tx.abort();await done.catch(()=>{});throw new StaleWorkspaceError();
+ }
+ if(!current){tx.abort();await done.catch(()=>{});throw new Error('Tracker workspace has not been initialised');}
+ const id=String(record.itemId),key=JSON.stringify([scope,'tracker_states',id]);
+ const fp=fingerprint(record),changed=knownRows.get(key)!==fp;
+ if(changed)rows.put({key,workspace:scope,collection:'tracker_states',value:record});
+ const order={...current.order,tracker_states:[...(current.order?.tracker_states||[])]};
+ if(!order.tracker_states.includes(id))order.tracker_states.push(id);
+ let archiveKey=null,archiveFingerprint=null,archiveChanged=false;
+ if(archived){
+  if(archived.id==null)throw new Error('Archived Tracker entry has no ID');
+  const archiveId=String(archived.id);
+  archiveKey=JSON.stringify([scope,'tracker_entries',archiveId]);
+  archiveFingerprint=fingerprint(archived);
+  archiveChanged=knownRows.get(archiveKey)!==archiveFingerprint;
+  if(archiveChanged)rows.put({key:archiveKey,workspace:scope,collection:'tracker_entries',value:archived});
+  order.tracker_entries=[...(current.order?.tracker_entries||[])];
+  if(!order.tracker_entries.includes(archiveId))order.tracker_entries.push(archiveId);
+ }
+ const revision=(current.revision||0)+1;
+ metaStore.put({...current,order,revision,updatedAt:Date.now()},scope);
+ await done;
+ if(scope===workspace){observedRevision=revision;knownRows.set(key,fp);if(archiveKey)knownRows.set(archiveKey,archiveFingerprint);}
+ return {revision,recordWrites:Number(changed)+Number(archiveChanged)};
+}
 async function writeSnapshot(scope,snapshot){
  if(scope!==workspace)throw new Error('Account changed before save');
  const d=await openDb(),tx=d.transaction(['meta','rows'],'readwrite'),done=complete(tx),metaStore=tx.objectStore('meta'),rows=tx.objectStore('rows');const current=await request(metaStore.get(scope));
